@@ -1,0 +1,26 @@
+
+/* UTILS */
+.whitespace { padding:10px; }
+.no-select { .no-selection();  }
+
+
+
+/* DRAG & DROP */
+.upfront-dragged {
+  cursor: pointer;
+  .opacity(50);
+  .border-radius(5px);
+  .box-shadow(5px 5px 8px rgba(0,0,0,.3));
+}
+
+.upfront-drag-preview {
+  border-top: 4px solid @blue;
+  position: absolute;
+  z-index: @zindexModal + 10;
+  display: none;
+}
+
+.upfront-dev-page { padding: 40px 0; }
+
+
+.upfront-centered { text-align: center }

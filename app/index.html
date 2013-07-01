@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Livingdocs Editor</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+
+    <!-- livingdocs designs css -->
+    <link rel="stylesheet" href="vendor/bootstrap-design/css/style.css">
+
+    <!-- build:css({.tmp,app}) styles/editor.css -->
+    <link rel="stylesheet" href="vendor/livingdocs-engine/css/livingdocs.css">
+    <link rel="stylesheet" href="styles/editor.css">
+    <!-- endbuild -->
+
+</head>
+  <body>
+    <!--[if lt IE 9]>
+      <p class="chromeframe">The Livingdocs-Editor is not supported in your browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+    <![endif]-->
+
+    <!-- livingdoc magic happens here -->
+    <div class="wrapper">
+      <div class="story doc-section">
+      </div>
+    </div>
+
+    <!-- the big guns -->
+    <script src="vendor/jquery-1.9.1.js"></script>
+    <script src="vendor/angular/angular.js"></script>
+
+    <!-- livingdocs designs -->
+    <script src="vendor/bootstrap-design/design.js"></script>
+
+    <!-- build:js({.tmp,app}) scripts/constants.js -->
+    <script src="scripts/components/environment/constants.js"></script>
+    <!-- endbuild -->
+
+    <!-- build:js({.tmp,app}) scripts/editor.js -->
+    <!-- livingdocs-engine -->
+    <script src="vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js"></script>
+    <script src="vendor/livingdocs-engine/vendor/store/store.js"></script>
+    <script src="vendor/livingdocs-engine/vendor/editableJS/editable.js"></script>
+    <script src="vendor/livingdocs-engine/livingdocs_engine.js"></script>
+    <!-- angular-ui-bootstrap elements -->
+    <script src="vendor/angular-ui-bootstrap/transition.js"></script>
+    <script src="vendor/angular-ui-bootstrap/dialog.js"></script>
+    <script src="vendor/angular-ui-bootstrap/pagination.js"></script>
+
+
+    <script src="editor.js"></script>
+    <!-- endbuild -->
+
+</body>
+</html>

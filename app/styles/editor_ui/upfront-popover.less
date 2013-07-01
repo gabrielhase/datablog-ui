@@ -1,0 +1,61 @@
+.upfront-popover {
+  border: 1px solid @panelBorder;
+  background: @panelBackground;
+
+
+
+  .border-radius(5px);
+  .box-shadow( 1px 1px 6px rgba(0,0,0,.1) );
+
+  margin-bottom: 10px;
+
+  .close {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+/* Arrow - copied from panel */
+.upfront-popover .arrow,
+.upfront-popover .arrow:after {
+  position: absolute;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+}
+.upfront-popover .arrow:after {
+  content: "";
+  z-index: -1;
+}
+
+.upfront-popover .arrow-bottom {
+  bottom: -@panelArrowWidth;
+  left: 50%;
+  margin-left: -@panelArrowWidth;
+  border-width: @panelArrowWidth @panelArrowWidth 0;
+  border-top-color: @panelArrowColor;
+  &:after {
+    border-width: @panelArrowOuterWidth @panelArrowOuterWidth 0;
+    border-top-color: @panelArrowOuterColor;
+    bottom: -1px;
+    left: -@panelArrowOuterWidth;
+  }
+}
+
+.upfront-popover .arrow-top {
+  top: -@panelArrowWidth;
+  left: 50%;
+  margin-left: -@panelArrowWidth;
+  border-width: 0 @panelArrowWidth @panelArrowWidth @panelArrowWidth;
+  border-bottom-color: @panelArrowColor;
+  &:after {
+    border-width: 0 @panelArrowOuterWidth @panelArrowOuterWidth @panelArrowOuterWidth;
+    border-top-color: @panelArrowOuterColor;
+    bottom: -1px;
+    left: -@panelArrowOuterWidth;
+  }
+}
+

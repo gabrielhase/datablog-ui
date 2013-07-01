@@ -1,0 +1,63 @@
+
+.upfront-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: @zindexPanel;
+  display: none;
+
+  border: 1px solid @panelBorder;
+  // border-top: 5px solid black;
+
+  background: @panelBackground;
+
+  .border-radius(5px);
+  .box-shadow( 1px 1px 6px rgba(0,0,0,.1) );
+/*  .box-shadow( 0 5px 10px rgba(0,0,0,.2) );*/
+
+  margin-bottom: 10px;
+
+  .close {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.upfront-panel-header {
+  background:#fff;
+  border-bottom:1px solid #ddd;
+  -webkit-border-top-left-radius: 5px;
+  border-top-left-radius: 5px;
+  -webkit-border-top-right-radius: 5px;
+  border-top-right-radius: 5px;
+
+  h3 {
+    padding: 4px 10px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 200;
+    line-height: 30px;
+  }
+  button.close { padding: 2px 8px 0 0; }
+}
+
+.upfront-panel-content {
+  min-width: 200px;
+  min-height: 50px;
+  padding: 10px;
+}
+
+.upfront-panel-full-content {
+  padding: 0;
+}
+
+/* Property Panel */
+
+.upfront-action-list {
+  margin: 5px 5px;
+  li {
+    padding-bottom: 5px;
+    border-bottom: 1px solid @grayLight;
+  }
+}
