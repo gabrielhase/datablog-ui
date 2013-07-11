@@ -43,7 +43,6 @@ class Session
   accessToken: ->
     deferred = @$q.defer()
     accessToken = @cookies.get('accessToken')
-
     if accessToken
       deferred.resolve(accessToken)
     else

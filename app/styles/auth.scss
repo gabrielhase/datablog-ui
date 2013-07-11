@@ -8,6 +8,16 @@
 Base styles: opinionated defaults
 ========================================================================== */
 
+body {font-family: 'Source Sans Pro', sans-serif;background: #E7E8E2;word-wrap: break-word;margin-top: 2px;color: #393939}
+a {text-decoration: none;color: #393939}
+a:visited {color: inherit}
+h1 {font-size: 1.5em}
+h2 {font-size: 1.25em;margin-bottom: 1em}
+h2, h4 {text-align: center}
+h4 {font-size:1.25em;margin: .5em .5em .5em 1.5em}
+h5 {font-size:1em;margin: .25em 0}
+figure {position: relative}
+
 html,
 button,
 input,
@@ -76,6 +86,31 @@ textarea {
   resize: vertical;
 }
 
+input[type=search] {
+  -webkit-appearance: textfield;
+  -webkit-box-sizing: content-box;
+  font-family: inherit;
+  font-size: 90%;
+  color: transparent;
+  cursor: pointer;
+  background: #DCDCD7 image-url('application/img/icon_search.png') no-repeat 7px 7px;
+  background-size: 24px 24px;
+  border:none;
+  padding: 8px 4px 8px 32px;
+  width: 1px;
+  border-radius: 2px;
+  -webkit-transition: all .5s;
+  -moz-transition: all .5s;
+  transition: all .5s;
+  z-index: 5;
+  margin-top: -2px;
+  border: 2px solid transparent;
+}
+
+input[type=search]:focus {
+width: 176px;padding-left: 36px;color: #000;background-color:#E7E8E2;cursor: auto;border: 2px solid rgba(0,0,0,.15);box-shadow: 0 0 5px rgba(109,207,246,.5);margin-left: -262px; outline: none;}
+
+
 /* ==========================================================================
 Chrome Frame prompt
 ========================================================================== */
@@ -139,7 +174,7 @@ Enable overflow: auto on elements with overthrow class when html element has ove
 
 
   input {
-    width: 100%;
+    width: 90%;
   }
 }
 

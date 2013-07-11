@@ -7,13 +7,13 @@ upfront.angular = do ->
     upfront.angular.init()
 
 
+  # NOTE: because of the evented nature of the API wrapper, the AuthController
+  # has to enclose the Editor.
   init: ->
     $root = $(
       """
-      <div class="-js-editor-root upfront-control" ng-controller="EditorController">
-        <h1>{{message}}</h1>
-        {{server}}
-        <div id='splash' name='form' ng-controller='AuthController' ng-show='active'>
+      <div ng-controller='AuthController'>
+        <div id='splash' name='form' ng-show='active'>
           <div class='cell'>
             <form name='form' id='auth' ng-submit='formSubmitted()'>
               <h2>Livingdocs</h2>
@@ -33,7 +33,13 @@ upfront.angular = do ->
             </form>
           </div>
         </div>
+        <div class="-js-editor-root upfront-control" ng-controller="EditorController">
+          <h1>{{message}}</h1>
+          {{server}}
+        </div>
       </div>
+
+
       """
     ).appendTo(document.body)
     angular.bootstrap( $root[0], ["ldEditor"] )

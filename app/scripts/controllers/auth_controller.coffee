@@ -20,7 +20,6 @@ class AuthController
 
   performRequest: (data) ->
     @showLoadingIndicator()
-
     @apiHttp
       .post('auth', data)
       .success((data, _) => @requestSucceeded(data))
