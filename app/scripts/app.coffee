@@ -15,4 +15,6 @@ angular
 @upfront = @upfront || {}
 
 upfront.variables = do () ->
-  domain: 'thelivingdoc.com'
+  apiDomain: 'thelivingdoc.com'
+  frontendDomain: ''
+

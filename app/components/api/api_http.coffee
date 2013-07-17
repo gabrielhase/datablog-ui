@@ -7,7 +7,7 @@ angular.module('ldApi').factory('apiHttp', [
 
     urlWithPath = (path) ->
       [
-        "http://api.#{upfront.variables.domain}",
+        "http://api.#{upfront.variables.apiDomain}",
         path.replace(/^\/*/, '')
       ].join('/')
 

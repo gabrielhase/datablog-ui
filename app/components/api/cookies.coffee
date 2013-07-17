@@ -8,7 +8,12 @@ class Cookies
 
 
   constructor: () ->
-    @domain = ".#{upfront.variables.domain}"
+    # When working on localhost the domain has to be "", NULL, or False
+    # Otherwise the domain value has to contain at least two '.'
+    if upfront.variables.frontendDomain != ""
+      @domain = ".#{upfront.variables.frontendDomain}"
+    else
+      @domain = ""
 
 
   get: (name) ->
