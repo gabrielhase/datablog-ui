@@ -208,27 +208,6 @@ module.exports = function (grunt) {
       //   }
       // }
     },
-    htmlmin: {
-      dist: {
-        options: {
-          /*removeCommentsFromCDATA: true,
--          // https://github.com/yeoman/grunt-usemin/issues/44
--          //collapseWhitespace: true,
--          collapseBooleanAttributes: true,
--          removeAttributeQuotes: true,
--          removeRedundantAttributes: true,
--          useShortDoctype: true,
--          removeEmptyAttributes: true,
--          removeOptionalTags: true*/
-        },
-        files: [{
-          expand: true,
-          cwd: '<%= yeoman.app %>',
-          src: ['*.html', 'views/*.html'],
-          dest: '<%= yeoman.dist %>'
-        }]
-      }
-    },
     // Put files not handled in other tasks here
     copy: {
       dist: {
@@ -242,7 +221,9 @@ module.exports = function (grunt) {
             '.htaccess',
             'images/{,*/}*.{gif,webp,svg}',
             'styles/fonts/*',
-            'vendor/*'
+            'vendor/*',
+            '*.html',
+            'views/*.html'
           ]
         }, {
           expand: true,
@@ -264,7 +245,7 @@ module.exports = function (grunt) {
       dist: [
         'coffee',
         'imagemin',
-        'htmlmin'
+        'compass:dist'
       ]
     },
     karma: {
