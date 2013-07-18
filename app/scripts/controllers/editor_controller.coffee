@@ -1,27 +1,35 @@
+# Parent scope of the editor app.
 class EditorController
 
 
-  constructor: ($scope, $q, authedHttp, $http) ->
-    documentPromise = $q.defer()
-    apiEndpoint = "documents/current"
-    authedHttp.post(apiEndpoint, {url: 'http://watson.thelivingdoc.com/africa-story.draft'})
-      .success (doc) ->
-        documentPromise.resolve(doc)
-        doc
-      .error (error) ->
-        documentPromise.reject('fail')
+  constructor: ($scope, currentDocumentService, uiStateService, snippetInsertService, editableEventsService) ->
+    # editor watches for ui state changes
+    $scope.uiStateService = uiStateService
+    # bounding box is used for popover placement
+    $scope.boundingBox = editableEventsService.currentTextSelection
+    editableEventsService.setup()
+    currentDocumentService.get()
+    # watchers
+    @watchInsertMode($scope, snippetInsertService, uiStateService)
 
-    $scope.message = 'Ello, Ello'
-    $scope.server = documentPromise.promise
+
+  watchInsertMode: (scope, snippetInsertService, uiStateService) ->
+    scope.$watch('uiStateService.state.insertMode', (newVal, oldVal, scope) ->
+      if insertParams = uiStateService.state.insertMode
+        snippetInsertService.activateInsertMode(scope, insertParams)
+      else
+        snippetInsertService.deactivateInsertMode()
+    )
 
 
 angular.module('ldEditor').controller(
   'EditorController'
   [
     '$scope'
-    '$q'
-    'authedHttp'
-    '$http'
+    'currentDocumentService'
+    'uiStateService'
+    'snippetInsertService'
+    'editableEventsService'
     EditorController
   ]
 )

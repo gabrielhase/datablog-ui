@@ -27,16 +27,99 @@
     <![endif]-->
 
     <!-- Add your site or application content here -->
-    <div class="section"></div>
+    <div class="section" ng-app='ldEditor'>
+
+      <div ng-controller='AuthController'>
+        <div id='splash' name='form' ng-show='active'>
+          <div class='cell'>
+            <form name='form' id='auth' ng-submit='formSubmitted()'>
+              <h2>Livingdocs</h2>
+              <p class='loading' ng-show='loading'>Loading…</p>
+
+              <ng-switch on='loading'>
+                <fieldset ng-switch-when='false'>
+                  <p ng-show='statusMessage' class="auth-status">{{statusMessage}}</p>
+                  <input class="email" name='email' type='email' placeholder='Email' ng-model='$parent.email' autofocus required />
+                  <input class="password" name='password' type='password' placeholder='Password' ng-model='$parent.password' required />
+
+                  <input type='submit' id='submit' value='Log In' />
+                  <small><a href="#">Forgot your password?</a></small>
+                  <small><a href="#">No account? Register here</a></small>
+                </fieldset>
+              </ng-switch>
+            </form>
+          </div>
+        </div>
+        <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>
+          <div ng-show="serverResponse" class="top-message" ng-animate="{show: 'message-show'}">
+            <div ng-show="serverResponse.status == 200">
+              page saved
+            </div>
+            <div ng-show="serverResponse.status != 200">
+              There was an error saving your page
+            </div>
+          </div>
+
+          <div sidebar ng-if="uiStateService.state.sidebar">
+            <div document-panel ng-if="uiStateService.state.documentPanel"></div>
+            <div snippet-panel ng-if="uiStateService.state.snippetPanel"></div>
+          </div>
+
+          <div popover ng-if="uiStateService.state.flowtextPopover" bounding-box="{{ boundingBox }}">
+            <ng-include src="'flowtext-options.html'" ng-show="!uiStateService.state.linkPopover">
+            </ng-include>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="vendor/jquery-1.9.1.js"></script>
     <script src="vendor/angular.js"></script>
+    <script src="vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js"></script>
+    <script src="vendor/livingdocs-engine/vendor/store/store.js"></script>
+    <script src="vendor/livingdocs-engine/vendor/editableJS/editable.js"></script>
+    <script src="vendor/livingdocs-engine/livingdocs_engine.js"></script>
 
     <!-- build:js({.tmp,app}) scripts/scripts.js -->
     <script src="scripts/app.js"></script>
-    <script src="scripts/bootstrap/editor_init.js"></script>
+
     <script src="scripts/controllers/auth_controller.js"></script>
     <script src="scripts/controllers/editor_controller.js"></script>
+    <script src="scripts/controllers/blocktext_options_controller.js"></script>
+    <script src="scripts/controllers/document_panel_controller.js"></script>
+    <script src="scripts/controllers/flowtext_options_controller.js"></script>
+    <script src="scripts/controllers/popover_controller.js"></script>
+    <script src="scripts/controllers/sidebar_controller.js"></script>
+    <script src="scripts/controllers/snippet_panel_controller.js"></script>
+
+    <script src="scripts/directives/autosave.js"></script>
+    <script src="scripts/directives/document_click.js"></script>
+    <script src="scripts/directives/document_panel.js"></script>
+    <script src="scripts/directives/popover.js"></script>
+    <script src="scripts/directives/sidebar.js"></script>
+    <!-- <script src="scripts/directives/snippet_drag.js"></script> -->
+    <script src="scripts/directives/snippet_panel.js"></script>
+
+    <script src="scripts/models/snippet_insertor.js"></script>
+    <script src="scripts/models/document.js"></script>
+
+    <script src="scripts/services/current_document_service.js"></script>
+    <script src="scripts/services/doc_observer_service.js"></script>
+    <script src="scripts/services/editable_events_service.js"></script>
+    <script src="scripts/services/page_state_service.js"></script>
+    <script src="scripts/services/snippet_delete_service.js"></script>
+    <script src="scripts/services/snippet_insert_service.js"></script>
+    <script src="scripts/services/storage_service.js"></script>
+    <script src="scripts/services/ui_state_service.js"></script>
+
+    <script src="scripts/templates/add_button.tmpl.js"></script>
+    <script src="scripts/templates/blocktext_options.tmpl.js"></script>
+    <script src="scripts/templates/delete_button.tmpl.js"></script>
+    <script src="scripts/templates/document_panel.tmpl.js"></script>
+    <script src="scripts/templates/flowtext_options.tmpl.js"></script>
+    <script src="scripts/templates/popover.tmpl.js"></script>
+    <script src="scripts/templates/sidebar.tmpl.js"></script>
+    <script src="scripts/templates/snippet_panel.tmpl.js"></script>
     <!-- endbuild -->
 
     <!-- build:js({.tmp,app}) scripts/modules.js -->
