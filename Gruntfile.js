@@ -160,17 +160,11 @@ module.exports = function (grunt) {
         }
       }
     },
-    // not used since Uglify task does concat,
-    // but still available if needed
-    /*concat: {
-      dist: {}
-    },*/
     rev: {
       dist: {
         files: {
           src: [
             '<%= yeoman.dist %>/scripts/{,*/}*.js',
-            '<%= yeoman.dist %>/components/{,*/}*.js',
             '<%= yeoman.dist %>/styles/{,*/}*.css',
             '<%= yeoman.dist %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}',
             '<%= yeoman.dist %>/styles/fonts/*'
@@ -218,14 +212,14 @@ module.exports = function (grunt) {
       dist: {
         options: {
           /*removeCommentsFromCDATA: true,
-          // https://github.com/yeoman/grunt-usemin/issues/44
-          //collapseWhitespace: true,
-          collapseBooleanAttributes: true,
-          removeAttributeQuotes: true,
-          removeRedundantAttributes: true,
-          useShortDoctype: true,
-          removeEmptyAttributes: true,
-          removeOptionalTags: true*/
+-          // https://github.com/yeoman/grunt-usemin/issues/44
+-          //collapseWhitespace: true,
+-          collapseBooleanAttributes: true,
+-          removeAttributeQuotes: true,
+-          removeRedundantAttributes: true,
+-          useShortDoctype: true,
+-          removeEmptyAttributes: true,
+-          removeOptionalTags: true*/
         },
         files: [{
           expand: true,
@@ -247,7 +241,8 @@ module.exports = function (grunt) {
             '*.{ico,png,txt}',
             '.htaccess',
             'images/{,*/}*.{gif,webp,svg}',
-            'styles/fonts/*'
+            'styles/fonts/*',
+            'vendor/*'
           ]
         }, {
           expand: true,
@@ -278,11 +273,6 @@ module.exports = function (grunt) {
         singleRun: true
       }
     },
-    cdnify: {
-      dist: {
-        html: ['<%= yeoman.dist %>/*.html']
-      }
-    },
     ngmin: {
       dist: {
         files: [{
@@ -298,7 +288,10 @@ module.exports = function (grunt) {
         files: {
           '<%= yeoman.dist %>/scripts/scripts.js': [
             '<%= yeoman.dist %>/scripts/scripts.js'
-          ] // TODO what does this do???
+          ],
+          '<%= yeoman.dist %>/scripts/modules.js': [
+            '<%= yeoman.dist %>/scripts/modules.js'
+          ]
         }
       }
     }
@@ -332,7 +325,6 @@ module.exports = function (grunt) {
     'concurrent:dist',
     'concat',
     'copy',
-    'cdnify',
     'ngmin',
     'cssmin',
     'uglify',
