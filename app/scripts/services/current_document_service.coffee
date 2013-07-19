@@ -24,9 +24,10 @@ angular.module('ldEditor').factory('currentDocumentService', [
         currentDocumentId = upfront.variables.documentId if !currentDocumentId
         documentPromise = $q.defer()
         # IMPORTANT: the space_id should never change
-        apiEndpoint = "spaces/#{upfront.variables.spaceId}/documents/#{currentDocumentId}"
-        res = authedHttp.get(apiEndpoint)
-        .success (data) ->
+        #apiEndpoint = "spaces/#{upfront.variables.spaceId}/documents/#{currentDocumentId}"
+        #res = authedHttp.get(apiEndpoint)
+        res = upfront.api.get("documents/#{upfront.variables.documentId}")
+        .then (data) ->
           doc = new models.Document
             id: data.document.id
             title: data.document.title

@@ -21,10 +21,11 @@ angular.module('ldEditor').factory('storageService', [
 
       # For making cross-origin requests work we set the header to x-www-form-urlencoded, see editor_app.coffee
       # This requires us to serialize JSON ourselves.
-      res = authedHttp.post(savePagePath, {url: $location.absUrl(), html: html, snippet_tree: content})
-      res.success (data, status) ->
+      #res = authedHttp.post(savePagePath, {url: $location.absUrl(), html: html, snippet_tree: content})
+      res = upfront.api.post(savePagePath, {html: html, snippet_tree: content})
+      res.done (data, status) ->
         savePagePromise.resolve({status: status, data: data})
-      res.error (data, staus) ->
+      res.fail (data, staus) ->
         savePagePromise.resolve({status: status, data: data})
 
       savePagePromise.promise
