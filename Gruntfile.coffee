@@ -178,7 +178,7 @@ module.exports = (grunt) ->
           src: [
             '*.{ico,png,txt}'
             '.htaccess'
-            'images/{,*/}*.{gif,webp,svg}'
+            'images/{,*/}*.{gif,webp,svg,png}'
             'styles/fonts/*'
             'vendor/**/*'
             '*.html'
