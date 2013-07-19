@@ -35,9 +35,6 @@ module.exports = (grunt) ->
       coffeeTest:
         files: ['test/spec/{,*/}*.coffee']
         tasks: ['coffee:test']
-      compass:
-        files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}']
-        tasks: ['compass']
       livereload:
         options:
           livereload: LIVERELOAD_PORT
@@ -125,17 +122,25 @@ module.exports = (grunt) ->
           dest: '.tmp/spc'
           ext: '.j'
         ]
-    compass:
-      options:
-        sassDir: '<%= yeoman.app %>/styles'
-        cssDir: '.tmp/styles'
-        imagesDir: '<%= yeoman.app %>/images'
-        fontsDir: '<%= yeoman.app %>/styles/fonts'
-        relativeAssets: true
-      dist: {}
-      server:
+    recess:
+      development:
         options:
-          debugInfo: true
+          compile: true
+        files: [
+          # app styles
+          expand: true,
+          cwd: '<%= yeoman.app %>/styles',
+          src: ['*.less'],
+          dest: '.tmp/styles',
+          ext: '.css'
+        ,
+          # components styles
+          expand: true,
+          cwd: '<%= yeoman.app %>/components',
+          src: ['**/*.less'],
+          dest: '.tmp/styles',
+          ext: '.css'
+        ]
     rev:
       dist:
         files:
@@ -162,18 +167,6 @@ module.exports = (grunt) ->
           src: '{,*/}*.{png,jpg,jpeg}'
           dest: '<%= yeoman.dist %>/images'
         ]
-    # cssmin:
-      # By default, your `index.html` <!-- Usemin Block --> will take care of
-      # minification. This option is pre-configured if you do not wish to use
-      # Usemin blocks.
-      # dist: {
-      #   files: {
-      #     '<%= yeoman.dist %>/styles/main.css': [
-      #       '.tmp/styles/{,*/}*.css',
-      #       '<%= yeoman.app %>/styles/{,*/}*.css'
-      #     ]
-      #   }
-      # }
     # Put files not handled in other tasks here
     copy:
       dist:
@@ -187,7 +180,7 @@ module.exports = (grunt) ->
             '.htaccess'
             'images/{,*/}*.{gif,webp,svg}'
             'styles/fonts/*'
-            'vendor/*'
+            'vendor/**/*'
             '*.html'
             'views/*.html'
           ]
@@ -209,7 +202,7 @@ module.exports = (grunt) ->
       dist: [
         'coffee'
         'imagemin'
-        'compass:dist'
+        'recess'
       ]
     karma:
       unit:
@@ -240,7 +233,7 @@ module.exports = (grunt) ->
       grunt.task.run([
         'clean:server'
         'concurrent:server'
-        'compass:server'
+        'recess'
         'connect:livereload'
         'open'
         'watch'
@@ -260,7 +253,6 @@ module.exports = (grunt) ->
     'concat'
     'copy'
     'ngmin'
-    'cssmin'
     'uglify'
     'rev'
     'usemin'
