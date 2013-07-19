@@ -37,10 +37,6 @@ module.exports = function (grunt) {
         files: ['test/spec/{,*/}*.coffee'],
         tasks: ['coffee:test']
       },
-      compass: {
-        files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}'],
-        tasks: ['compass']
-      },
       livereload: {
         options: {
           livereload: LIVERELOAD_PORT
@@ -151,19 +147,20 @@ module.exports = function (grunt) {
         }]
       }
     },
-    compass: {
-      options: {
-        sassDir: '<%= yeoman.app %>/styles',
-        cssDir: '.tmp/styles',
-        imagesDir: '<%= yeoman.app %>/images',
-        fontsDir: '<%= yeoman.app %>/styles/fonts',
-        relativeAssets: true
-      },
-      dist: {},
-      server: {
+    recess: {
+      development: {
         options: {
-          debugInfo: true
-        }
+          compile: true
+        },
+        files: [
+          {
+            expand: true,
+            cwd: '<%= yeoman.app %>/styles',
+            src: ['*.less'],
+            dest: '.tmp/styles',
+            ext: '.css'
+          }
+        ]
       }
     },
     rev: {
@@ -238,7 +235,7 @@ module.exports = function (grunt) {
       dist: [
         'coffee',
         'imagemin',
-        'compass:dist'
+        'recess'
       ]
     },
     karma: {
@@ -279,7 +276,7 @@ module.exports = function (grunt) {
     grunt.task.run([
       'clean:server',
       'concurrent:server',
-      'compass:server',
+      'recess',
       'connect:livereload',
       'open',
       'watch'

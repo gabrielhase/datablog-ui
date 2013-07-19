@@ -1,0 +1,25 @@
+.top-message {
+  background-color: #7FC1E6;
+  color: white;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 30px;
+  text-align: center;
+  position: fixed;
+}
+
+.message-show {
+ -webkit-transition: 1s linear all; /* Safari/Chrome */
+ -moz-transition: 1s linear all; /* Firefox */
+ -o-transition: 1s linear all; /* Opera */
+ transition: 1s linear all; /* IE10+ and Future Browsers */
+
+ /* The animation preparation code */
+ opacity: 0;
+}
+
+.message-show.message-show-active {
+ /* The animation code itself */
+ opacity: 1;
+}

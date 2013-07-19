@@ -1,0 +1,33 @@
+//
+// Close icons
+// --------------------------------------------------
+
+a.upfront-close,
+button.upfront-close {
+  background:transparent; 
+  border:none;
+  float: right;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: @baseLineHeight;
+  color: @black;
+  text-shadow: 0 1px 0 rgba(255,255,255,1);
+  .opacity(20);
+  &:hover {
+    color: @black;
+    text-decoration: none;
+    cursor: pointer;
+    .opacity(40);
+  }
+}
+
+// Additional properties for button version
+// iOS requires the button element instead of an anchor tag.
+// If you want the anchor version, it requires `href="#"`.
+button.upfront-close {
+  padding: 0 5px 0 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+}
