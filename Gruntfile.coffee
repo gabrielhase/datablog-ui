@@ -218,13 +218,12 @@ module.exports = (grunt) ->
         ]
     uglify:
       dist:
-        files:
-          '<%= yeoman.dist %>/scripts/scripts.js': [
-            '<%= yeoman.dist %>/scripts/scripts.js'
-          ],
-          '<%= yeoman.dist %>/scripts/modules.js': [
-            '<%= yeoman.dist %>/scripts/modules.js'
-          ]
+        files: [
+          expand: true
+          cwd: '<%= yeoman.dist %>/scripts'
+          src: '*.js'
+          dest: '<%= yeoman.dist %>/scripts'
+        ]
 
   grunt.registerTask 'server', (target) ->
     if (target == 'dist')
