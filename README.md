@@ -1,18 +1,20 @@
 # watson-ui
 
-## Requirements
+## Requirements and Setup
 
-- npm
+**node and npm**
+install from here: http://nodejs.org/
+After installing run `npm install`
 
-## Development
-
-Setup the development environment by running:
-
-    $ npm install
+**sass & compass**
+grunt-contrib-compass needs compass installed:
+```bash
+gem update --system && gem install compass
+```
 
 ### Development Server
 
-    $ grunt server
+`grunt server`
 
 ### Development API
 
