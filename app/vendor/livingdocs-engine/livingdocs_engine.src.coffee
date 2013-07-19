@@ -483,7 +483,7 @@ class SnippetNodeIterator
 # String Helpers
 # --------------
 # inspired by [https://github.com/epeli/underscore.string]()
-@S = do ->
+@words = do ->
 
 
   # convert 'camelCase' to 'Camel Case'
@@ -507,6 +507,11 @@ class SnippetNodeIterator
         c.toUpperCase()
 
 
+  # convert 'camelCase' to 'camel-case'
+  snakeCase: (str) ->
+    $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase()
+
+
   # prepend a prefix to a string if it is not already present
   prefix: (prefix, string) ->
     if string.indexOf(prefix) == 0
@@ -524,9 +529,6 @@ class SnippetNodeIterator
   # camelize: (str) ->
   #   $.trim(str).replace(/[-_\s]+(.)?/g, (match, c) ->
   #     c.toUpperCase()
-
-  # dasherize: (str) ->
-  #   $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase()
 
   # classify: (str) ->
   #   $.titleize(String(str).replace(/[\W_]/g, ' ')).replace(/\s/g, '')
@@ -1382,7 +1384,7 @@ class Loader
     # add `css!` prefix to urls so yepnope always treats them as css files
     cssUrl = for url in cssUrl
       @loadedCssFiles.push(url)
-      S.prefix('css!', url)
+      words.prefix('css!', url)
 
     # yepnope calls the callback for each file to load
     # but we want to execute the callback only once all files are loaded
@@ -2686,7 +2688,7 @@ class SnippetTree
   # -------------
 
   printJson: ->
-    S.readableJson(@toJson())
+    words.readableJson(@toJson())
 
 
   # returns a JSON representation of the whole tree
@@ -2771,7 +2773,7 @@ stash = do ->
     entries = for obj in @store.getIndex()
       { key: obj.key, date: new Date(obj.date).toString() }
 
-    S.readableJson(entries)
+    words.readableJson(entries)
 
 # Template
 # --------
@@ -2807,7 +2809,7 @@ class Template
 
     @$template = $( @pruneHtml(html) ).wrap('<div>')
     @$wrap = @$template.parent()
-    @title = title || S.humanize( @name )
+    @title = title || words.humanize( @name )
 
     @editables = undefined
     @editableCount = 0
@@ -2913,7 +2915,7 @@ class Template
       editables: @editables
       containers: @containers
 
-    S.readableJson(doc)
+    words.readableJson(doc)
 
 
 # Static functions
@@ -2989,7 +2991,7 @@ setupApi = ->
   # Json that can be used for saving of the document
   @toJson = $.proxy(document, 'toJson')
   @readableJson = ->
-    S.readableJson(document.toJson())
+    words.readableJson(document.toJson())
 
   # Print the content of the snippetTree in a readable string
   @printTree = $.proxy(document, 'printTree')
@@ -3003,6 +3005,9 @@ setupApi = ->
   # Get help about a snippet
   # @param identifier: (String) snippet identifier e.g. "bootstrap.title"
   @help = $.proxy(document, 'help')
+
+  # Expose words string util
+  @words = words
 
 
   # Stash

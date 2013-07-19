@@ -472,7 +472,7 @@
 
   })();
 
-  this.S = (function() {
+  this.words = (function() {
     return {
       humanize: function(str) {
         var uncamelized;
@@ -491,6 +491,9 @@
             return c.toUpperCase();
           });
         }
+      },
+      snakeCase: function(str) {
+        return $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase();
       },
       prefix: function(prefix, string) {
         if (string.indexOf(prefix) === 0) {
@@ -1362,7 +1365,7 @@
         for (_i = 0, _len = cssUrl.length; _i < _len; _i++) {
           url = cssUrl[_i];
           this.loadedCssFiles.push(url);
-          _results.push(S.prefix('css!', url));
+          _results.push(words.prefix('css!', url));
         }
         return _results;
       }).call(this);
@@ -2794,7 +2797,7 @@
     };
 
     SnippetTree.prototype.printJson = function() {
-      return S.readableJson(this.toJson());
+      return words.readableJson(this.toJson());
     };
 
     SnippetTree.prototype.toJson = function() {
@@ -2895,7 +2898,7 @@
           }
           return _results;
         }).call(this);
-        return S.readableJson(entries);
+        return words.readableJson(entries);
       }
     };
   })();
@@ -2914,7 +2917,7 @@
       this.version = version || 1;
       this.$template = $(this.pruneHtml(html)).wrap('<div>');
       this.$wrap = this.$template.parent();
-      this.title = title || S.humanize(this.name);
+      this.title = title || words.humanize(this.name);
       this.editables = void 0;
       this.editableCount = 0;
       this.containers = void 0;
@@ -3020,7 +3023,7 @@
         editables: this.editables,
         containers: this.containers
       };
-      return S.readableJson(doc);
+      return words.readableJson(doc);
     };
 
     return Template;
@@ -3083,7 +3086,7 @@
     this.create = $.proxy(document, 'createSnippet');
     this.toJson = $.proxy(document, 'toJson');
     this.readableJson = function() {
-      return S.readableJson(document.toJson());
+      return words.readableJson(document.toJson());
     };
     this.printTree = $.proxy(document, 'printTree');
     this.eachContainer = chainable(document, 'eachContainer');
@@ -3091,6 +3094,7 @@
     this.changed = chainable(document.changed, 'add');
     this.DragDrop = DragDrop;
     this.help = $.proxy(document, 'help');
+    this.words = words;
     stash.init();
     this.stash = $.proxy(stash, 'stash');
     this.stash.snapshot = $.proxy(stash, 'snapshot');
