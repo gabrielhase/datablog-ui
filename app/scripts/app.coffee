@@ -18,9 +18,15 @@ angular
   .run([
     '$templateCache'
     ($templateCache) ->
+
       # preload templates
-      $templateCache.put('flowtext-options.html', upfront.angularTemplates.flowtextOptions)
-      $templateCache.put('blocktext-options.html', upfront.angularTemplates.blocktextOptions)
+      templates = upfront.angularTemplates
+      for templateName, template of templates
+        # put templates in cache by their name
+        # flowtextOptions -> flowtext-options.html
+        fileName = "#{ doc.words.snakeCase(templateName) }.html"
+        $templateCache.put(fileName, template)
+
   ])
 
 # ===============
