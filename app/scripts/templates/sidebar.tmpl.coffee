@@ -4,7 +4,7 @@ upfront.angularTemplates.sidebar = """
 <div class="upfront-sidebar" id="{{controlId}}"
   ng-class="{'upfront-sidebar-hidden': sidebarHidden}">
   <div class="upfront-sidebar-nav">
-    <i class="upfront-icon-newspaper upfront-sidebar-nav-elem upfront-sidebar-nav-first"
+    <i class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"
       data-nav="document"
       ng-click="loadDocument()"
       ng-class="{'active': uiStateService.state.documentPanel}"></i>
