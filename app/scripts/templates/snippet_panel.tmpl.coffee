@@ -4,11 +4,11 @@ upfront.angularTemplates.snippetPanel = """
 <div id="{{ controlId }}">
   <div class="upfront-sidebar-header" style="display: block;"
     ng-click="hideSidebar()">
-    <i class="upfront-icon-right-bold upfront-sidebar-hide-icon"></i>
+    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>
     <h3><span>Insert Snippets</span></h3>
   </div>
   <div class="upfront-sidebar-content upfront-help-small">
-    <i class="upfront-icon-help-circled"></i>
+    <i class="entypo-help"></i>
     Drag & Drop or click list items
   </div>
   <ul class="upfront-snippet-list">

@@ -15,7 +15,7 @@ upfront.angularTemplates.sidebar = """
   </div>
 
   <div class="upfront-sidebar-header">
-    <i class="upfront-icon-right-bold upfront-sidebar-hide-icon"></i>
+    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>
     <h3><span></span></h3>
   </div>
 
