@@ -66,9 +66,6 @@
     }
   },
   "config": {
-    "namespace": "watson",
-    "css": [
-      "/styles/watson.css"
-    ]
+    "namespace": "watson"
   }
 };})();}).call(this);
