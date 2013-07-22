@@ -31,10 +31,13 @@ module.exports = (grunt) ->
     watch:
       coffee:
         files: ['<%= yeoman.app %>/scripts/{,*/}*.coffee', '<%= yeoman.app %>/components/{,*/}*.coffee']
-        tasks: ['coffee:dist']
+        tasks: ['coffee:tmp']
       coffeeTest:
         files: ['test/spec/{,*/}*.coffee']
         tasks: ['coffee:test']
+      recess:
+        files: ['<%= yeoman.app %>/styles/{,*/}*']
+        tasks: ['recess:development']
       livereload:
         options:
           livereload: LIVERELOAD_PORT
@@ -94,7 +97,7 @@ module.exports = (grunt) ->
         '<%= yeoman.app %>/components/{,*/}*.js'
       ]
     coffee:
-      dist:
+      tmp:
         files: [
           expand: true
           cwd: '<%= yeoman.app %>/scripts'
@@ -118,9 +121,9 @@ module.exports = (grunt) ->
         files: [
           expand: true
           cwd: 'test/spec'
-          src: '{,*/*.coffee'
-          dest: '.tmp/spc'
-          ext: '.j'
+          src: '{,*/}*.coffee'
+          dest: '.tmp/spec'
+          ext: '.js'
         ]
     recess:
       development:
@@ -192,18 +195,6 @@ module.exports = (grunt) ->
             'generated/*'
           ]
         ]
-    concurrent:
-      server: [
-        'coffee:dist'
-      ]
-      test: [
-        'coffee'
-      ]
-      dist: [
-        'coffee'
-        'imagemin'
-        'recess'
-      ]
     karma:
       unit:
         configFile: 'karma.conf.js'
@@ -224,6 +215,18 @@ module.exports = (grunt) ->
           src: '*.js'
           dest: '<%= yeoman.dist %>/scripts'
         ]
+    concurrent:
+      server: [
+        'coffee:tmp'
+      ]
+      test: [
+        'coffee'
+      ]
+      dist: [
+        'coffee'
+        'imagemin'
+        'recess'
+      ]
 
   grunt.registerTask 'server', (target) ->
     if (target == 'dist')
