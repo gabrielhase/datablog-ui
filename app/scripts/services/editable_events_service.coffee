@@ -22,7 +22,7 @@ angular.module('ldEditor').factory('editableEventsService', [
 
 
     setup: ->
-      #@setupEvents()
+      @setupEvents()
 
 
     textSelected: (snippet, elem, selection) ->

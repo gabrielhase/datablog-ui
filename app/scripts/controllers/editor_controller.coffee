@@ -5,10 +5,12 @@ class EditorController
   constructor: ($scope, currentDocumentService, uiStateService, snippetInsertService, editableEventsService) ->
     # editor watches for ui state changes
     $scope.uiStateService = uiStateService
+
     # bounding box is used for popover placement
     $scope.boundingBox = editableEventsService.currentTextSelection
     editableEventsService.setup()
     currentDocumentService.get()
+
     # watchers
     @watchInsertMode($scope, snippetInsertService, uiStateService)
 

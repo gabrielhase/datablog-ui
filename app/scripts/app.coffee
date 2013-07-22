@@ -45,6 +45,7 @@ upfront.variables = do () ->
 # bootstrap
 # ===============
 upfront.angular = do ->
+
   $(document).ready () ->
     upfront.api.post('auth', {})
       .then (data) ->
