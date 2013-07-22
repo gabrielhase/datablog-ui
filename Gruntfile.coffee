@@ -88,14 +88,6 @@ module.exports = (grunt) ->
           ]
         ]
       server: '.tmp'
-    jshint:
-      options:
-        jshintrc: '.jshintrc'
-      all: [
-        'Gruntfile.js'
-        '<%= yeoman.app %>/scripts/{,*/}*.js'
-        '<%= yeoman.app %>/components/{,*/}*.js'
-      ]
     coffee:
       tmp:
         files: [
@@ -261,7 +253,6 @@ module.exports = (grunt) ->
   ])
 
   grunt.registerTask('default', [
-    'jshint'
     'test'
     'build'
   ])
