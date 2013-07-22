@@ -1,6 +1,4 @@
-@models ||= {}
-
-class models.Document
+class Document
 
   constructor: ({ @id, @title, @state, @url, @lastChangedDate }) ->
     # empty

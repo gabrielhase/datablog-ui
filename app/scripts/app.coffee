@@ -20,8 +20,7 @@ angular
     ($templateCache) ->
 
       # preload templates
-      templates = upfront.angularTemplates
-      for templateName, template of templates
+      for templateName, template of angularTemplates
         # put templates in cache by their name
         # flowtextOptions -> flowtext-options.html
         fileName = "#{ doc.words.snakeCase(templateName) }.html"
@@ -34,6 +33,7 @@ angular
 # global variables
 # ===============
 @upfront = @upfront || {}
+angularTemplates = {}
 
 upfront.variables = do () ->
   apiDomain: 'thelivingdoc.com'

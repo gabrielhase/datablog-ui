@@ -7,7 +7,7 @@ angular.module('ldEditor').directive('sidebar', [
     return {
       restrict: 'A'
       scope: {}
-      template: upfront.angularTemplates.sidebar
+      template: angularTemplates.sidebar
       replace: true
       transclude: true
       controller: 'SidebarController'

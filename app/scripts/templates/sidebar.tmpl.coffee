@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.sidebar = """
+angularTemplates.sidebar = """
 <div class="upfront-sidebar" id="{{controlId}}"
   ng-class="{'upfront-sidebar-hidden': sidebarHidden}">
   <div class="upfront-sidebar-nav">

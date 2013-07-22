@@ -8,7 +8,7 @@ angular.module('ldEditor').directive('popover', [
         'boundingBox': '@'
       }
       transclude: true
-      template: upfront.angularTemplates.popover
+      template: angularTemplates.popover
       controller: 'PopoverController'
       link: (scope, element, attrs) ->
 

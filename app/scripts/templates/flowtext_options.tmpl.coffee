@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.flowtextOptions = """
+angularTemplates.flowtextOptions = """
 <div ng-controller='FlowtextOptionsController'>
   <div ng-show="!linkMode" class='upfront-btn-group'>
     <a ng-click='toggleBold()'

@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.editor = """
+angularTemplates.editor = """
 <div ng-controller='AuthController'>
   <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>
 

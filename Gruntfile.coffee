@@ -90,18 +90,18 @@ module.exports = (grunt) ->
       server: '.tmp'
     coffee:
       tmp:
+        options:
+          join: true
         files: [
-          expand: true
-          cwd: '<%= yeoman.app %>/scripts'
-          src: '{,*/}*.coffee'
-          dest: '.tmp/scripts'
-          ext: '.js'
-        ,
-          expand: true
-          cwd: '<%= yeoman.app %>/scripts'
-          src: '{,*/}*.tmpl.coffee'
-          dest: '.tmp/scripts'
-          ext: '.tmpl.js'
+          '.tmp/editor.js': [
+            'app/scripts/api_mock.coffee'
+            'app/scripts/app.coffee'
+            'app/scripts/controllers/*.coffee'
+            'app/scripts/directives/*.coffee'
+            'app/scripts/models/*.coffee'
+            'app/scripts/services/*.coffee'
+            'app/scripts/templates/*.coffee'
+          ]
         ,
           expand: true
           cwd: '<%= yeoman.app %>/components'
@@ -247,7 +247,6 @@ module.exports = (grunt) ->
     'concat'
     'copy'
     'ngmin'
-    'uglify'
     'rev'
     'usemin'
   ])

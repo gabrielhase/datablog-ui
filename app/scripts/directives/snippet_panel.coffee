@@ -4,7 +4,7 @@ angular.module('ldEditor').directive 'snippetPanel', () ->
   return {
     restrict: 'A'
     scope: {}
-    template: upfront.angularTemplates.snippetPanel
+    template: angularTemplates.snippetPanel
     replace: true
     controller: 'SnippetPanelController'
     require: '^sidebar'

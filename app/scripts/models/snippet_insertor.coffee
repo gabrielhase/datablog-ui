@@ -1,6 +1,4 @@
-@models ||= {}
-
-class models.SnippetInsertor
+class SnippetInsertor
 
   insertScopes = []
   snippetToInsert = undefined
@@ -29,7 +27,7 @@ class models.SnippetInsertor
   renderInsertPoint: (scope, $container, snippetContainer) ->
     insertScope = scope.$new()
     insertScopes.push(insertScope)
-    @$compile(upfront.angularTemplates.addButton)(insertScope, (button, childScope) =>
+    @$compile(angularTemplates.addButton)(insertScope, (button, childScope) =>
       $container.append(button)
       childScope.container = $container
       childScope.insertSnippet = ($event) =>

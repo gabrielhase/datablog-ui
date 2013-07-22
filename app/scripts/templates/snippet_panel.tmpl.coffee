@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.snippetPanel = """
+angularTemplates.snippetPanel = """
 <div id="{{ controlId }}">
   <div class="upfront-sidebar-header" style="display: block;"
     ng-click="hideSidebar()">

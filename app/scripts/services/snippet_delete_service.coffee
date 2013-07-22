@@ -12,7 +12,7 @@ angular.module('ldEditor').factory('snippetDeleteService', [
       snippetElem.$html.find('.upfront-snippet-delete').remove() # ugly hack to clean up saved x's
       buttonScope = $rootScope.$new()
       buttonScopes.push(buttonScope)
-      $compile(upfront.angularTemplates.deleteButton)(buttonScope, (button, childScope) =>
+      $compile(angularTemplates.deleteButton)(buttonScope, (button, childScope) =>
         childScope.deleteSnippet = => @removeSnippet(snippet)
 
         if snippetElem.$html.css('position') != 'absolute' && snippetElem.$html.css('position') != 'relative'

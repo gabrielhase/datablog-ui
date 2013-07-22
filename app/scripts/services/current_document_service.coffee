@@ -28,7 +28,7 @@ angular.module('ldEditor').factory('currentDocumentService', [
         #res = authedHttp.get(apiEndpoint)
         res = upfront.api.get("documents/#{upfront.variables.documentId}")
         .then (data) ->
-          doc = new models.Document
+          doc = new Document
             id: data.document.id
             title: data.document.title
             state: data.document.state

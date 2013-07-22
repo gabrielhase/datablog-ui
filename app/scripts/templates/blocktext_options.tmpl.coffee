@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.blocktextOptions = """
+angularTemplates.blocktextOptions = """
 <div ng-controller='BlocktextOptionsController'>
   <button>
     H1

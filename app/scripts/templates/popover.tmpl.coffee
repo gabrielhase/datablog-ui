@@ -1,6 +1,4 @@
-upfront.angularTemplates = upfront.angularTemplates || {}
-
-upfront.angularTemplates.popover = """
+angularTemplates.popover = """
 <div class='upfront-popover-panel upfront-popover'
   style='position: absolute; left: {{left}}px; top: {{top}}px'>
   <div class='arrow'></div>

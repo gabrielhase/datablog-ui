@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width">
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 
-    <!-- <link rel="stylesheet" href="styles/api/auth.css"> -->
+    <!-- livingdocs designs css -->
     <link rel="stylesheet" href="vendor/watson/watson.css">
 
     <!-- build:css({.tmp,app}) styles/main.css -->
@@ -30,60 +30,25 @@
       <script src="bower_components/json3/lib/json3.min.js"></script>
     <![endif]-->
 
-    <!-- Add your site or application content here -->
+    <!-- livingdoc magic happens here -->
     <div class="doc-section">
     </div>
 
-    <script src="vendor/watson/watson.js"></script>
+    <!-- the big guns -->
     <script src="vendor/jquery-1.9.1.js"></script>
     <script src="vendor/angular.js"></script>
+
+    <!-- livingdocs designs -->
+    <script src="vendor/watson/watson.js"></script>
+
+    <!-- livingdocs-engine -->
     <script src="vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js"></script>
     <script src="vendor/livingdocs-engine/vendor/store/store.js"></script>
     <script src="vendor/livingdocs-engine/vendor/editableJS/editable.js"></script>
     <script src="vendor/livingdocs-engine/livingdocs_engine.js"></script>
 
-    <!-- build:js({.tmp,app}) scripts/scripts.js -->
-    <script src="scripts/app.js"></script>
-    <script src="scripts/api_mock.js"></script>
-
-    <script src="scripts/controllers/auth_controller.js"></script>
-    <script src="scripts/controllers/editor_controller.js"></script>
-    <script src="scripts/controllers/blocktext_options_controller.js"></script>
-    <script src="scripts/controllers/document_panel_controller.js"></script>
-    <script src="scripts/controllers/flowtext_options_controller.js"></script>
-    <script src="scripts/controllers/popover_controller.js"></script>
-    <script src="scripts/controllers/sidebar_controller.js"></script>
-    <script src="scripts/controllers/snippet_panel_controller.js"></script>
-
-    <script src="scripts/directives/autosave.js"></script>
-    <script src="scripts/directives/document_click.js"></script>
-    <script src="scripts/directives/document_panel.js"></script>
-    <script src="scripts/directives/popover.js"></script>
-    <script src="scripts/directives/sidebar.js"></script>
-    <script src="scripts/directives/snippet_drag.js"></script>
-    <script src="scripts/directives/snippet_panel.js"></script>
-
-    <script src="scripts/models/snippet_insertor.js"></script>
-    <script src="scripts/models/document.js"></script>
-
-    <script src="scripts/services/current_document_service.js"></script>
-    <script src="scripts/services/doc_observer_service.js"></script>
-    <script src="scripts/services/editable_events_service.js"></script>
-    <script src="scripts/services/page_state_service.js"></script>
-    <script src="scripts/services/snippet_delete_service.js"></script>
-    <script src="scripts/services/snippet_insert_service.js"></script>
-    <script src="scripts/services/storage_service.js"></script>
-    <script src="scripts/services/ui_state_service.js"></script>
-
-    <script src="scripts/templates/editor.tmpl.js"></script>
-    <script src="scripts/templates/add_button.tmpl.js"></script>
-    <script src="scripts/templates/blocktext_options.tmpl.js"></script>
-    <script src="scripts/templates/delete_button.tmpl.js"></script>
-    <script src="scripts/templates/document_panel.tmpl.js"></script>
-    <script src="scripts/templates/flowtext_options.tmpl.js"></script>
-    <script src="scripts/templates/popover.tmpl.js"></script>
-    <script src="scripts/templates/sidebar.tmpl.js"></script>
-    <script src="scripts/templates/snippet_panel.tmpl.js"></script>
+    <!-- build:js({.tmp,app}) scripts/editor.js -->
+    <script src="editor.js"></script>
     <!-- endbuild -->
 
     <!-- build:js({.tmp,app}) scripts/api.js -->
