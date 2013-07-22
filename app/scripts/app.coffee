@@ -29,6 +29,7 @@ angular
 
   ])
 
+
 # ===============
 # global variables
 # ===============
@@ -39,6 +40,7 @@ upfront.variables = do () ->
   frontendDomain: ''
   documentId: 1
 
+
 # ===============
 # bootstrap
 # ===============
@@ -47,6 +49,7 @@ upfront.angular = do ->
     upfront.api.post('auth', {})
       .then (data) ->
         upfront.angular.loadDocument(data.accessToken)
+
 
   init: ->
     $root = $(
@@ -96,6 +99,7 @@ upfront.angular = do ->
       """).appendTo(document.body)
     angular.bootstrap( $root[0], ["ldEditor"] )
 
+
   loadDocument: (accessToken) ->
     upfront.api.get("documents/#{upfront.variables.documentId}", { accessToken: accessToken })
       .then (data) ->
@@ -111,3 +115,4 @@ upfront.angular = do ->
           doc.ready ->
             # load the editor
             upfront.angular.init()
+
