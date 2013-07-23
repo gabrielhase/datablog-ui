@@ -2,14 +2,14 @@
 class EditorController
 
 
-  constructor: ($scope, currentDocumentService, uiStateService, snippetInsertService, editableEventsService) ->
+  constructor: ($scope, documentService, uiStateService, snippetInsertService, editableEventsService) ->
     # editor watches for ui state changes
     $scope.uiStateService = uiStateService
 
     # bounding box is used for popover placement
     $scope.boundingBox = editableEventsService.currentTextSelection
     editableEventsService.setup()
-    currentDocumentService.get()
+    documentService.get()
 
     # watchers
     @watchInsertMode($scope, snippetInsertService, uiStateService)
@@ -28,7 +28,7 @@ angular.module('ldEditor').controller(
   'EditorController'
   [
     '$scope'
-    'currentDocumentService'
+    'documentService'
     'uiStateService'
     'snippetInsertService'
     'editableEventsService'

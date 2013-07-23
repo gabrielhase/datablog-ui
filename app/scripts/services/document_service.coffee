@@ -1,8 +1,6 @@
-angular.module('ldEditor').factory('currentDocumentService', [
-  '$q'
-  'authedHttp'
-  ($q, authedHttp) ->
+angular.module('ldEditor').factory 'documentService',
 
+  ($q, authedHttp) ->
 
     currentDocument = null
     currentDocumentId = null
@@ -41,4 +39,4 @@ angular.module('ldEditor').factory('currentDocumentService', [
           currentDocument
 
         return documentPromise.promise
-])
+

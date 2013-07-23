@@ -1,15 +1,15 @@
 class DocumentPanelController
 
 
-  constructor: ($scope, currentDocumentService) ->
-    $scope.document = currentDocumentService.get()
+  constructor: ($scope, documentService) ->
+    $scope.document = documentService.get()
 
 
 angular.module('ldEditor').controller(
   'DocumentPanelController'
   [
     '$scope'
-    'currentDocumentService'
+    'documentService'
     DocumentPanelController
   ]
 )
