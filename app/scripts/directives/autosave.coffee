@@ -1,6 +1,5 @@
-angular.module('ldEditor').directive('autosave', [
-  'pageStateService'
-  '$timeout'
+angular.module('ldEditor').directive 'autosave',
+
   (pageStateService, $timeout) ->
 
     (scope, element, attrs) ->
@@ -13,5 +12,3 @@ angular.module('ldEditor').directive('autosave', [
 
       doc.changed ->
         pageStateService.dirty()
-
-])

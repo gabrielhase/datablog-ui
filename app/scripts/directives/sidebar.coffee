@@ -1,5 +1,5 @@
-angular.module('ldEditor').directive('sidebar', [
-  '$compile'
+angular.module('ldEditor').directive 'sidebar',
+
   ($compile) ->
 
 
@@ -14,4 +14,3 @@ angular.module('ldEditor').directive('sidebar', [
       link: (scope, element, attrs) ->
         # nothing
     }
-])

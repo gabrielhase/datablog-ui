@@ -1,6 +1,5 @@
-angular.module('ldEditor').directive('documentClick', [
-  '$document'
-  'docObserverService'
+angular.module('ldEditor').directive 'documentClick',
+
   ($document, docObserverService) ->
 
     (scope, element, attrs) ->
@@ -8,4 +7,3 @@ angular.module('ldEditor').directive('documentClick', [
         scope.$apply(
           docObserverService.click.fire()
         )
-])

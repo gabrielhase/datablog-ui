@@ -2,9 +2,14 @@ angular.module('ldEditor').factory 'documentService',
 
   ($q, authedHttp) ->
 
+    # Private
+    # -------
+
     currentDocument = null
     currentDocumentId = null
 
+    # Service
+    # -------
 
     reset: () ->
       currentDocument = null
@@ -39,4 +44,3 @@ angular.module('ldEditor').factory 'documentService',
           currentDocument
 
         return documentPromise.promise
-

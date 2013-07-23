@@ -1,5 +1,4 @@
-angular.module('ldEditor').directive 'documentPanel', () ->
-
+angular.module('ldEditor').directive 'documentPanel', ->
 
   return {
     restrict: 'A'

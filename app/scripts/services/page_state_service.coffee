@@ -1,9 +1,8 @@
-angular.module('ldEditor').factory('pageStateService', [
-  'storageService'
-  '$timeout'
+angular.module('ldEditor').factory 'pageStateService',
+
   (storageService, $timeout) ->
 
-    # private
+    # Private
     # -------
 
     dirtyState = 'saved' # 'saved', 'dirty', 'saving'
@@ -11,8 +10,8 @@ angular.module('ldEditor').factory('pageStateService', [
     throttle = 5 # seconds to wait between saves
 
 
-    # public service
-    # --------------
+    # Service
+    # -------
 
     onSave: $.Callbacks()
 
@@ -58,5 +57,3 @@ angular.module('ldEditor').factory('pageStateService', [
         waitingBeforeSave = undefined
         @saveNow()
       , seconds * 1000)
-
-])

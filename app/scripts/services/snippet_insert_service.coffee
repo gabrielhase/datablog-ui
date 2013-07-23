@@ -1,9 +1,6 @@
-angular.module('ldEditor').factory('snippetInsertService', [
-  'uiStateService'
-  '$compile'
-  'docObserverService'
-  (uiStateService, $compile, docObserverService) ->
+angular.module('ldEditor').factory 'snippetInsertService',
 
+  (uiStateService, $compile, docObserverService) ->
 
     page = new SnippetInsertor
       uiStateService: uiStateService
@@ -11,4 +8,3 @@ angular.module('ldEditor').factory('snippetInsertService', [
       docObserverService: docObserverService
 
     page
-])

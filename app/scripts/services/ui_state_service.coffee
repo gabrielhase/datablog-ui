@@ -58,3 +58,4 @@ angular.module('ldEditor').factory 'uiStateService', () ->
   # to more elaborate functions, e.g. changeMode or the link, on the inside
   set: (name, visibility) ->
     @setter[name].call(@, visibility)
+

@@ -1,11 +1,14 @@
-angular.module('ldEditor').factory('snippetDeleteService', [
-  '$compile'
-  '$rootScope'
+angular.module('ldEditor').factory 'snippetDeleteService',
+
   ($compile, $rootScope) ->
 
+    # Private
+    # -------
 
     buttonScopes = []
 
+    # Service
+    # -------
 
     renderDeleteButton: (snippet) ->
       snippetElem = doc.document.renderer.snippets[snippet.id]
@@ -33,5 +36,3 @@ angular.module('ldEditor').factory('snippetDeleteService', [
       while scope = buttonScopes.pop()
         scope.$destroy()
         scope = null
-
-])

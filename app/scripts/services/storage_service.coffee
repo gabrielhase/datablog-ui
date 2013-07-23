@@ -1,17 +1,15 @@
-angular.module('ldEditor').factory('storageService', [
-  '$q'
-  '$location'
-  'authedHttp'
+angular.module('ldEditor').factory 'storageService',
+
   ($q, $location, authedHttp) ->
 
-    # private
+    # Private
     # -------
 
     savePagePath = "documents/save"
 
 
-    # public service
-    # --------------
+    # Service
+    # -------
 
     savePage: () ->
       savePagePromise = $q.defer()
@@ -29,4 +27,3 @@ angular.module('ldEditor').factory('storageService', [
         savePagePromise.resolve({status: status, data: data})
 
       savePagePromise.promise
-])

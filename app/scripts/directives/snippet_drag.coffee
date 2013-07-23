@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'snippetDrag', () ->
+angular.module('ldEditor').directive 'snippetDrag', ->
 
   dragDrop = new doc.DragDrop
     minDistance: 10

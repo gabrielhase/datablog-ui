@@ -1,5 +1,4 @@
-angular.module('ldEditor').directive 'snippetPanel', () ->
-
+angular.module('ldEditor').directive 'snippetPanel', ->
 
   return {
     restrict: 'A'

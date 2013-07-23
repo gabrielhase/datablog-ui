@@ -1,12 +1,11 @@
 # NOTE: doc is the public API from livingdocs-engine with which we can access
 # the editable.js events.
-angular.module('ldEditor').factory('editableEventsService', [
-  '$rootScope'
-  '$compile'
-  'uiStateService'
-  'snippetDeleteService'
+angular.module('ldEditor').factory  'editableEventsService',
+
   ($rootScope, $compile, uiStateService, snippetDeleteService) ->
 
+    # Private
+    # -------
 
     currentSelection = undefined
     # NOTE: mocked selection is a test object that is used to test toggling of
@@ -18,8 +17,10 @@ angular.module('ldEditor').factory('editableEventsService', [
       isLinked: false
 
 
-    currentTextSelection: {}
+    # Service
+    # -------
 
+    currentTextSelection: {}
 
     setup: ->
       @setupEvents()
@@ -56,7 +57,6 @@ angular.module('ldEditor').factory('editableEventsService', [
         $rootScope.$apply(
           uiStateService.set('flowtextPopover', false)
         )
-
 
 
     toggleCurrentSelectionBold: ->
@@ -96,5 +96,3 @@ angular.module('ldEditor').factory('editableEventsService', [
 
     isCurrentSelectionLinked: ->
       mockedSelection.isLinked
-
-])
