@@ -9,10 +9,12 @@ angularTemplates.snippetPanel = """
     <i class="entypo-help"></i>
     Drag & Drop or click list items
   </div>
-  <ul class="upfront-snippet-list">
-    <li ng-repeat="snippet in snippets" class="upfront-snippet-item" ng-class="{selected: $index==snippetInsertService.selectedSnippet}">
-      <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, $index, snippet)">{{ snippet.title }}</a>
-    </li>
-  </ul>
+  <div class="upfront-snippet-wrapper">
+    <ul class="upfront-snippet-list">
+      <li ng-repeat="snippet in snippets" class="upfront-snippet-item" ng-class="{selected: $index==snippetInsertService.selectedSnippet}">
+        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, $index, snippet)">{{ snippet.title }}</a>
+      </li>
+    </ul>
+  </div>
 </div>
 """
