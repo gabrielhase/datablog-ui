@@ -1,5 +1,7 @@
 class SidebarController
 
+  angular.module('ldEditor').controller 'SidebarController',
+    ['$scope', 'uiStateService', SidebarController ]
 
   constructor: ($scope, uiStateService) ->
     $scope.sidebarHidden = true
@@ -23,13 +25,3 @@ class SidebarController
     scope.sidebarHidden = true
     uiStateService.set('documentPanel', false)
     uiStateService.set('snippetPanel', false)
-
-
-angular.module('ldEditor').controller(
-  'SidebarController'
-  [
-    '$scope'
-    'uiStateService'
-    SidebarController
-  ]
-)

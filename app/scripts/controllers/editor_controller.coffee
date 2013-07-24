@@ -1,6 +1,16 @@
 # Parent scope of the editor app.
+
 class EditorController
 
+  angular.module('ldEditor').controller 'EditorController',
+    [
+      '$scope'
+      'documentService'
+      'uiStateService'
+      'snippetInsertService'
+      'editableEventsService'
+      EditorController
+    ]
 
   constructor: ($scope, documentService, uiStateService, snippetInsertService, editableEventsService) ->
     # editor watches for ui state changes
@@ -22,16 +32,3 @@ class EditorController
       else
         snippetInsertService.deactivateInsertMode()
     )
-
-
-angular.module('ldEditor').controller(
-  'EditorController'
-  [
-    '$scope'
-    'documentService'
-    'uiStateService'
-    'snippetInsertService'
-    'editableEventsService'
-    EditorController
-  ]
-)

@@ -3,9 +3,8 @@
 # we need subdomain support (at least for now). The implementation is extremely
 # basic, the domain is fixed and the path is always /
 class Cookies
-  angular.module('ldApi')
-  .service('cookies', [Cookies])
 
+  angular.module('ldApi').service('cookies', [Cookies])
 
   constructor: () ->
     # When working on localhost the domain has to be "", NULL, or False

@@ -1,5 +1,7 @@
 class SnippetPanelController
 
+  angular.module('ldEditor').controller 'SnippetPanelController',
+  [ '$scope', 'docObserverService', 'snippetInsertService', SnippetPanelController ]
 
   constructor: ($scope, docObserverService, snippetInsertService) ->
     $scope.snippetInsertService = snippetInsertService
@@ -16,14 +18,3 @@ class SnippetPanelController
   selectSnippet: ($scope, $event, $index, snippet, docObserverService) ->
     $scope.snippetInsertService.selectedSnippet = $index # work with index in order not to have deep comparison
     docObserverService.snippetTemplateClick.fire($event, snippet)
-
-
-angular.module('ldEditor').controller(
-  'SnippetPanelController'
-  [
-    '$scope'
-    'docObserverService'
-    'snippetInsertService'
-    SnippetPanelController
-  ]
-)

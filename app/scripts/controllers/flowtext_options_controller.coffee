@@ -1,5 +1,7 @@
 class FlowtextOptionsController
 
+  angular.module('ldEditor').controller 'FlowtextOptionsController',
+    ['$scope', 'uiStateService', 'editableEventsService', FlowtextOptionsController ]
 
   constructor: ($scope, uiStateService, editableEventsService) ->
     # UI State
@@ -44,14 +46,3 @@ class FlowtextOptionsController
       else
         editableEventsService.expandCurrentSelectionToWord()
         scope.linkMode = true
-
-
-angular.module('ldEditor').controller(
-  'FlowtextOptionsController'
-  [
-    '$scope'
-    'uiStateService'
-    'editableEventsService'
-    FlowtextOptionsController
-  ]
-)
