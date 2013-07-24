@@ -30,7 +30,7 @@ module.exports = (grunt) ->
     yeoman: yeomanConfig
     watch:
       coffee:
-        files: ['<%= yeoman.app %>/scripts/{,*/}*.coffee', '<%= yeoman.app %>/components/{,*/}*.coffee']
+        files: ['<%= yeoman.app %>/scripts/{,*/}*.coffee']
         tasks: ['coffee:tmp']
       coffeeTest:
         files: ['test/spec/{,*/}*.coffee']
@@ -101,6 +101,7 @@ module.exports = (grunt) ->
             'app/scripts/models/*.coffee'
             'app/scripts/services/*.coffee'
             'app/scripts/templates/*.coffee'
+            'app/scripts/components/**/*.coffee'
           ]
         ,
           expand: true
