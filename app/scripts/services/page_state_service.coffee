@@ -7,7 +7,7 @@ angular.module('ldEditor').factory 'pageStateService',
 
     dirtyState = 'saved' # 'saved', 'dirty', 'saving'
     waitingBeforeSave = undefined
-    throttle = 5 # seconds to wait between saves
+    throttle = 3 # seconds to wait between saves
 
 
     # Service
@@ -38,9 +38,8 @@ angular.module('ldEditor').factory 'pageStateService',
     saveNow: ->
       if dirtyState != 'saved'
         dirtyState = 'saving'
-        storageService.savePage()
-          .then (response) =>
-            @afterSave(response)
+        storageService.savePage().then (response) =>
+          @afterSave(response)
 
 
     # @api: private

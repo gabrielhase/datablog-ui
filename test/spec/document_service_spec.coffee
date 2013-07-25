@@ -66,9 +66,9 @@ describe 'ldWatsonApi: documentService', ->
 
     @$httpBackend.expectPOST('/articles/1')
     response = @documentService.save(document)
-    response.then (data) ->
-      expect(document.id).toEqual('1')
+    response.then (response) ->
       expect(document.revision).toEqual(2)
+      expect(response.status).toEqual(200)
 
     @$httpBackend.flush()
 

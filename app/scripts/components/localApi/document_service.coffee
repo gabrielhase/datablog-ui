@@ -38,6 +38,10 @@ angular.module('ldLocalApi').factory 'documentService',
     save: (document) ->
       deferred = $q.defer()
       document.revision = document.revision + 1
-      deferred.resolve(document)
+      deferred.resolve(status: 200)
 
       deferred.promise
+
+
+    publish: (document) ->
+      @save(document)

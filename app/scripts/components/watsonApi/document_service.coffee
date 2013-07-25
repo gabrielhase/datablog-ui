@@ -35,12 +35,29 @@ angular.module('ldWatsonApi').factory 'documentService',
       apiEndpoint = "/articles/#{ document.id }"
 
       payload =
-        json: document.toJson()
+        json: document.json
         revision: document.revision
 
       res = $http.post(apiEndpoint, payload).then (response) ->
         # todo: manage dirty state (or who should do that?)
         document.revision = response.data.revision
-        deferred.resolve(document)
+        deferred.resolve(status: response.status)
+
+      deferred.promise
+
+
+    publish: (document) ->
+      deferred = $q.defer()
+      apiEndpoint = "/articles/#{ document.id }/publish"
+
+      payload =
+        json: document.json
+        html: document.html
+        revision: document.revision
+
+      res = $http.post(apiEndpoint, payload).then (response) ->
+        # todo: manage dirty state (or who should do that?)
+        document.revision = response.data.revision
+        deferred.resolve(status: response.status)
 
       deferred.promise

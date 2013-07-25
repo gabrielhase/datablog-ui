@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'storageService',
 
-  ($q, $location, authedHttp) ->
+  ($q, editorService, documentService) ->
 
     # Private
     # -------
@@ -14,16 +14,14 @@ angular.module('ldEditor').factory 'storageService',
     savePage: () ->
       savePagePromise = $q.defer()
 
-      content = doc.toJson()
-      html = $('.doc-section').html() # TODO: this should go into the livingdocs-engine
+      editorService.updateDocument()
+      document = editorService.currentDocument
 
       # For making cross-origin requests work we set the header to x-www-form-urlencoded, see editor_app.coffee
       # This requires us to serialize JSON ourselves.
       #res = authedHttp.post(savePagePath, {url: $location.absUrl(), html: html, snippet_tree: content})
-      res = upfront.api.post(savePagePath, {html: html, snippet_tree: content})
-      res.done (data, status) ->
-        savePagePromise.resolve({status: status, data: data})
-      res.fail (data, staus) ->
-        savePagePromise.resolve({status: status, data: data})
+
+      documentService.save(document).then (response) ->
+        savePagePromise.resolve(status: response.status, data: response.document)
 
       savePagePromise.promise

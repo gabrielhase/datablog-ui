@@ -12,7 +12,7 @@ angular
     $locationProvider.html5Mode(true)
 
 
-  .run ($templateCache, documentService, editableEventsService) ->
+  .run ($templateCache, documentService, editableEventsService, editorService) ->
 
     # preload templates
     for templateName, template of angularTemplates
@@ -27,7 +27,7 @@ angular
     # load document
     documentId = 1
     documentService.get(documentId).then (document) ->
-      doc.loadDocument(json: document.json)
+      editorService.loadDocument(document)
 
     # setup events after the document is ready
     doc.ready ->

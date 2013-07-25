@@ -4,6 +4,7 @@ class Document
     @setState(state)
     @revision = +revision || 0
     @dirty = false
+    @html = ''
 
 
   # possible values: 'new', 'published', 'updated'

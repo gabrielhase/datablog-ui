@@ -1,5 +1,5 @@
 angularTemplates.editor = """
-<div ng-controller='AuthController'>
+<div>
   <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>
 
     <!-- Autosave messages -->
