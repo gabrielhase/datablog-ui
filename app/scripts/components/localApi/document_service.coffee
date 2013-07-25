@@ -16,7 +16,7 @@ angular.module('ldLocalApi').factory 'documentService',
         title: 'Watson Story'
         state: 'new'
         revision: 1
-        lastChanged: new Date()
+        updated_at: new Date()
         json:
           "content": [
             {
@@ -35,5 +35,9 @@ angular.module('ldLocalApi').factory 'documentService',
       documentPromise.promise
 
 
-    post: (document) ->
-      #todo
+    save: (document) ->
+      deferred = $q.defer()
+      document.revision = document.revision + 1
+      deferred.resolve(document)
+
+      deferred.promise

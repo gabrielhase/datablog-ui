@@ -1,9 +1,8 @@
 class Document
 
-  constructor: ({ @id, @title, @lastChanged, @json, revision, state }) ->
+  constructor: ({ @id, @title, @updated_at, @json, revision, state }) ->
     @setState(state)
-    @revision = revision || 0
-    @state = 'new'
+    @revision = +revision || 0
     @dirty = false
 
 
@@ -15,6 +14,13 @@ class Document
       console.log "unsupported document state: #{ state }"
 
 
+  toJson: ->
+    # todo: fetch json from doc.toJson()
+    # or figure out where to do this best
+    @json
+
+
   # css class used in view for the state
-  statusCssClass: () ->
+  statusCssClass: ->
+    # todo: check allowed values
     @state

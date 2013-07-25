@@ -7,7 +7,7 @@ angular.module('ldApi', [])
 
 # The actual UI
 angular
-  .module('ldEditor', ['ldApi', 'ldLocalApi'])
+  .module('ldEditor', ['ldLocalApi'])
   .config ($httpProvider, $locationProvider) ->
     $locationProvider.html5Mode(true)
 
