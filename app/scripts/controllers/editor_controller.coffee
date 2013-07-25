@@ -18,8 +18,6 @@ class EditorController
 
     # bounding box is used for popover placement
     $scope.boundingBox = editableEventsService.currentTextSelection
-    editableEventsService.setup()
-    documentService.get()
 
     # watchers
     @watchInsertMode($scope, snippetInsertService, uiStateService)

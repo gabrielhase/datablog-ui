@@ -7,26 +7,31 @@ angular.module('ldApi', [])
 
 # The actual UI
 angular
-  .module('ldEditor', ['ldApi'])
-  .config([
-    '$httpProvider'
-    '$locationProvider'
-    ($httpProvider, $locationProvider) ->
-      $locationProvider.html5Mode(true)
-  ])
+  .module('ldEditor', ['ldApi', 'ldLocalApi'])
+  .config ($httpProvider, $locationProvider) ->
+    $locationProvider.html5Mode(true)
 
-  .run([
-    '$templateCache'
-    ($templateCache) ->
 
-      # preload templates
-      for templateName, template of angularTemplates
-        # put templates in cache by their name
-        # flowtextOptions -> flowtext-options.html
-        fileName = "#{ doc.words.snakeCase(templateName) }.html"
-        $templateCache.put(fileName, template)
+  .run ($templateCache, documentService, editableEventsService) ->
 
-  ])
+    # preload templates
+    for templateName, template of angularTemplates
+      # put templates in cache by their name
+      # flowtextOptions -> flowtext-options.html
+      fileName = "#{ doc.words.snakeCase(templateName) }.html"
+      $templateCache.put(fileName, template)
+
+    # load serverDesign from javascript for easier modification
+    doc.addDesign(design.watson.snippets, design.watson.config)
+
+    # load document
+    documentId = 1
+    documentService.get(documentId).then (document) ->
+      doc.loadDocument(json: document.json)
+
+    # setup events after the document is ready
+    doc.ready ->
+      editableEventsService.setup()
 
 
 # ===============
@@ -44,35 +49,9 @@ upfront.variables = do () ->
 # ===============
 # bootstrap
 # ===============
-upfront.angular = do ->
-
-  $(document).ready () ->
-    upfront.api.post('auth', {})
-      .then (data) ->
-        upfront.angular.loadDocument(data.accessToken)
-
-
-  init: ->
-    $root = $(
-      """
-      <ng-include src="'editor.html'"></ng-include>
-      """).appendTo(document.body)
-    angular.bootstrap( $root[0], ["ldEditor"] )
-
-
-  loadDocument: (accessToken) ->
-    upfront.api.get("documents/#{upfront.variables.documentId}", { accessToken: accessToken })
-      .then (data) ->
-        { document, user, snippetTree } = data
-        if document && user && snippetTree
-          upfront.__currentUser = user
-          upfront.__currentDocument = document
-
-          # load serverDesign from javascript for easier modification
-          doc.addDesign(design.watson.snippets, design.watson.config)
-          doc.loadDocument(json: snippetTree)
-
-          doc.ready ->
-            # load the editor
-            upfront.angular.init()
-
+$(document).ready ->
+  $root = $(
+    """
+    <ng-include src="'editor.html'"></ng-include>
+    """).appendTo(document.body)
+  angular.bootstrap( $root[0], ["ldEditor"] )

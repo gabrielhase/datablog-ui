@@ -94,7 +94,6 @@ module.exports = (grunt) ->
           join: true
         files: [
           '.tmp/editor.js': [
-            'app/scripts/api_mock.coffee'
             'app/scripts/app.coffee'
             'app/scripts/controllers/*.coffee'
             'app/scripts/directives/*.coffee'
