@@ -6,19 +6,15 @@
 install from here: http://nodejs.org/
 After installing run `npm install`
 
-**sass & compass**
-grunt-contrib-compass needs compass installed:
-```bash
-gem update --system && gem install compass
-```
 
 ### Development Server
 
-`grunt server`
+During development run  
+```bash
+grunt server
+```
+This will watch and build css as well as coffeescript and start a livereloading server at localhost:9000
 
-### Development API
-
-By default the watson-ui uses the staging server API at api.thelivingdoc.com. This is set in app.coffee. For local development you can easily point the API to your local machines livingdocs server, just be sure to start the livingdocs server.
 
 ### Folder structure
 
