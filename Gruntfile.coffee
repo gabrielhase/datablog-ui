@@ -30,8 +30,8 @@ module.exports = (grunt) ->
     yeoman: yeomanConfig
     watch:
       coffee:
-        files: ['<%= yeoman.app %>/scripts/{,*/}*.coffee']
-        tasks: ['coffee:tmp']
+        files: ['<%= yeoman.app %>/scripts/**/*.coffee']
+        tasks: ['concurrent:server']
       coffeeTest:
         files: ['test/spec/{,*/}*.coffee']
         tasks: ['coffee:test']
@@ -102,20 +102,21 @@ module.exports = (grunt) ->
             'app/scripts/templates/*.coffee'
             'app/scripts/components/**/*.coffee'
           ]
-        ,
-          expand: true
-          cwd: '<%= yeoman.app %>/components'
-          src: '{,*/}*.coffee'
-          dest: '.tmp/components'
-          ext: '.js'
         ]
       test:
+        options:
+          join: true
         files: [
-          expand: true
-          cwd: 'test/spec'
-          src: '{,*/}*.coffee'
-          dest: '.tmp/spec'
-          ext: '.js'
+          '.tmp/editor_test.js': [
+            'app/scripts/app.coffee'
+            'app/scripts/controllers/*.coffee'
+            'app/scripts/directives/*.coffee'
+            'app/scripts/models/*.coffee'
+            'app/scripts/services/*.coffee'
+            'app/scripts/templates/*.coffee'
+            'app/scripts/components/**/*.coffee'
+            'test/spec/**/*.coffee'
+          ]
         ]
     recess:
       development:
@@ -190,7 +191,17 @@ module.exports = (grunt) ->
     karma:
       unit:
         configFile: 'karma.conf.js'
+        browsers: ['PhantomJS']
+      once:
+        configFile: 'karma.conf.js'
+        browsers: ['PhantomJS']
         singleRun: true
+      browsers:
+        configFile: 'karma.conf.js'
+        browsers: ['Chrome', 'Firefox', 'Safari', 'Opera']
+      build:
+        configFile: 'karma.conf.js'
+        browsers: ['Chrome', 'Firefox', 'Safari', 'Opera']
     ngmin:
       dist:
         files: [
@@ -210,6 +221,7 @@ module.exports = (grunt) ->
     concurrent:
       server: [
         'coffee:tmp'
+        'coffee:test'
       ]
       test: [
         'coffee'

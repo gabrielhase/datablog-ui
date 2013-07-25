@@ -7,12 +7,23 @@ basePath = '';
 files = [
   JASMINE,
   JASMINE_ADAPTER,
-  'app/bower_components/angular/angular.js',
-  'app/bower_components/angular-mocks/angular-mocks.js',
-  'app/scripts/*.js',
-  'app/scripts/**/*.js',
-  'test/mock/**/*.js',
-  'test/spec/**/*.js'
+
+  // the big guns
+  'app/vendor/jquery-1.9.1.js',
+  'app/vendor/angular/angular.js',
+  'app/vendor/angular/angular-mocks.js',
+
+  // livingdocs designs
+  'app/vendor/watson/watson.js',
+
+  // livingdocs-engine
+  "app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js",
+  "app/vendor/livingdocs-engine/vendor/store/store.js",
+  "app/vendor/livingdocs-engine/vendor/editableJS/editable.js",
+  "app/vendor/livingdocs-engine/livingdocs_engine.js",
+
+  // specs
+  '.tmp/editor_test.js'
 ];
 
 // list of files to exclude
@@ -36,7 +47,7 @@ colors = true;
 logLevel = LOG_INFO;
 
 // enable / disable watching file and executing tests whenever any file changes
-autoWatch = false;
+autoWatch = true;
 
 // Start these browsers, currently available:
 // - Chrome
