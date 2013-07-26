@@ -173,12 +173,10 @@ module.exports = (grunt) ->
           dest: '<%= yeoman.dist %>'
           src: [
             '*.{ico,png,txt}'
-            '.htaccess'
             'images/{,*/}*.{gif,webp,svg,png}'
             'styles/fonts/*'
             'vendor/**/*'
             '*.html'
-            'views/*.html'
           ]
         ,
           expand: true

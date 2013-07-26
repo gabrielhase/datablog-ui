@@ -1,18 +1,14 @@
 <!doctype html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<html>
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title></title>
+    <title>Livingdocs Editor</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
-    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 
     <!-- livingdocs designs css -->
-    <link rel="stylesheet" href="vendor/watson/watson.css">
+    <link rel="stylesheet" href="vendor/watson-design/watson.css">
 
     <!-- build:css({.tmp,app}) styles/editor.css -->
     <link rel="stylesheet" href="vendor/livingdocs-engine/css/livingdocs.css">
@@ -21,13 +17,8 @@
 
 </head>
   <body>
-    <!--[if lt IE 7]>
-      <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
-    <![endif]-->
-
     <!--[if lt IE 9]>
-      <script src="bower_components/es5-shim/es5-shim.js"></script>
-      <script src="bower_components/json3/lib/json3.min.js"></script>
+      <p class="chromeframe">The Livingdocs-Editor is not supported in your browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
     <![endif]-->
 
     <!-- livingdoc magic happens here -->
@@ -39,15 +30,15 @@
     <script src="vendor/angular/angular.js"></script>
 
     <!-- livingdocs designs -->
-    <script src="vendor/watson/watson.js"></script>
+    <script src="vendor/watson-design/watson.js"></script>
 
+    <!-- build:js({.tmp,app}) scripts/editor.js -->
     <!-- livingdocs-engine -->
     <script src="vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js"></script>
     <script src="vendor/livingdocs-engine/vendor/store/store.js"></script>
     <script src="vendor/livingdocs-engine/vendor/editableJS/editable.js"></script>
     <script src="vendor/livingdocs-engine/livingdocs_engine.js"></script>
 
-    <!-- build:js({.tmp,app}) scripts/editor.js -->
     <script src="editor.js"></script>
     <!-- endbuild -->
 
