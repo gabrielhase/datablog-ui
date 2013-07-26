@@ -6,6 +6,14 @@
 install from here: http://nodejs.org/
 After installing run `npm install`
 
+### Export
+
+To export all necessary scripts, styles and assets, run:
+```bash
+grunt build
+```
+This will create a `dist` folder with everything you need.
+
 
 ### Development Server
 
