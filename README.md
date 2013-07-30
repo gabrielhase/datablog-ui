@@ -3,8 +3,10 @@
 ## Requirements and Setup
 
 **node and npm**
-install from here: http://nodejs.org/
-After installing run `npm install`
+  
+  1. Install node.js and npm (http://nodejs.org/)
+  2. Install grunt using `npm install -g grunt-cli`
+  3. From the root of the project run `npm install`
 
 ### Export
 
