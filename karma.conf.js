@@ -14,7 +14,7 @@ files = [
   'app/vendor/angular/angular-mocks.js',
 
   // livingdocs designs
-  'app/vendor/watson/watson.js',
+  'app/vendor/watson-design/watson.js',
 
   // livingdocs-engine
   "app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js",
