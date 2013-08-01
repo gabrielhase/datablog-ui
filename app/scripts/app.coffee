@@ -2,6 +2,12 @@
 # module definitions
 # ===============
 
+# local API component module (mock API)
+angular.module('ldLocalApi', [])
+
+# watson API component module
+angular.module('ldWatsonApi', [])
+
 # API component module
 angular.module('ldApi', [])
 

@@ -1,4 +1,3 @@
-angular.module('ldWatsonApi', [])
 angular.module('ldWatsonApi').factory 'documentService',
 
   ($q, $http) ->

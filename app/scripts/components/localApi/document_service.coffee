@@ -1,4 +1,3 @@
-angular.module('ldLocalApi', [])
 angular.module('ldLocalApi').factory 'documentService',
 
   ($q) ->
