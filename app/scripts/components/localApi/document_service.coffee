@@ -12,17 +12,17 @@ angular.module('ldLocalApi').factory 'documentService',
 
       docs[id] ||= new Document
         id: id
-        title: 'Watson Story'
+        title: 'Data Story'
         state: 'new'
         revision: 1
         updated_at: new Date()
         json:
           "content": [
             {
-              "identifier": "watson.text_layout"
+              "identifier": "bootstrap.column"
               "containers":
                 "default": [
-                  "identifier": "watson.title"
+                  "identifier": "bootstrap.hero"
                   "editables": {}
                 ]
             }

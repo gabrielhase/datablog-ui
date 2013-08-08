@@ -5,9 +5,6 @@
 # local API component module (mock API)
 angular.module('ldLocalApi', [])
 
-# watson API component module
-angular.module('ldWatsonApi', [])
-
 # API component module
 angular.module('ldApi', [])
 
@@ -28,7 +25,7 @@ angular
       $templateCache.put(fileName, template)
 
     # load serverDesign from javascript for easier modification
-    doc.addDesign(design.watson.snippets, design.watson.config)
+    doc.addDesign(design.bootstrap.snippets, design.bootstrap.config)
 
     # load document
     documentId = 1
