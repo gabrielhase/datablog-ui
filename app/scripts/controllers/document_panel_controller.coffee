@@ -1,7 +1,5 @@
+angular.module('ldEditor').controller 'DocumentPanelController',
 class DocumentPanelController
 
-  angular.module('ldEditor').controller 'DocumentPanelController',
-    ['$scope', 'documentService', DocumentPanelController ]
-
-  constructor: ($scope, documentService) ->
-    $scope.document = documentService.get()
+  constructor: ($scope, editorService) ->
+    $scope.document = editorService.currentDocument

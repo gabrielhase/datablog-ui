@@ -1,14 +1,14 @@
-angular.module('ldEditor').factory 'editorService',
-
-  ->
+angular.module('ldEditor').factory 'editorService', ->
 
     currentDocument: undefined
+    snippetTemplateClick: $.Callbacks()
+
 
     loadDocument: (document) ->
       @currentDocument = document
-      doc.loadDocument(json: document.json)
+      doc.init(design: design.bootstrap, json: document.data)
 
 
     updateDocument: ->
-      @currentDocument.json = doc.toJson()
+      @currentDocument.data = doc.toJson()
       @currentDocument.html = $('.doc-section').html()

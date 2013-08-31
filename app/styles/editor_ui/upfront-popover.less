@@ -31,7 +31,7 @@
   z-index: -1;
 }
 
-.upfront-popover .arrow {
+.upfront-popover .arrow-bottom {
   bottom: -@panelArrowWidth;
   left: 50%;
   margin-left: -@panelArrowWidth;
@@ -44,3 +44,18 @@
     left: -@panelArrowOuterWidth;
   }
 }
+
+.upfront-popover .arrow-top {
+  top: -@panelArrowWidth;
+  left: 50%;
+  margin-left: -@panelArrowWidth;
+  border-width: 0 @panelArrowWidth @panelArrowWidth @panelArrowWidth;
+  border-bottom-color: @panelArrowColor;
+  &:after {
+    border-width: 0 @panelArrowOuterWidth @panelArrowOuterWidth @panelArrowOuterWidth;
+    border-top-color: @panelArrowOuterColor;
+    bottom: -1px;
+    left: -@panelArrowOuterWidth;
+  }
+}
+

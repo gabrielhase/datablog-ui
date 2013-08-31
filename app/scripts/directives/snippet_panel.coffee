@@ -9,5 +9,5 @@ angular.module('ldEditor').directive 'snippetPanel', ->
     require: '^sidebar'
     link: (scope, element, attrs, SidebarController) ->
       # Define upwards API
-      scope.hideSidebar = SidebarController.hideSidebar
+      scope.hideSidebar = => SidebarController.hideSidebar('snippetPanel')
   }

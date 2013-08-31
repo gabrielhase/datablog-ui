@@ -64,6 +64,11 @@
   color: #333;
 }
 
+.upfront-sidebar-nav-third {
+  top: 93px;
+  color: #333;
+}
+
 
 // HEADER
 
@@ -105,7 +110,11 @@
 
 // CONTENT
 .upfront-sidebar-content {
-  padding: 5px 15px;
+  position: relative;
+  z-index: 10;
+  padding: 6px 15px 7px;
+  background: #E9E9E9;
+  border-bottom: 1px solid #CCC;
 }
 
 
@@ -125,22 +134,38 @@
   list-style: none;
 }
 
+.upfront-snippet-grouptitle {
+  padding: 7px 15px;
+  font-weight: 500;
+  line-height: 1.1em;
+  border: 1px solid #DDD;
+  border-width: 1px 0;
+  background: #F0F0F0;
+
+  i {
+    margin-right: 10px;
+  }
+}
+
 .upfront-snippet-item {
 
   a {
     display: block;
     padding: 5px 15px;
     clear: both;
-    font-size: 16px;
-    line-height: 20px;
+    font-size: 14px;
     font-weight: normal;
-    line-height: @baseLineHeight;
+    line-height: @baseLineHeight + 4;
     color: #666;
     white-space: nowrap;
     text-decoration: none;
+    border-bottom: 1px solid #F1F1F1;
 
     &:hover { text-decoration: none; }
   }
+
+  &:last-child a { border-bottom: 0; }
+
 
   &.selected:hover,
   &.selected {

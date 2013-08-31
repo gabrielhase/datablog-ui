@@ -2,9 +2,8 @@
 # The reason is that angular.js implementation always works on the main domain and
 # we need subdomain support (at least for now). The implementation is extremely
 # basic, the domain is fixed and the path is always /
+angular.module('ldApi').service 'cookies',
 class Cookies
-
-  angular.module('ldApi').service('cookies', [Cookies])
 
   constructor: () ->
     # When working on localhost the domain has to be "", NULL, or False

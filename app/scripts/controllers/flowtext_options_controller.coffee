@@ -1,7 +1,5 @@
+angular.module('ldEditor').controller 'FlowtextOptionsController',
 class FlowtextOptionsController
-
-  angular.module('ldEditor').controller 'FlowtextOptionsController',
-    ['$scope', 'uiStateService', 'editableEventsService', FlowtextOptionsController ]
 
   constructor: ($scope, uiStateService, editableEventsService) ->
     # UI State
@@ -18,8 +16,6 @@ class FlowtextOptionsController
 
   selectBlockLevel: (uiStateService) ->
     # TODO: change selection to whole block
-    # add blocktext popover
-    uiStateService.set('blocktextPopover', true)
 
 
   toggleBold: (scope, editableEventsService) ->

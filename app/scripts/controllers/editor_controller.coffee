@@ -1,32 +1,23 @@
 # Parent scope of the editor app.
-
+angular.module('ldEditor').controller 'EditorController',
 class EditorController
 
-  angular.module('ldEditor').controller 'EditorController',
-    [
-      '$scope'
-      'documentService'
-      'uiStateService'
-      'snippetInsertService'
-      'editableEventsService'
-      EditorController
-    ]
-
-  constructor: ($scope, documentService, uiStateService, snippetInsertService, editableEventsService) ->
+  constructor: (@$scope, @dialogService, @uiStateService, @snippetInsertService, @editableEventsService) ->
     # editor watches for ui state changes
-    $scope.uiStateService = uiStateService
+    @$scope.state = @uiStateService.state
 
-    # bounding box is used for popover placement
-    $scope.boundingBox = editableEventsService.currentTextSelection
+    # bounding box is used for text popover placement
+    @$scope.boundingBox = @editableEventsService.currentTextSelection
 
     # watchers
-    @watchInsertMode($scope, snippetInsertService, uiStateService)
+    @watchInsertMode()
 
 
-  watchInsertMode: (scope, snippetInsertService, uiStateService) ->
-    scope.$watch('uiStateService.state.insertMode', (newVal, oldVal, scope) ->
-      if insertParams = uiStateService.state.insertMode
-        snippetInsertService.activateInsertMode(scope, insertParams)
+  watchInsertMode: () ->
+    @$scope.$watch('state.insertMode', (newVal, oldVal, scope) =>
+      insertModeState = @uiStateService.state.insertMode
+      if insertModeState.active
+        @snippetInsertService.activateInsertMode(scope, insertModeState)
       else
-        snippetInsertService.deactivateInsertMode()
+        @snippetInsertService.deactivateInsertMode()
     )

@@ -1,5 +1,4 @@
 angular.module('ldEditor').factory 'pageStateService',
-
   (storageService, $timeout) ->
 
     # Private
@@ -13,7 +12,13 @@ angular.module('ldEditor').factory 'pageStateService',
     # Service
     # -------
 
-    onSave: $.Callbacks()
+    # This callback is fired without arguments.
+    onSuccessfulSave: $.Callbacks()
+
+
+    # This callback is fired with a string as the single argument, denoting the
+    # reason why the save operation failed.
+    onFailedSave: $.Callbacks()
 
 
     dirty: ->
@@ -26,20 +31,29 @@ angular.module('ldEditor').factory 'pageStateService',
 
 
     # @api: private
-    afterSave: (response) ->
+    afterSuccessfulSave: (document) ->
       if dirtyState == 'saving'
-        if response.status == 200
-          dirtyState = 'saved'
+        dirtyState = 'saved'
+        @onSuccessfulSave.fire()
 
-        @onSave.fire(response)
+
+    # @api: private
+    afterFailedSave: (reason) ->
+      if dirtyState == 'saving'
+        dirtyState = 'dirty'
+        @onFailedSave.fire(reason)
 
 
     # @api: private
     saveNow: ->
       if dirtyState != 'saved'
         dirtyState = 'saving'
-        storageService.savePage().then (response) =>
-          @afterSave(response)
+        storageService
+          .savePage()
+          .then(
+            (response) => @afterSuccessfulSave(response)
+            (reason) => @afterFailedSave(reason)
+          )
 
 
     # @api: private

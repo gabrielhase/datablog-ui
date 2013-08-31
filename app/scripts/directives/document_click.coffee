@@ -1,9 +1,16 @@
-angular.module('ldEditor').directive 'documentClick',
+angular.module('ldEditor').directive 'documentClick', ($document, docService) ->
 
-  ($document, docObserverService) ->
+  (scope, element, attrs) ->
 
-    (scope, element, attrs) ->
-      $document.on "click.livingdocs", ->
+    $document.on "click.livingdocs", (event) ->
+      if event.livingdocs?.action != 'imageClick'
         scope.$apply(
-          docObserverService.click.fire()
+          docService.imageClickCleanup.fire()
         )
+      scope.$apply(
+        docService.click.fire()
+      )
+
+    # don't propagate any clicks from within the editor
+    $('.-js-editor-root').on "click.livingdocs", (event) ->
+      event.stopPropagation()

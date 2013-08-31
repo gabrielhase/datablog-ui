@@ -1,7 +1,5 @@
+angular.module('ldEditor').controller 'AuthController',
 class AuthController
-
-  angular.module('ldEditor').controller 'AuthController',
-    ['$scope', 'apiHttp', 'session', AuthController ]
 
   constructor: (@$scope, @apiHttp, @session) ->
     @$scope.$on(@session.unauthenticatedEvent, => @activate())

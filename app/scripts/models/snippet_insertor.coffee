@@ -7,9 +7,9 @@ class SnippetInsertor
 
   # The SnippetInsertor should define how to react to events on the document
   # with respect to the insert mode state.
-  constructor: ({@uiStateService, @$compile, docObserverService}) ->
-    docObserverService.click.add($.proxy(@deactivateInsertMode, @))
-    docObserverService.snippetTemplateClick.add($.proxy(@selectSnippetTemplate, @))
+  constructor: ({ @uiStateService, @$compile, editorService, docService }) ->
+    docService.click.add($.proxy(@deactivateInsertMode, @))
+    editorService.snippetTemplateClick.add($.proxy(@selectSnippetTemplate, @))
 
 
   selectSnippetTemplate: ($event, snippet) ->
@@ -37,14 +37,16 @@ class SnippetInsertor
 
   activateInsertMode: (scope, insertParams) ->
     if snippetToInsert != undefined
-      @deactivateInsertMode(false) # TODO: this is pretty ugly -> we need a different behavior to handle activation and toggle state
+      @deactivateInsertMode(false)
     snippetToInsert = insertParams.snippet
-    doc.document.snippetTree.each (snippet) =>
-      if snippet.hasContainers
-        snippetElem = doc.document.renderer.snippets[snippet.id]
-        for name, container of snippetElem.containers
-          @renderInsertPoint(scope, $(container), snippet.containers[name])
-
+    # insert point in root
+    @renderInsertPoint(scope, doc.document.renderer.$root, doc.document.snippetTree.root)
+    # insert points in other snippets
+    doc.document.snippetTree.each (snippetModel) =>
+      if snippetModel.hasContainers
+        snippetView = doc.document.renderer.snippets[snippetModel.id]
+        for name, container of snippetView.containers
+          @renderInsertPoint(scope, $(container), snippetModel.containers[name])
 
 
   deactivateInsertMode: (resetSelectedSnippet = true) ->

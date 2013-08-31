@@ -1,27 +1,30 @@
+angular.module('ldEditor').controller 'SidebarController',
 class SidebarController
 
-  angular.module('ldEditor').controller 'SidebarController',
-    ['$scope', 'uiStateService', SidebarController ]
-
-  constructor: ($scope, uiStateService) ->
-    $scope.sidebarHidden = true
-    $scope.uiStateService = uiStateService
+  constructor: (@$scope, @uiStateService) ->
+    @$scope.uiStateService = @uiStateService
     # methods
-    $scope.loadDocument = => @registerActivePanel($scope, 'documentPanel', uiStateService)
-    $scope.loadSnippets = => @registerActivePanel($scope, 'snippetPanel', uiStateService)
+    @$scope.loadDocument = => @registerActivePanel('documentPanel')
+    @$scope.loadSnippets = => @registerActivePanel('snippetPanel')
+    @$scope.loadProperties = => @registerActivePanel('propertiesPanel')
     # API for panels
-    @hideSidebar = => @hide($scope, uiStateService)
+    @hideSidebar = (activePanel) => @hide(activePanel)
 
 
-  registerActivePanel: (scope, panel, uiStateService) ->
-    if uiStateService.state[panel] # toggle
-      @hide(scope, uiStateService)
+  registerActivePanel: (panel) ->
+    if @uiStateService.state.isActive(panel) # toggle
+      if @uiStateService.state.sidebar.foldedOut
+        @hide(panel)
+      else
+        @uiStateService.set 'sidebar',
+          foldedOut: true
     else
-      uiStateService.set(panel, true)
-      scope.sidebarHidden = false
+      @uiStateService.set(panel, {})
+      @uiStateService.set 'sidebar',
+        foldedOut: true
 
 
-  hide: (scope, uiStateService) ->
-    scope.sidebarHidden = true
-    uiStateService.set('documentPanel', false)
-    uiStateService.set('snippetPanel', false)
+  hide: (activePanel) ->
+    @uiStateService.set 'sidebar',
+      foldedOut: false
+    @uiStateService.set(activePanel, false)

@@ -20,6 +20,9 @@ module.exports = (grunt) ->
     app: 'app'
     dist: 'dist'
 
+  envApis =
+    local: 'ldLocalApi'
+    livingdocs: 'ldApi'
 
   try
     yeomanConfig.app = require('./bower.json').appPath || yeomanConfig.app
@@ -28,10 +31,25 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     yeoman: yeomanConfig
+    ngconstant:
+      localApi: [
+        {
+          dest: '<%= yeoman.app %>/scripts/components/environment/constants.js'
+          name: 'envApi'
+          deps: [envApis[grunt.option('api')] || envApis['local']]
+        }
+      ]
+      distApi: [
+        {
+          dest: '<%= yeoman.app %>/scripts/components/environment/constants.js'
+          name: 'envApi'
+          deps: [envApis[grunt.option('api')] || envApis['livingdocs']]
+        }
+      ]
     watch:
       coffee:
         files: ['<%= yeoman.app %>/scripts/**/*.coffee']
-        tasks: ['concurrent:server']
+        tasks: ['concurrent:coffee']
       coffeeTest:
         files: ['test/spec/{,*/}*.coffee']
         tasks: ['coffee:test']
@@ -43,9 +61,8 @@ module.exports = (grunt) ->
           livereload: LIVERELOAD_PORT
         files: [
           '<%= yeoman.app %>/{,*/}*.html'
-          '{.tmp,<%= yeoman.app %>}/styles/{,*/}*.css'
-          '{.tmp,<%= yeoman.app %>}/scripts/{,*/}*.js'
-          '{.tmp,<%= yeoman.app %>}/components/{,*/}*.js'
+          '.tmp/styles/{,*/}*.css'
+          '.tmp/{,*/}*.js'
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
     connect:
@@ -94,12 +111,15 @@ module.exports = (grunt) ->
           join: true
         files: [
           '.tmp/editor.js': [
+            'app/scripts/utils/*.coffee'
             'app/scripts/app.coffee'
             'app/scripts/controllers/*.coffee'
             'app/scripts/directives/*.coffee'
             'app/scripts/models/*.coffee'
             'app/scripts/services/*.coffee'
+            'app/scripts/filters/*.coffee'
             'app/scripts/templates/*.coffee'
+            'app/scripts/components/**/component.coffee'
             'app/scripts/components/**/*.coffee'
           ]
         ]
@@ -108,12 +128,15 @@ module.exports = (grunt) ->
           join: true
         files: [
           '.tmp/editor_test.js': [
+            'app/scripts/utils/*.coffee'
             'app/scripts/app.coffee'
             'app/scripts/controllers/*.coffee'
             'app/scripts/directives/*.coffee'
             'app/scripts/models/*.coffee'
             'app/scripts/services/*.coffee'
+            'app/scripts/filters/*.coffee'
             'app/scripts/templates/*.coffee'
+            'app/scripts/components/**/component.coffee'
             'app/scripts/components/**/*.coffee'
             'test/spec/**/*.coffee'
           ]
@@ -190,6 +213,9 @@ module.exports = (grunt) ->
       unit:
         configFile: 'karma.conf.js'
         browsers: ['PhantomJS']
+      chrome:
+        configFile: 'karma.conf.js'
+        browsers: ['Chrome']
       once:
         configFile: 'karma.conf.js'
         browsers: ['PhantomJS']
@@ -217,18 +243,18 @@ module.exports = (grunt) ->
           dest: '<%= yeoman.dist %>/scripts'
         ]
     concurrent:
-      server: [
+      coffee: [
+        'ngconstant:localApi'
         'coffee:tmp'
         'coffee:test'
       ]
-      test: [
-        'coffee'
-      ]
       dist: [
+        'ngconstant:distApi'
         'coffee'
         'imagemin'
         'recess'
       ]
+
 
   grunt.registerTask 'server', (target) ->
     if (target == 'dist')
@@ -236,18 +262,20 @@ module.exports = (grunt) ->
     else
       grunt.task.run([
         'clean:server'
-        'concurrent:server'
+        'concurrent:coffee'
         'recess'
         'connect:livereload'
         'open'
         'watch'
       ])
 
+  # alias for server
+  grunt.registerTask('dev', ['server'])
+
   grunt.registerTask('test', [
     'clean:server'
-    'concurrent:test'
-    'connect:test'
-    'karma'
+    'concurrent:coffee'
+    'karma:unit'
   ])
 
   grunt.registerTask('build', [
@@ -257,7 +285,6 @@ module.exports = (grunt) ->
     'concat'
     'copy'
     'ngmin'
-    'rev'
     'usemin'
   ])
 

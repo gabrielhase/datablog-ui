@@ -1,46 +1,43 @@
-angular.module('ldLocalApi').factory 'documentService',
+angular.module('ldLocalApi').factory 'documentService', ($q) ->
 
-  ($q) ->
+  docs = {}
 
-    docs = {}
+  # Service
+  # -------
 
-    # Service
-    # -------
+  get: (id) ->
+    documentPromise = $q.defer()
 
-    get: (id) ->
-      documentPromise = $q.defer()
-
-      docs[id] ||= new Document
-        id: id
-        title: 'Data Story'
-        state: 'new'
-        revision: 1
-        updated_at: new Date()
-        json:
-          "content": [
-            {
-              "identifier": "bootstrap.column"
-              "containers":
-                "default": [
-                  "identifier": "bootstrap.hero"
-                  "editables": {}
-                ]
-            }
-          ]
-          "meta": {}
+    docs[id] ||= new Document
+      id: id
+      title: 'Test Story'
+      revisionNumber: 1
+      updatedAt: new Date()
+      data:
+        "content": [
+          {
+           "identifier": "bootstrap.column"
+           "containers":
+             "default": [
+               "identifier": "bootstrap.hero"
+               "editables": {}
+             ]
+          }
+        ]
+        "meta": {}
 
 
-      documentPromise.resolve(docs[id])
-      documentPromise.promise
+    documentPromise.resolve(docs[id])
+    documentPromise.promise
 
 
-    save: (document) ->
-      deferred = $q.defer()
-      document.revision = document.revision + 1
-      deferred.resolve(status: 200)
+  save: (document) ->
+    deferred = $q.defer()
+    document.revisionNumber = document.revision + 1
+    deferred.resolve(document)
 
-      deferred.promise
+    deferred.promise
 
 
-    publish: (document) ->
-      @save(document)
+  publish: (document) ->
+    @save(document)

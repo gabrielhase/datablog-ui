@@ -1,12 +1,10 @@
+angular.module('ldEditor').controller 'PopoverController',
 class PopoverController
 
-  angular.module('ldEditor').controller 'PopoverController',
-    ['$scope', 'uiStateService', PopoverController ]
-
-  constructor: ($scope, uiStateService) ->
-    $scope.close = ($event, target) => @close($event, target, uiStateService)
+  constructor: (@$scope, @uiStateService) ->
+    @$scope.close = ($event, target) => @close($event, target)
 
 
-  close: ($event, target, uiStateService) ->
+  close: ($event, target) ->
     $event.stopPropagation()
-    uiStateService.set('flowtextPopover', false)
+    @$scope.openCondition.active = false

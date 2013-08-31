@@ -6,10 +6,8 @@
 # promises are queued until a session is opened.
 #
 # TODO: Use safer storage means than cookies.
+angular.module('ldApi').service 'session',
 class Session
-
-  angular.module('ldApi')
-    .service('session', ['cookies', '$q', '$rootScope', Session])
 
   constructor: (@cookies, @$q, @$rootScope) ->
 
