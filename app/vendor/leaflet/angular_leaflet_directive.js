@@ -575,7 +575,6 @@ leafletDirective.directive('leaflet', [
                 }
                 tileLayerObj = L.tileLayer($scope.leaflet.tileLayer, defaults.tileLayerOptions);
                 tileLayerObj.addTo(map);
-
                 $scope.leaflet.tileLayerObj = !!attrs.testing ? tileLayerObj : str_inspect_hint;
             }
 
