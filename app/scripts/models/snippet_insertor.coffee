@@ -7,7 +7,7 @@ class SnippetInsertor
 
   # The SnippetInsertor should define how to react to events on the document
   # with respect to the insert mode state.
-  constructor: ({ @uiStateService, @$compile, editorService, docService }) ->
+  constructor: ({ @uiStateService, @$compile, @mapInsertService, editorService, docService }) ->
     docService.click.add($.proxy(@deactivateInsertMode, @))
     editorService.snippetTemplateClick.add($.proxy(@selectSnippetTemplate, @))
 
@@ -21,6 +21,7 @@ class SnippetInsertor
 
   insertSnippet: ($event, snippetContainer) ->
     insertedSnippetModel = doc.create(snippetToInsert.identifier)
+    @mapInsertService.insertMap(insertedSnippetModel) if @mapInsertService.isMapSnippet(insertedSnippetModel)
     snippetContainer.append(insertedSnippetModel)
     @uiStateService.set('insertMode', false)
 
