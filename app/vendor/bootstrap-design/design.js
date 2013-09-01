@@ -3,7 +3,7 @@
     "namespace": "bootstrap",
     "version": 1,
     "css": [
-      "/designs/bootstrap/css/style.css"
+      "vendor/bootstrap-design/css/style.css"
     ],
     "groups": {
       "layout": {
@@ -16,6 +16,7 @@
       "others": {
         "title": "others",
         "templates": [
+          "map",
           "button",
           "hero",
           "image",
@@ -31,6 +32,11 @@
     }
   },
   "templates": [
+    {
+      "title": "map",
+      "id": "map",
+      "html": "<div data-type=\"angular-directive\"><h3 doc-editable=\"title\">Title</h3><div data-placeholder=\"directive\"><iframe frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
+    },
     {
       "title": "Single Centered Column",
       "id": "column",

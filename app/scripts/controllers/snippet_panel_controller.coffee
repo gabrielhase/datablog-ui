@@ -13,6 +13,7 @@ class SnippetPanelController
     for name, template of design.templates
       template
 
+
   initGroups: () ->
     design = doc.getDesign()
     for name, group of design.groups
