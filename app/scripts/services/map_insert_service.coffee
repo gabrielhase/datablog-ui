@@ -7,30 +7,27 @@ angular.module('ldEditor').factory 'mapInsertService', ($rootScope, $compile) ->
   # Service
 
   isMapSnippet: (snippetModel) ->
-    console.log snippetModel
     $template = snippetModel.template.$template
     $template.data('type') == 'angular-directive'
 
 
   insertMap: (snippetModel) ->
-    $template = snippetModel.template.$template
-    $directiveRoot = $template.find('*[data-placeholder="directive"]')
-    $directiveRoot.html('')
-    template = '<leaflet center="center" height="220px"></leaflet>'
+    snippetView = doc.document.renderer.snippets[snippetModel.id]
+    $directiveRoot = snippetView.$html.find('*[data-placeholder="leaflet-directive"]')
+    template = '<div ng-controller="MapController"><leaflet center="center" height="220px"></leaflet><a ng-click="testClick()" class="upfront-control">testEvent</a></div>'
     mapScope = $rootScope.$new()
-    mapScopes[snippetModel] = mapScope
+    mapScopes[snippetModel.id] = mapScope
     $compile(template)(mapScope, (map, childScope) ->
-      childScope.center =
-        lat: 46.362093
-        lng: 9.036255
+      childScope.center =  # my home
+        lat: 47.388778
+        lng: 8.541971
         zoom: 10
-      $directiveRoot.append(map)
-      #$('.-js-editor-root').append(map)
+      $directiveRoot.html(map)
     )
 
 
   removeMap: (snippetModel) ->
-    scope = mapScopes[snippetModel]
+    scope = mapScopes[snippetModel.id]
     scope.$destroy()
-    mapScopes[snippetModel] = undefined
+    mapScopes[snippetModel.id] = undefined
 

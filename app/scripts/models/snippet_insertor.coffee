@@ -21,8 +21,8 @@ class SnippetInsertor
 
   insertSnippet: ($event, snippetContainer) ->
     insertedSnippetModel = doc.create(snippetToInsert.identifier)
+    snippetContainer.append(insertedSnippetModel) # need to call this first to get an instance
     @mapInsertService.insertMap(insertedSnippetModel) if @mapInsertService.isMapSnippet(insertedSnippetModel)
-    snippetContainer.append(insertedSnippetModel)
     @uiStateService.set('insertMode', false)
 
 
