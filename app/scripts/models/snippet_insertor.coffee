@@ -20,7 +20,8 @@ class SnippetInsertor
 
 
   insertSnippet: ($event, snippetContainer) ->
-    snippetContainer.append(doc.create(snippetToInsert.identifier))
+    insertedSnippetModel = doc.create(snippetToInsert.identifier)
+    snippetContainer.append(insertedSnippetModel)
     @uiStateService.set('insertMode', false)
 
 
