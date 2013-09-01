@@ -35,7 +35,7 @@
     {
       "title": "map",
       "id": "map",
-      "html": "<div data-type=\"angular-directive\"><h3 doc-editable=\"title\">Title</h3><div data-placeholder=\"directive\"><iframe frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
+      "html": "<div data-type=\"angular-directive\"><h3 doc-editable=\"title\">Title</h3><div data-placeholder=\"leaflet-directive\"><iframe frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
     },
     {
       "title": "Single Centered Column",
