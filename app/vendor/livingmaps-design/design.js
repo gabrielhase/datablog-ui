@@ -1,9 +1,9 @@
-(function() { this.design || (this.design = {}); design.bootstrap = (function() { return {
+(function() { this.design || (this.design = {}); design.livingmaps = (function() { return {
   "config": {
-    "namespace": "bootstrap",
+    "namespace": "livingmaps",
     "version": 1,
     "css": [
-      "vendor/bootstrap-design/css/style.css"
+      "/designs/livingmaps/css/style.css"
     ],
     "groups": {
       "layout": {
@@ -16,12 +16,12 @@
       "others": {
         "title": "others",
         "templates": [
-          "map",
           "button",
           "hero",
           "image",
           "info",
           "largeButton",
+          "map",
           "seperator",
           "smallSubtitle",
           "subtitle",
@@ -32,11 +32,6 @@
     }
   },
   "templates": [
-    {
-      "title": "map",
-      "id": "map",
-      "html": "<div data-type=\"angular-directive\"><h3 doc-editable=\"title\">Title</h3><div data-placeholder=\"leaflet-directive\"><iframe frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
-    },
     {
       "title": "Single Centered Column",
       "id": "column",
@@ -71,6 +66,11 @@
       "title": "Large Button",
       "id": "largeButton",
       "html": "<div>\n  <hr>\n</div>"
+    },
+    {
+      "title": "Map",
+      "id": "map",
+      "html": "<div data-type=\"angular-directive\">\n  <h3 doc-editable=\"title\">Title</h3>\n  <div data-placeholder=\"leaflet-directive\">\n    <iframe style=\"width: 100%\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe>\n  </div>\n</div>"
     },
     {
       "title": "Seperator",
