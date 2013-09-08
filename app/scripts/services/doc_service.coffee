@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'docService',
 
-  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService) ->
+  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, mapInsertService) ->
 
     # Service
     # -------
@@ -30,6 +30,9 @@ angular.module('ldEditor').factory 'docService',
           uiStateService.set('flowtextPopover', false)
         )
 
+      doc.snippetAdded (snippet) ->
+        mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)
+
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
           action: 'imageClick'
@@ -46,3 +49,9 @@ angular.module('ldEditor').factory 'docService',
             imagePath: imagePath
           )
         )
+
+      # NOTE: since we need the renderer to replace directives we need to wait for doc.ready
+      doc.ready ->
+        doc.snippetsLoaded (snippets) ->
+          for snippet in snippets
+            mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)

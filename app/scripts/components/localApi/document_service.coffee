@@ -22,6 +22,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
                "identifier": "livingmaps.hero"
               ,
                "identifier": "livingmaps.map"
+              ,
+               "identifier": "livingmaps.text"
              ]
           }
         ]
