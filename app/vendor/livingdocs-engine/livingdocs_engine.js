@@ -1222,7 +1222,6 @@
       this.root = new SnippetContainer({
         isRoot: true
       });
-      this.snippetsLoaded = $.Callbacks('memory');
       if ((content != null) && (design != null)) {
         this.fromJson(content, design);
       }
@@ -1402,7 +1401,7 @@
     };
 
     SnippetTree.prototype.fromJson = function(json, design) {
-      var loadedSnippets, snippet, snippetJson, _i, _len, _ref,
+      var snippet, snippetJson, _i, _len, _ref,
         _this = this;
       this.root.snippetTree = void 0;
       _ref = json.content;
@@ -1412,12 +1411,9 @@
         this.root.append(snippet);
       }
       this.root.snippetTree = this;
-      loadedSnippets = [];
-      this.root.each(function(snippet) {
-        snippet.snippetTree = _this;
-        return loadedSnippets.push(snippet);
+      return this.root.each(function(snippet) {
+        return snippet.snippetTree = _this;
       });
-      return this.snippetsLoaded.fire(loadedSnippets);
     };
 
     return SnippetTree;
@@ -3652,7 +3648,6 @@
     this.snippetFocused = chainable(page.focus.snippetFocus, 'add');
     this.snippetBlurred = chainable(page.focus.snippetBlur, 'add');
     this.snippetAdded = chainable(document.snippetTree.snippetAdded, 'add');
-    this.snippetsLoaded = chainable(document.snippetTree.snippetsLoaded, 'add');
     this.startDrag = $.proxy(page, 'startDrag');
     this.imageClick = chainable(page.imageClick, 'add');
     return this.textSelection = chainable(page.editableController.selection, 'add');

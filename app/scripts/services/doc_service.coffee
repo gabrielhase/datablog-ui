@@ -52,6 +52,5 @@ angular.module('ldEditor').factory 'docService',
 
       # NOTE: since we need the renderer to replace directives we need to wait for doc.ready
       doc.ready ->
-        doc.snippetsLoaded (snippets) ->
-          for snippet in snippets
-            mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)
+        doc.document.snippetTree.root.each (snippet) ->
+          mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)
