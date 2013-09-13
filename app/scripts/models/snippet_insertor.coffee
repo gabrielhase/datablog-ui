@@ -46,8 +46,9 @@ class SnippetInsertor
     doc.document.snippetTree.each (snippetModel) =>
       if snippetModel.hasContainers
         snippetView = doc.document.renderer.snippets[snippetModel.id]
-        for container in snippetView.directives?.container
-          @renderInsertPoint(scope, $(container.elem), snippetModel.containers[container.name])
+        if snippetView.directives?.container
+          for container in snippetView.directives?.container
+            @renderInsertPoint(scope, $(container.elem), snippetModel.containers[container.name])
 
 
   deactivateInsertMode: (resetSelectedSnippet = true) ->

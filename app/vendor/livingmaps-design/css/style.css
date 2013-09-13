@@ -166,6 +166,10 @@ a:hover {
   text-decoration: underline;
 }
 
+img {
+  min-width: 100%;
+}
+
 .img-rounded {
   -webkit-border-radius: 6px;
      -moz-border-radius: 6px;
