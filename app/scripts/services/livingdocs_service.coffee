@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, mapInsertService) ->
+  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService) ->
 
     # Service
     # -------
@@ -31,7 +31,7 @@ angular.module('ldEditor').factory 'livingdocsService',
         )
 
       doc.snippetAdded (snippet) ->
-        mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)
+        angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
@@ -53,4 +53,4 @@ angular.module('ldEditor').factory 'livingdocsService',
       # NOTE: since we need the renderer to replace directives we need to wait for doc.ready
       doc.ready ->
         doc.document.snippetTree.root.each (snippet) ->
-          mapInsertService.insertMap(snippet) if mapInsertService.isMapSnippet(snippet)
+          angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)

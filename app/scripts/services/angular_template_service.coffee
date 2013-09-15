@@ -1,4 +1,4 @@
-angular.module('ldEditor').factory 'mapInsertService', ($rootScope, $compile, dataService) ->
+angular.module('ldEditor').factory 'angularTemplateService', ($rootScope, $compile, dataService) ->
 
   # Private Scope
   mapScopes = {}
@@ -6,14 +6,21 @@ angular.module('ldEditor').factory 'mapInsertService', ($rootScope, $compile, da
 
   # Service
 
-  isMapSnippet: (snippetModel) ->
+  isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
-    $template.data('type') == 'angular-directive'
+    $template.data('template') == 'angular'
 
 
-  insertMap: (snippetModel) ->
+  insertAngularTemplate: (snippetModel) ->
     snippetView = doc.document.renderer.snippets[snippetModel.id]
-    $directiveRoot = snippetView.$html.find('*[data-placeholder="leaflet-directive"]')
+    for node in snippetView.$html.find('*[data-is]')
+      switch $(node).data('is')
+        when 'leaflet-map' then @insertMap(snippetModel, $(node))
+        else
+          alert("unknown template value #{$(node).data('is')}")
+
+
+  insertMap: (snippetModel, $directiveRoot) ->
     template = '<div ng-controller="MapController"><leaflet center="center" geojson="geojson"></leaflet></div>'
     mapScope = $rootScope.$new()
     mapScopes[snippetModel.id] = mapScope
@@ -44,6 +51,9 @@ angular.module('ldEditor').factory 'mapInsertService', ($rootScope, $compile, da
         data: newData
         popupContentProperty: snippetModel.data('popupContentProperty')
 
+
+  removeAngularTemplate: (snippetModel) ->
+    @removeMap(snippetModel)
 
 
   removeMap: (snippetModel) ->
