@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
+angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) ->
 
   return {
     restrict: 'A'
@@ -16,6 +16,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
       scope.$watch('snippet', (newVal, oldVal) ->
         if newVal
           renderStyles(newVal?.template?.styles, newVal)
+          renderData(newVal.data, newVal) if newVal.model.identifier == 'livingmaps.map'
       )
 
       formElementScopes = [] # stores the scopes of all dynamically added form elements
@@ -49,6 +50,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
           $(".upfront-properties-form").append(checkbox)
         )
 
+
       renderSelect = (label, options, snippet) ->
         insertScope = scope.$new()
         formElementScopes.push(insertScope)
@@ -75,10 +77,12 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
           $(".upfront-properties-form").append(select)
         )
 
+
       cleanForm = ->
         for elemScope in formElementScopes
           elemScope.htmlElement.remove()
           elemScope.$destroy()
+
 
       deduceFormElement = (entry) ->
         # definition in design.js takes precedence
@@ -90,6 +94,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
         else
           undefined
 
+
       renderStyles = (styles, snippet) ->
         cleanForm()
         for entry in styles
@@ -98,4 +103,36 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile) ->
             when "checkbox" then renderCheckbox(entry.name, entry.css, snippet)
             when "select" then renderSelect(entry.name, entry.css, snippet)
             else log.error("unknown form element #{formElement} for style #{entry.name}")
+
+
+      renderDataSelect = (label, options, snippet) ->
+        insertScope = scope.$new()
+        formElementScopes.push(insertScope)
+        $compile(
+          """
+          <label>{{label}}:</label>
+          <select ng-model="selectedData" ng-options="option.value as option.name for option in options">
+            <option value="">-- choose {{label}} --</option>
+          </select>
+          """
+        )(insertScope, (select, childScope) ->
+          childScope.htmlElement = select
+          childScope.label = label
+          childScope.options = options
+
+          childScope.selectedData = snippet.model.data('dataIdentifier')
+
+          childScope.$watch('selectedData', (newVal, oldVal) ->
+            snippet.model.data('dataIdentifier', newVal)
+            snippet.model.data('geojson', dataService.get(newVal))
+          )
+
+          $(".upfront-properties-form").append(select)
+        )
+
+
+
+      renderData = (data, snippet) ->
+        renderDataSelect('Mock Data', dataService.options(), snippet)
+        #snippet.model.data('geojson', data)
   }

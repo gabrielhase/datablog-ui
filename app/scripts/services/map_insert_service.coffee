@@ -22,8 +22,15 @@ angular.module('ldEditor').factory 'mapInsertService', ($rootScope, $compile, da
         lat: 47.388778
         lng: 8.541971
         zoom: 12
-      childScope.geojson =
-        data: dataService.get('spielplatz')
+
+      childScope.snippetModel = snippetModel
+      childScope.$watch('snippetModel.data("dataIdentifier")', (newVal) ->
+        newData = snippetModel.data('geojson')
+        if newData
+          childScope.geojson =
+            data: newData
+      )
+
       $directiveRoot.html(map)
     )
 
