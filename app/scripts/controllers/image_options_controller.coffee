@@ -1,9 +1,9 @@
 angular.module('ldEditor').controller 'ImageOptionsController',
 class ImageOptionsController
 
-  constructor: (@$scope, @uiStateService, @dialogService, @docService) ->
+  constructor: (@$scope, @uiStateService, @dialogService, @livingdocsService) ->
     @$scope.clickImageGalleryBtn = => @clickImageGalleryBtn()
-    @docService.imageClickCleanup.add($.proxy(@closePopover, @))
+    @livingdocsService.imageClickCleanup.add($.proxy(@closePopover, @))
 
 
   clickImageGalleryBtn: ->

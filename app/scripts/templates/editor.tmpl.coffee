@@ -28,6 +28,7 @@ angularTemplates.editor = """
       <ng-include src="'image-options.html'"></ng-include>
     </div>
 
+
   </div>
 </div>
 """

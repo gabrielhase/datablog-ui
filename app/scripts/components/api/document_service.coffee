@@ -28,8 +28,8 @@ angular.module('ldApi').factory 'documentService', ($q, authedHttp) ->
     id: data.document.id
     title: data.document.title
     updatedAt: new Date(data.document.updated_at)
-    data: data.document.revision.data
-    revisionNumber: data.document.revision.revision_number
+    data: data.document?.revision?.data
+    revisionNumber: data.document?.revision?.revision_number
     publicationRevisionNumber: data.document.publication?.revision_number
 
   payloadForSave = (document) ->

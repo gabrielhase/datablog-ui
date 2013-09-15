@@ -8,7 +8,10 @@
     <meta name="viewport" content="width=device-width">
 
     <!-- livingdocs designs css -->
-    <link rel="stylesheet" href="vendor/bootstrap-design/css/style.css">
+    <link rel="stylesheet" href="vendor/livingmaps-design/css/style.css">
+
+    <!-- leaflet css -->
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css">
 
     <!-- build:css({.tmp,app}) styles/editor.css -->
     <link rel="stylesheet" href="vendor/livingdocs-engine/css/livingdocs.css">
@@ -22,17 +25,18 @@
     <![endif]-->
 
     <!-- livingdoc magic happens here -->
-    <div class="wrapper">
-      <div class="story doc-section">
-      </div>
+    <div class="doc-section container">
     </div>
 
     <!-- the big guns -->
     <script src="vendor/jquery-1.9.1.js"></script>
     <script src="vendor/angular/angular.js"></script>
 
+    <!-- leaflet -->
+    <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+
     <!-- livingdocs designs -->
-    <script src="vendor/bootstrap-design/design.js"></script>
+    <script src="vendor/livingmaps-design/design.js"></script>
 
     <!-- build:js({.tmp,app}) scripts/constants.js -->
     <script src="scripts/components/environment/constants.js"></script>
@@ -48,7 +52,8 @@
     <script src="vendor/angular-ui-bootstrap/transition.js"></script>
     <script src="vendor/angular-ui-bootstrap/dialog.js"></script>
     <script src="vendor/angular-ui-bootstrap/pagination.js"></script>
-
+    <!-- leaflet directive -->
+    <script src="vendor/leaflet/angular_leaflet_directive.js"></script>
 
     <script src="editor.js"></script>
     <!-- endbuild -->
