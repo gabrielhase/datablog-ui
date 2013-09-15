@@ -1,4 +1,4 @@
-angular.module('ldLocalApi').factory 'imageService', ($q) ->
+angular.module('ldApi').factory 'imageService', ($q) ->
 
   payload =
     info:

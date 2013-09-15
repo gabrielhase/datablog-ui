@@ -7,8 +7,8 @@ class SnippetInsertor
 
   # The SnippetInsertor should define how to react to events on the document
   # with respect to the insert mode state.
-  constructor: ({ @uiStateService, @$compile, editorService, docService }) ->
-    docService.click.add($.proxy(@deactivateInsertMode, @))
+  constructor: ({ @uiStateService, @$compile, editorService, livingdocsService }) ->
+    livingdocsService.click.add($.proxy(@deactivateInsertMode, @))
     editorService.snippetTemplateClick.add($.proxy(@selectSnippetTemplate, @))
 
 
@@ -20,7 +20,8 @@ class SnippetInsertor
 
 
   insertSnippet: ($event, snippetContainer) ->
-    snippetContainer.append(doc.create(snippetToInsert.identifier))
+    insertedSnippetModel = doc.create(snippetToInsert.identifier)
+    snippetContainer.append(insertedSnippetModel) # need to call this first to get an instance
     @uiStateService.set('insertMode', false)
 
 
@@ -45,8 +46,9 @@ class SnippetInsertor
     doc.document.snippetTree.each (snippetModel) =>
       if snippetModel.hasContainers
         snippetView = doc.document.renderer.snippets[snippetModel.id]
-        for name, container of snippetView.containers
-          @renderInsertPoint(scope, $(container), snippetModel.containers[name])
+        if snippetView.directives?.container
+          for container in snippetView.directives?.container
+            @renderInsertPoint(scope, $(container.elem), snippetModel.containers[container.name])
 
 
   deactivateInsertMode: (resetSelectedSnippet = true) ->

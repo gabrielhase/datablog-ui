@@ -6,7 +6,7 @@ angular.module('ldEditor').factory 'editorService', ->
 
     loadDocument: (document) ->
       @currentDocument = document
-      doc.init(design: design.bootstrap, json: document.data)
+      doc.init(design: design.livingmaps, json: document.data)
 
 
     updateDocument: ->

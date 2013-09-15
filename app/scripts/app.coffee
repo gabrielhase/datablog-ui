@@ -1,10 +1,10 @@
 angular
-  .module('ldEditor', ['envApi', 'ui.bootstrap.dialog', 'ui.bootstrap.pagination'])
+  .module('ldEditor', ['envApi', 'ui.bootstrap.dialog', 'ui.bootstrap.pagination', 'leaflet-directive'])
   .config ($httpProvider, $locationProvider) ->
     $locationProvider.html5Mode(true)
 
 
-  .run ($templateCache, documentService, docService, editorService) ->
+  .run ($templateCache, documentService, livingdocsService, editorService) ->
 
     # preload templates
     for templateName, template of angularTemplates
@@ -14,13 +14,13 @@ angular
       $templateCache.put(fileName, template)
 
     # load document
-    documentId = 2 # test document
+    documentId = 15 # test document
     documentService.get(documentId).then (document) ->
       editorService.loadDocument(document)
 
     # setup events after the document is ready
     doc.ready ->
-      docService.setup()
+      livingdocsService.setup()
 
 
 # ===============
@@ -32,7 +32,7 @@ angularTemplates = {}
 upfront.variables = do () ->
   apiDomain: 'thelivingdoc.com'
   frontendDomain: ''
-  documentId: 2
+  documentId: 15
 
 
 # ===============

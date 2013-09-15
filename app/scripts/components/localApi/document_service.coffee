@@ -16,13 +16,30 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
       data:
         "content": [
           {
-           "identifier": "bootstrap.column"
+            "identifier": "livingmaps.column"
+            "containers":
+              "default": [
+                "identifier": "livingmaps.map"
+              ,
+                "identifier": "livingmaps.title"
+                "content": {"title": "livingmaps"}
+              ]
+          },
+          {
+           "identifier": "livingmaps.mainAndSidebar"
            "containers":
-             "default": [
-               "identifier": "bootstrap.hero"
-               "editables": {}
+             "main": [
+               "identifier": "livingmaps.text"
+              ,
+               "identifier": "livingmaps.text"
+              ,
+               "identifier": "livingmaps.text"
+             ],
+             "sidebar": [
+              "identifier": "livingmaps.image"
              ]
           }
+
         ]
         "meta": {}
 

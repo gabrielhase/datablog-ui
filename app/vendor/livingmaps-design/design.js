@@ -1,9 +1,9 @@
-(function() { this.design || (this.design = {}); design.bootstrap = (function() { return {
+(function() { this.design || (this.design = {}); design.livingmaps = (function() { return {
   "config": {
-    "namespace": "bootstrap",
+    "namespace": "livingmaps",
     "version": 1,
     "css": [
-      "/designs/bootstrap/css/style.css"
+      "/designs/livingmaps/css/style.css"
     ],
     "groups": {
       "layout": {
@@ -21,6 +21,7 @@
           "image",
           "info",
           "largeButton",
+          "map",
           "seperator",
           "smallSubtitle",
           "subtitle",
@@ -34,7 +35,7 @@
     {
       "title": "Single Centered Column",
       "id": "column",
-      "html": "<div class=\"row-fluid\">\n  <div class=\"span8 offset2\" doc-container=\"\"></div>\n</div>"
+      "html": "<div class=\"row-fluid\">\n  <div class=\"span12\" doc-container=\"\"></div>\n</div>"
     },
     {
       "title": "Main and Sidebar Columns",
@@ -54,7 +55,7 @@
     {
       "title": "Image",
       "id": "image",
-      "html": "<div class=\"img-polaroid\" doc-editable=\"image\">\n  Drag your image here...\n</div>"
+      "html": "<img class=\"img-polaroid img-full-width\" doc-image=\"image\" src=\"\">"
     },
     {
       "title": "Info",
@@ -65,6 +66,11 @@
       "title": "Large Button",
       "id": "largeButton",
       "html": "<div>\n  <hr>\n</div>"
+    },
+    {
+      "title": "Map",
+      "id": "map",
+      "html": "<div data-template=\"angular\">\n  <h3 doc-editable=\"title\">Title</h3>\n  <div data-is=\"leaflet-map\">\n    <iframe style=\"width: 100%\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe>\n  </div>\n</div>"
     },
     {
       "title": "Seperator",
