@@ -982,7 +982,12 @@
     };
 
     SnippetModel.prototype.setData = function(name, value) {
-      return this.dataValues[name] = value;
+      if (this.dataValues[name] !== value) {
+        this.dataValues[name] = value;
+        if (this.snippetTree) {
+          return this.snippetTree.dataChanging(this);
+        }
+      }
     };
 
     SnippetModel.prototype.style = function(name, value) {
@@ -1267,6 +1272,7 @@
       this.snippetMoved = $.Callbacks();
       this.snippetContentChanged = $.Callbacks();
       this.snippetHtmlChanged = $.Callbacks();
+      this.snippetDataChanged = $.Callbacks();
       this.snippetSettingsChanged = $.Callbacks();
       return this.changed = $.Callbacks();
     };
@@ -1384,6 +1390,10 @@
 
     SnippetTree.prototype.htmlChanging = function(snippet) {
       return this.fireEvent('snippetHtmlChanged', snippet);
+    };
+
+    SnippetTree.prototype.dataChanging = function(snippet) {
+      return this.fireEvent('snippetDataChanged', snippet);
     };
 
     SnippetTree.prototype.printJson = function() {

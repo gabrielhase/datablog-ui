@@ -965,8 +965,10 @@ class SnippetModel
 
 
   setData: (name, value) ->
-    @dataValues[name] = value
-    # TODO: change event
+    if @dataValues[name] != value
+      @dataValues[name] = value
+      if @snippetTree
+        @snippetTree.dataChanging(this)
 
 
   style: (name, value) ->
@@ -1229,6 +1231,7 @@ class SnippetTree
     # content changes
     @snippetContentChanged = $.Callbacks()
     @snippetHtmlChanged = $.Callbacks()
+    @snippetDataChanged = $.Callbacks()
     @snippetSettingsChanged = $.Callbacks()
 
     @changed = $.Callbacks()
@@ -1353,6 +1356,10 @@ class SnippetTree
 
   htmlChanging: (snippet) ->
     @fireEvent('snippetHtmlChanged', snippet)
+
+
+  dataChanging: (snippet) ->
+    @fireEvent('snippetDataChanged', snippet)
 
 
   # Serialization
