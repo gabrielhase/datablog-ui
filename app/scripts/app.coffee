@@ -14,7 +14,7 @@ angular
       $templateCache.put(fileName, template)
 
     # load document
-    documentId = 2 # test document
+    documentId = 15 # test document
     documentService.get(documentId).then (document) ->
       editorService.loadDocument(document)
 
@@ -32,7 +32,7 @@ angularTemplates = {}
 upfront.variables = do () ->
   apiDomain: 'thelivingdoc.com'
   frontendDomain: ''
-  documentId: 2
+  documentId: 15
 
 
 # ===============
