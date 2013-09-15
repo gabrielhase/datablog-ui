@@ -79,7 +79,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
             snippet.model.data('geojson', dataService.get(newVal))
             if newVal != oldVal
               snippet.model.data('popupContentProperty', null)
-              scope.propertySelectElem.remove()
+              scope.propertySelectElem.remove() if scope.propertySelectElem
               propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
               $(".upfront-properties-form .propertySelect").append(propertySelect)
           )

@@ -1,13 +1,13 @@
 angular.module('ldEditor').controller 'PropertiesPanelController',
 class PropertiesPanelController
 
-  constructor: (@$scope, @mapInsertService) ->
+  constructor: (@$scope, @angularTemplateService) ->
     @$scope.deleteSnippet = (snippet) => @deleteSnippet(snippet)
     @$scope.isDeletable = (snippet) => @isDeletable(snippet)
 
 
   deleteSnippet: (snippet) ->
-    @mapInsertService.removeMap(snippet.model) if @mapInsertService.isMapSnippet(snippet.model)
+    @angularTemplateService.removeAngularTemplate(snippet.model) if @angularTemplateService.isAngularTemplate(snippet.model)
     snippet.model.remove()
 
 
