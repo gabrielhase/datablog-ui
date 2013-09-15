@@ -868,6 +868,7 @@
       assert(this.template, 'cannot instantiate snippet without template reference');
       this.initializeDirectives();
       this.styles = {};
+      this.dataValues = {};
       this.id = id || guid.next();
       this.identifier = this.template.identifier;
       this.next = void 0;
@@ -970,6 +971,18 @@
       } else {
         return log.error("get error: " + this.identifier + " has no name named " + name);
       }
+    };
+
+    SnippetModel.prototype.data = function(name, value) {
+      if (arguments.length === 1) {
+        return this.dataValues[name];
+      } else {
+        return this.setData(name, value);
+      }
+    };
+
+    SnippetModel.prototype.setData = function(name, value) {
+      return this.dataValues[name] = value;
     };
 
     SnippetModel.prototype.style = function(name, value) {
@@ -1143,6 +1156,9 @@
       if (!this.isEmpty(this.styles)) {
         json.styles = this.flatCopy(this.styles);
       }
+      if (!this.isEmpty(this.dataValues)) {
+        json.data = $.extend(true, {}, this.dataValues);
+      }
       for (name in this.containers) {
         json.containers || (json.containers = {});
         json.containers[name] = [];
@@ -1179,7 +1195,7 @@
   })();
 
   SnippetModel.fromJson = function(json, design) {
-    var child, containerName, model, name, snippetArray, styleName, template, value, _i, _len, _ref, _ref1, _ref2;
+    var child, containerName, dataName, model, name, snippetArray, styleName, template, value, _i, _len, _ref, _ref1, _ref2, _ref3;
     template = design.get(json.identifier);
     assert(template, "error while deserializing snippet: unknown template identifier '" + json.identifier + "'");
     model = new SnippetModel({
@@ -1200,9 +1216,14 @@
       value = _ref1[styleName];
       model.style(styleName, value);
     }
-    _ref2 = json.containers;
-    for (containerName in _ref2) {
-      snippetArray = _ref2[containerName];
+    _ref2 = json.data;
+    for (dataName in _ref2) {
+      value = _ref2[dataName];
+      model.data(dataName, value);
+    }
+    _ref3 = json.containers;
+    for (containerName in _ref3) {
+      snippetArray = _ref3[containerName];
       assert(model.containers.hasOwnProperty(containerName), "error while deserializing snippet: unknown container " + containerName);
       if (snippetArray) {
         assert($.isArray(snippetArray), "error while deserializing snippet: container is not array " + containerName);
@@ -1404,11 +1425,13 @@
       var snippet, snippetJson, _i, _len, _ref,
         _this = this;
       this.root.snippetTree = void 0;
-      _ref = json.content;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        snippetJson = _ref[_i];
-        snippet = SnippetModel.fromJson(snippetJson, design);
-        this.root.append(snippet);
+      if (json.content) {
+        _ref = json.content;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          snippetJson = _ref[_i];
+          snippet = SnippetModel.fromJson(snippetJson, design);
+          this.root.append(snippet);
+        }
       }
       this.root.snippetTree = this;
       return this.root.each(function(snippet) {
