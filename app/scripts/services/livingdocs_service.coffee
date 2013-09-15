@@ -1,4 +1,4 @@
-angular.module('ldEditor').factory 'docService',
+angular.module('ldEditor').factory 'livingdocsService',
 
   ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, mapInsertService) ->
 
