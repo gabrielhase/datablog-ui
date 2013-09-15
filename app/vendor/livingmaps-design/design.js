@@ -55,7 +55,7 @@
     {
       "title": "Image",
       "id": "image",
-      "html": "<img class=\"img-polaroid\" doc-image=\"image\" src=\"\">"
+      "html": "<img class=\"img-polaroid img-full-width\" doc-image=\"image\" src=\"\">"
     },
     {
       "title": "Info",
