@@ -206,12 +206,48 @@ angular.module('ldLocalApi').factory 'dataService', ($q) ->
         {"type":"Feature","geometry":{"type":"Point","coordinates":[8.50164395099128,47.4156188059654]},"properties":{"Ort":"ZÃ¼rich","Name":"PlÃ¤tschweg-Hungerberg (Ober-Affoltern)","PLZ":"8046"}}
         {"type":"Feature","geometry":{"type":"Point","coordinates":[8.49142773912466,47.3495566801785]},"properties":{"Ort":"ZÃ¼rich","Name":"Uetliberg","PLZ":"8143"}}
       ]
+    "bikes":
+      "name":"Veloverleih", "type":"FeatureCollection" ,"features":[
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53860523423345,47.3758069986425]},"properties":{"Ort":"ZÃ¼rich","Adresse":"Vor Globus, Ecke Linth-Escher Gasse/Schweizergasse","PLZ":"8001","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt Pestalozziwiese","Tel":"079 336 36 12"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.54510305035658,47.366677812054]},"properties":{"Ort":"ZÃ¼rich","Adresse":"","PLZ":"8001","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt Bellevue","Tel":"079 336 36 12"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53556587387813,47.3774010676644]},"properties":{"Ort":"ZÃ¼rich","Adresse":"Kasernenstrasse 97","PLZ":"8001","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt HB SÃ¼d","Tel":"079 336 36 12"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53892587800527,47.3791501451938]},"properties":{"Ort":"ZÃ¼rich","Adresse":"Hauptbahnhof ZÃ¼rich, beim Landesmuseum","PLZ":"8001","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt HB Nord","Tel":"079 336 36 12"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.52351862308002,47.3866719363005]},"properties":{"Ort":"ZÃ¼rich","Adresse":"Josefstrasse, Richtung Heinrichstrasse","PLZ":"8005","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt Im Viadukt","Tel":"079 336 36 12"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53244457331406,47.3646935298596]},"properties":{"Ort":"ZÃ¼rich","Adresse":"Tessinerplatz; Kreuzung Gotthardstrasse und Alfred-Escher Strasse","PLZ":"8002","Url":"http://www.zuerirollt.ch","Mail":"info@zuerirollt.ch","Name":"ZÃ¼ri rollt Enge","Tel":""}}
+      ]
+    "pools":
+      "name":"Hallenbad", "type":"FeatureCollection" ,"features":[
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.51344316358373,47.3264715057095]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/hallenbad_leimbach/adresse-und-oeffnungszeiten.html","Adresse":"Klebestrasse 3","PLZ":"8041","Tel":"044 481 80 00","Name":"Hallenbad Leimbach"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.55673226195442,47.4104351020629]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/hallenbad_oerlikon/adresse.html","Adresse":"Wallisellenstrasse 100","PLZ":"8050","Tel":"044 315 67 77","Name":"Hallenbad Oerlikon"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.51803122434956,47.3995413508931]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/waermebad_kaeferberg/adresse.html","Adresse":"Emil-KlÃ¶ti-Strasse 17","PLZ":"8037","Tel":"044 276 80 40","Name":"WÃ¤rmebad KÃ¤ferberg"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.47986286113162,47.3886478983236]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.bad-altstetten.ch","Adresse":"Dachslernstrasse 35","PLZ":"8048","Tel":"044 431 77 44","Name":"Hallenbad Altstetten"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.50173204602248,47.4013205609613]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/hallenbad_blaesi/adresse.html","Adresse":"Limmattalstrasse 154","PLZ":"8049","Tel":"044 341 93 68","Name":"Hallenbad BlÃ¤si"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.56015050648561,47.3720376324258]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/hallenbad_bungertwies/adresse.html","Adresse":"Hofstrasse 56","PLZ":"8032","Tel":"044 251 77 30","Name":"Hallenbad Bungertwies"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53297126456966,47.372289444698]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ssd/de/index/sport/schwimmen/hallenbaeder/hallenbad_city/adresse.html","Adresse":"Sihlstrasse 71","PLZ":"8001","Tel":"","Name":"Hallenbad City"}}
+      ]
+    "cargo":
+      "name":"CargoTram", "type":"FeatureCollection" ,"features":[
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.51172926978877,47.3530684006283]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8045","Tel":"","Name":"ZÃ¼rich, Strassenverkehrsamt"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.56100586694545,47.3504137488599]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8008","Tel":"","Name":"ZÃ¼rich, Tiefenbrunnen"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.54978886527344,47.4218627924627]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8052","Tel":"","Name":"ZÃ¼rich, Seebach"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.54484110784434,47.3961574271697]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8057","Tel":"","Name":"ZÃ¼rich, Tramdepot UniversitÃ¤t Irchel"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.48480102340419,47.3743821570037]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8047","Tel":"","Name":"ZÃ¼rich, Albisrieden"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.57187536925445,47.3580164391588]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8032","Tel":"","Name":"ZÃ¼rich, Burgwies"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.59117476756865,47.4032514032016]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8051","Tel":"","Name":"ZÃ¼rich, Hirzenbach"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.50374136678112,47.3812341009568]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8003","Tel":"","Name":"ZÃ¼rich, Letzigrund"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.49163898376493,47.4027712367538]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8049","Tel":"","Name":"ZÃ¼rich, Wartau"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53017254532061,47.3384400956873]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8038","Tel":"","Name":"ZÃ¼rich, Wollishofen"}}
+        {"type":"Feature","geometry":{"type":"Point","coordinates":[8.51978279833471,47.3918521734772]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8005","Tel":"","Name":"ZÃ¼rich, Tramdepot Hard"}}
+      ]
 
 
   get: (key) ->
     switch key
       when 'playgrounds' then mockData.playgrounds
       when 'overlooks' then mockData.overlooks
+      when 'bikes' then mockData.bikes
+      when 'pools' then mockData.pools
+      when 'cargo' then mockData.cargo
       else
         'undefined key'
 
@@ -225,5 +261,17 @@ angular.module('ldLocalApi').factory 'dataService', ($q) ->
       {
         'name': 'overlooks in Zurich'
         'value': 'overlooks'
+      },
+      {
+        'name': 'bike rentals in Zurich'
+        'value': 'bikes'
+      },
+      {
+        'name': 'indoor pools in Zurich'
+        'value': 'pools'
+      },
+      {
+        'name': 'cargo Tram stations'
+        'value': 'cargo'
       }
     ]
