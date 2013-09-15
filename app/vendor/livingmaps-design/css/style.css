@@ -166,7 +166,7 @@ a:hover {
   text-decoration: underline;
 }
 
-img {
+.img-full-width {
   min-width: 100%;
 }
 
