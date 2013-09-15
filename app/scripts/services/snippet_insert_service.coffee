@@ -1,10 +1,10 @@
 angular.module('ldEditor').factory 'snippetInsertService',
-  (uiStateService, $compile, editorService, livingdocsService, mapInsertService) ->
+  (uiStateService, $compile, editorService, livingdocsService, angularTemplateService) ->
 
     page = new SnippetInsertor
       uiStateService: uiStateService
       $compile: $compile
-      mapInsertService: mapInsertService
+      angularTemplateService: angularTemplateService
       editorService: editorService
       livingdocsService: livingdocsService
 
