@@ -751,6 +751,14 @@ leafletDirective.directive('leaflet', [
                                         });
                                     }
                                 });
+
+                                if (geojson.hasOwnProperty("popupContentProperty")) {
+                                  if (feature.properties && $scope.geojson.popupContentProperty) {
+                                    layer.bindPopup(feature.properties[$scope.geojson.popupContentProperty]);
+                                  } else {
+                                    layer.unbindPopup();
+                                  }
+                                }
                             }
                         }).addTo(map);
                     }
