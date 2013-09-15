@@ -4,7 +4,7 @@ angular
     $locationProvider.html5Mode(true)
 
 
-  .run ($templateCache, documentService, docService, editorService) ->
+  .run ($templateCache, documentService, livingdocsService, editorService) ->
 
     # preload templates
     for templateName, template of angularTemplates
@@ -20,7 +20,7 @@ angular
 
     # setup events after the document is ready
     doc.ready ->
-      docService.setup()
+      livingdocsService.setup()
 
 
 # ===============
