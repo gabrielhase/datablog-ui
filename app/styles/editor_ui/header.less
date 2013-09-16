@@ -1,13 +1,25 @@
 .site-header {
   position: absolute;
   top: 0;
+  right: 0;
+  left: 0;
   width: 100%;
-  background-color: @green;
-  height: 250px;
+  background-color: @blue;
+  height: 260px;
   margin-bottom: 100px;
   color: #fff;
   border-bottom: 1px solid @grayLighter;
   box-shadow: 2px 5px 5px @grayLight;
+
+  p {
+    color: rgba(255,255,255,0.9);
+    span[class*="entypo-"] {
+      font-size: 1.2em;
+      width: 30px;
+      display: inline-block;
+      text-align: center;
+    }
+  }
 
   h1 {
     padding-top: 20px;
@@ -16,6 +28,7 @@
     font-family: 'proxima nova','Helvetica Neue',Helvetica,sans-serif;
     a {
       font-size: 0.5em;
+      color: rgba(255, 255, 255, 0.5);
     }
   }
 
@@ -26,5 +39,5 @@
 
 .doc-section {
   position: relative;
-  margin-top: 260px;
+  margin-top: 320px;
 }
