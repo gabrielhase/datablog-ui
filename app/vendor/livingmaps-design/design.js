@@ -35,12 +35,12 @@
     {
       "title": "Single Centered Column",
       "id": "column",
-      "html": "<div class=\"row-fluid\">\n  <div class=\"span12\" doc-container=\"\"></div>\n</div>"
+      "html": "<div class=\"row-fluid\"><div class=\"span12\" doc-container=\"\"></div></div>"
     },
     {
       "title": "Main and Sidebar Columns",
       "id": "mainAndSidebar",
-      "html": "<div class=\"row-fluid\">\n  <div class=\"span8\" doc-container=\"main\"></div>\n  <div class=\"span4\" doc-container=\"sidebar\"></div>\n</div>"
+      "html": "<div class=\"row-fluid\"><div class=\"span8\" doc-container=\"main\"></div><div class=\"span4\" doc-container=\"sidebar\"></div></div>"
     },
     {
       "title": "Button",
@@ -50,7 +50,7 @@
     {
       "title": "Hero",
       "id": "hero",
-      "html": "<div class=\"hero-unit\">\n  <h1 doc-editable=\"title\">Titel</h1>\n  <p doc-editable=\"tagline\">Tagline</p>\n</div>"
+      "html": "<div class=\"hero-unit\"><h1 doc-editable=\"title\">Titel</h1><p doc-editable=\"tagline\">Tagline</p></div>"
     },
     {
       "title": "Image",
@@ -60,22 +60,22 @@
     {
       "title": "Info",
       "id": "info",
-      "html": "<div class=\"alert alert-info\" doc-editable=\"info\">\n  Lorem Ipsum dolorem\n</div>"
+      "html": "<div class=\"alert alert-info\" doc-editable=\"info\">Lorem Ipsum dolorem</div>"
     },
     {
       "title": "Large Button",
       "id": "largeButton",
-      "html": "<div>\n  <hr>\n</div>"
+      "html": "<div><hr></div>"
     },
     {
       "title": "Map",
       "id": "map",
-      "html": "<div data-template=\"angular\">\n  <h3 doc-editable=\"title\">Title</h3>\n  <div data-is=\"leaflet-map\">\n    <iframe style=\"width: 100%\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe>\n  </div>\n</div>"
+      "html": "<div data-template=\"angular\"><h3 doc-editable=\"title\">Title</h3><div data-is=\"leaflet-map\" data-dependency=\"L\" data-dependency-resources=\"http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js;http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css\"><iframe style=\"width: 100%\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
     },
     {
       "title": "Seperator",
       "id": "seperator",
-      "html": "<div>\n  <hr>\n</div>"
+      "html": "<div><hr></div>"
     },
     {
       "title": "Paragraph Title",
@@ -90,12 +90,13 @@
     {
       "title": "Text",
       "id": "text",
-      "html": "<p doc-editable=\"text\">\n  Lorem ipsum dolorem. Lorem ipsum dolorem. Lorem ipsum dolorem\n</p>"
+      "html": "<p doc-editable=\"text\">Lorem ipsum dolorem. Lorem ipsum dolorem. Lorem ipsum dolorem</p>"
     },
     {
       "title": "Title",
       "id": "title",
       "html": "<h1 doc-editable=\"title\">Titel</h1>"
     }
-  ]
+  ],
+  "kickstarters": []
 };})();}).call(this);
