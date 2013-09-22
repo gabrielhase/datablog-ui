@@ -8,7 +8,7 @@ angular.module('ldEditor').factory 'angularTemplateService', ($rootScope, $compi
 
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
-    $template.data('template') == 'angular'
+    typeof $template.attr('data-template') != "undefined"
 
 
   insertAngularTemplate: (snippetModel) ->
