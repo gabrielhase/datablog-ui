@@ -8,16 +8,31 @@ angular.module('ldEditor').factory 'angularTemplateService', ($rootScope, $compi
 
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
-    $template.data('template') == 'angular'
+    typeof $template.attr('data-template') != "undefined"
 
 
   insertAngularTemplate: (snippetModel) ->
     snippetView = doc.document.renderer.snippets[snippetModel.id]
     for node in snippetView.$html.find('*[data-is]')
       switch $(node).data('is')
-        when 'leaflet-map' then @insertMap(snippetModel, $(node))
+        when 'leaflet-map'
+          @loadTemplate($(node), $.proxy(@insertMap, this, snippetModel, $(node)))
         else
           alert("unknown template value #{$(node).data('is')}")
+
+
+  loadTemplate: ($node, callback) ->
+    dependency = $node.data('dependency')
+    resourceList = $node.data('dependency-resources')
+    if dependency
+      yepnope [{
+        test: window.hasOwnProperty(dependency)
+        nope: resourceList.split(';')
+        complete: =>
+          callback()
+      }]
+    else
+      callback()
 
 
   insertMap: (snippetModel, $directiveRoot) ->
