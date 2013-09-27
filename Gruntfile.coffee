@@ -209,6 +209,16 @@ module.exports = (grunt) ->
             'generated/*'
           ]
         ]
+    simplemocha:
+      options:
+        reporter: 'spec',
+        timeout: '5000'
+      full:
+        src: ['.tmp/editor_test.js']
+      short:
+        options:
+          reporter: 'dot'
+        src: ['.tmp/editor_test.js']
     karma:
       unit:
         configFile: 'karma.conf.js'
@@ -255,6 +265,7 @@ module.exports = (grunt) ->
         'recess'
       ]
 
+  grunt.loadNpmTasks('grunt-simple-mocha')
 
   grunt.registerTask 'server', (target) ->
     if (target == 'dist')
@@ -275,7 +286,8 @@ module.exports = (grunt) ->
   grunt.registerTask('test', [
     'clean:server'
     'concurrent:coffee'
-    'karma:unit'
+    'simplemocha:full'
+    #'karma:unit'
   ])
 
   grunt.registerTask('build', [
