@@ -1,4 +1,4 @@
-angular.module('ldEditor').factory 'angularTemplateService', ($rootScope, $compile, dataService) ->
+angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, dataService) ->
 
   # Private Scope
   mapScopes = {}
