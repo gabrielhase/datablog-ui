@@ -24,9 +24,7 @@
     "grunt-ng-constant": "~0.4.2",
     "grunt-karma": "~0.4.5",
     "karma": "~0.10.2",
-    "karma-mocha": "",
-    "grunt-simple-mocha": "",
-    "karma-sinon-chai": ""
+    "karma-mocha": ""
   },
   "engines": {
     "node": ">=0.8.0"
