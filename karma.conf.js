@@ -1,82 +1,99 @@
 // Karma configuration
 
-module.exports = function(config) {
-  config.set({
-
-    // base path, that will be used to resolve files and exclude
-    basePath: '',
+// base path, that will be used to resolve files and exclude
+basePath = ''
 
 
-    // frameworks to use
-    frameworks: ['mocha', 'sinon-chai'],
+// frameworks to use
+frameworks = ['mocha', 'sinon-chai'];
 
 
-    // list of files / patterns to load in the browser
-    files: [
+// list of files / patterns to load in the browser
+files = [
+  MOCHA,
+  MOCHA_ADAPTER,
 
-      // the big guns
-      'app/vendor/jquery-1.9.1.js',
-      'app/vendor/angular/angular.js',
-      'app/vendor/angular/angular-mocks.js',
-      'app/vendor/angular-ui-bootstrap/*.js',
+  // the big guns
+  'app/vendor/jquery-1.9.1.js',
+  'app/vendor/angular/angular.js',
+  'app/vendor/angular/angular-mocks.js',
+  'app/vendor/angular-ui-bootstrap/*.js',
 
-      // livingdocs designs
-      'app/vendor/livingmaps-design/design.js',
+  // livingdocs designs
+  'app/vendor/livingmaps-design/design.js',
 
-      // livingdocs-engine
-      'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
-      'app/vendor/livingdocs-engine/vendor/store/store.js',
-      'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
-      'app/vendor/livingdocs-engine/livingdocs_engine.js',
+  // livingdocs-engine
+  'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
+  'app/vendor/livingdocs-engine/vendor/store/store.js',
+  'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
+  'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
-      // Maps
-      'app/vendor/leaflet/angular_leaflet_directive.js',
+  // Maps
+  'app/vendor/leaflet/angular_leaflet_directive.js',
 
-      // API
-      'app/scripts/components/environment/constants.js',
+  // Chai
+  'app/vendor/chai.js',
+  'app/vendor/sinon.js',
 
-      // specs
-      '.tmp/editor_test.js'
-    ],
+  // API
+  'app/scripts/components/environment/constants.js',
 
-    // list of files to exclude
-    exclude: [],
+  'app/scripts/utils/*.coffee',
+  'app/scripts/app.coffee',
+  'app/scripts/controllers/*.coffee',
+  'app/scripts/directives/*.coffee',
+  'app/scripts/models/*.coffee',
+  'app/scripts/services/*.coffee',
+  'app/scripts/filters/*.coffee',
+  'app/scripts/templates/*.coffee',
+  'app/scripts/components/**/component.coffee',
+  'app/scripts/components/**/*.coffee',
+  'test/spec/**/*.coffee'
 
-    // test results reporter to use
-    // possible values: dots || progress || growl
-    reporters: ['progress'],
+  // specs
+  //'.tmp/editor_test.js'
+];
 
-    // web server port
-    port: 8080,
-
-    // cli runner port
-    runnerPort: 9100,
-
-    // enable / disable colors in the output (reporters and logs)
-    colors: true,
-
-    // level of logging
-    // possible values: LOG_DISABLE || LOG_ERROR || LOG_WARN || LOG_INFO || LOG_DEBUG
-    logLevel: LOG_INFO,
-
-    // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
-
-    // Start these browsers, currently available:
-    // - Chrome
-    // - ChromeCanary
-    // - Firefox
-    // - Opera
-    // - Safari (only Mac)
-    // - PhantomJS
-    // - IE (only Windows)
-    browsers: ['PhantomJS'],
-
-    // If browser does not capture in given timeout [ms], kill it
-    captureTimeout: 60000,
-
-    // Continuous Integration mode
-    // if true, it capture browsers, run tests and exit
-    singleRun: false,
-  });
+preprocessors = {
+  '**/*.coffee': 'coffee'
 };
+
+// list of files to exclude
+exclude = [];
+
+// test results reporter to use
+// possible values: dots || progress || growl
+reporters = ['progress'];
+
+// web server port
+port = 8090;
+
+// cli runner port
+runnerPort = 9100;
+
+// enable / disable colors in the output (reporters and logs)
+colors = true;
+
+// level of logging
+// possible values: LOG_DISABLE || LOG_ERROR || LOG_WARN || LOG_INFO || LOG_DEBUG
+logLevel = LOG_INFO;
+
+// enable / disable watching file and executing tests whenever any file changes
+autoWatch = true;
+
+// Start these browsers, currently available:
+// - Chrome
+// - ChromeCanary
+// - Firefox
+// - Opera
+// - Safari (only Mac)
+// - PhantomJS
+// - IE (only Windows)
+browsers = ['PhantomJS'];
+
+// If browser does not capture in given timeout [ms], kill it
+captureTimeout = 5000;
+
+// Continuous Integration mode
+// if true, it capture browsers, run tests and exit
+singleRun = false;

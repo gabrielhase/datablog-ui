@@ -1,6 +1,8 @@
 # This file contains several helper functions to make testing angular components
 # easier, more descriptive, less verbose, and less error prone.
 
+expect = chai.expect
+
 # Stubs a service by name such that whenever that service is injected, the stub
 # is injected instead.
 #
