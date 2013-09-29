@@ -15,6 +15,23 @@ doc =
   DragDrop: ->
     true
 
+mockLeaflet = ->
+  return {
+    Icon:
+      extend: ->
+        true
+    Map: ->
+      setView: ->
+        true
+      on: ->
+        true
+    tileLayer: ->
+      return {
+        addTo: ->
+          true
+      }
+  }
+
 # Stubs a service by name such that whenever that service is injected, the stub
 # is injected instead.
 #
