@@ -1,7 +1,7 @@
 # String Helpers
 # --------------
 # inspired by [https://github.com/epeli/underscore.string]()
-@words = do ->
+@livingmapsWords = do ->
 
   # convert 'camelCase' to 'camel-case'
   snakeCase: (str) ->

@@ -1,10 +1,16 @@
-angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, dataService) ->
+angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile) ->
 
   # Private Scope
-  mapScopes = {}
-
+  LEAFLET_MAP_TEMPLATE = """
+    <div ng-controller="MapController">
+      <leaflet center="center" geojson="geojson">
+      </leaflet>
+    </div>
+  """
 
   # Service
+
+  mapScopes: {}
 
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
@@ -36,9 +42,9 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
 
 
   insertMap: (snippetModel, $directiveRoot) ->
-    template = '<div ng-controller="MapController"><leaflet center="center" geojson="geojson"></leaflet></div>'
+    template = LEAFLET_MAP_TEMPLATE
     mapScope = $rootScope.$new()
-    mapScopes[snippetModel.id] = mapScope
+    @mapScopes[snippetModel.id] = mapScope
     $compile(template)(mapScope, (map, childScope) =>
       childScope.center =  # my home
         lat: 47.388778
@@ -72,9 +78,9 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
 
 
   removeMap: (snippetModel) ->
-    scope = mapScopes[snippetModel.id]
+    scope = @mapScopes[snippetModel.id]
     scope.$destroy()
-    mapScopes[snippetModel.id] = undefined
+    @mapScopes[snippetModel.id] = undefined
 
 
   setupGeojsonListeners: (scope)->
