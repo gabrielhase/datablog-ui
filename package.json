@@ -2,7 +2,6 @@
   "name": "datablog-ui",
   "version": "0.0.0",
   "dependencies": {
-    "grunt-karma": "~0.4.5"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -16,14 +15,19 @@
     "grunt-contrib-watch": "~0.4.0",
     "grunt-usemin": "~0.1.11",
     "grunt-rev": "~0.1.0",
-    "grunt-karma": "~0.4.3",
     "grunt-open": "~0.2.0",
     "grunt-concurrent": "~0.3.0",
     "grunt-recess": "x",
     "matchdep": "~0.1.2",
     "connect-livereload": "~0.2.0",
     "grunt-ngmin": "~0.0.2",
-    "grunt-ng-constant": "~0.4.2"
+    "grunt-ng-constant": "~0.4.2",
+    "grunt-karma": "~0.7.1",
+    "karma": "~0.10.2",
+    "karma-mocha": "",
+    "karma-sinon-chai": "",
+    "karma-coverage": "git://github.com/moorcock/karma-coverage.git",
+    "grunt-simple-mocha": ""
   },
   "engines": {
     "node": ">=0.8.0"
