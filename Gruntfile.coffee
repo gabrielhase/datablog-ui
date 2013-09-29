@@ -50,9 +50,6 @@ module.exports = (grunt) ->
       coffee:
         files: ['<%= yeoman.app %>/scripts/**/*.coffee']
         tasks: ['concurrent:coffee']
-      coffeeTest:
-        files: ['test/spec/{,*/}*.coffee']
-        tasks: ['coffee:test']
       recess:
         files: ['<%= yeoman.app %>/styles/{,*/}*']
         tasks: ['recess:development']
@@ -77,13 +74,6 @@ module.exports = (grunt) ->
               lrSnippet
               mountFolder(connect, '.tmp')
               mountFolder(connect, yeomanConfig.app)
-            ]
-      test:
-        options:
-          middleware: (connect) ->
-            return [
-              mountFolder(connect, '.tmp')
-              mountFolder(connect, 'test')
             ]
       dist:
         options:
@@ -121,24 +111,6 @@ module.exports = (grunt) ->
             'app/scripts/templates/*.coffee'
             'app/scripts/components/**/component.coffee'
             'app/scripts/components/**/*.coffee'
-          ]
-        ]
-      test:
-        options:
-          join: true
-        files: [
-          '.tmp/editor_test.js': [
-            'app/scripts/utils/*.coffee'
-            'app/scripts/app.coffee'
-            'app/scripts/controllers/*.coffee'
-            'app/scripts/directives/*.coffee'
-            'app/scripts/models/*.coffee'
-            'app/scripts/services/*.coffee'
-            'app/scripts/filters/*.coffee'
-            'app/scripts/templates/*.coffee'
-            'app/scripts/components/**/component.coffee'
-            'app/scripts/components/**/*.coffee'
-            'test/spec/**/*.coffee'
           ]
         ]
     recess:
@@ -246,7 +218,6 @@ module.exports = (grunt) ->
       coffee: [
         'ngconstant:localApi'
         'coffee:tmp'
-        'coffee:test'
       ]
       dist: [
         'ngconstant:distApi'
@@ -255,6 +226,7 @@ module.exports = (grunt) ->
         'recess'
       ]
 
+  grunt.loadNpmTasks('grunt-simple-mocha')
 
   grunt.registerTask 'server', (target) ->
     if (target == 'dist')
@@ -274,7 +246,6 @@ module.exports = (grunt) ->
 
   grunt.registerTask('test', [
     'clean:server'
-    'concurrent:coffee'
     'karma:unit'
   ])
 
