@@ -25,9 +25,6 @@ module.exports = function(config) {
 
       // livingdocs-engine
       'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
-      'app/vendor/livingdocs-engine/vendor/store/store.js',
-      'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
-      'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',
@@ -42,7 +39,6 @@ module.exports = function(config) {
       'app/scripts/directives/*.coffee',
       'app/scripts/models/*.coffee',
       'app/scripts/services/*.coffee',
-      'app/scripts/filters/*.coffee',
       'app/scripts/templates/*.coffee',
       'app/scripts/components/**/component.coffee',
       'app/scripts/components/**/*.coffee',

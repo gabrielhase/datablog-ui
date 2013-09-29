@@ -3,6 +3,18 @@
 
 expect = chai.expect
 
+# mock doc (livingdocs-engine) globally
+# specific doc behavior can be "over-mocked" in specific specs
+doc =
+  ready: ->
+    true
+  init: ->
+    true
+  changed: ->
+    true
+  DragDrop: ->
+    true
+
 # Stubs a service by name such that whenever that service is injected, the stub
 # is injected instead.
 #

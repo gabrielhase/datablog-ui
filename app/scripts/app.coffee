@@ -10,7 +10,7 @@ angular
     for templateName, template of angularTemplates
       # put templates in cache by their name
       # flowtextOptions -> flowtext-options.html
-      fileName = "#{ doc.words.snakeCase(templateName) }.html"
+      fileName = "#{ words.snakeCase(templateName) }.html"
       $templateCache.put(fileName, template)
 
     # load document
