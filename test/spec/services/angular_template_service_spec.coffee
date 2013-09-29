@@ -84,20 +84,8 @@ describe 'angularTemplateService', ->
             @storedData.dataIdentifier
 
       @$directiveRoot = $('<div></div>')
-      window.L =
-        Icon:
-          extend: ->
-            true
-        Map: ->
-          setView: ->
-            true
-          on: ->
-            true
-        tileLayer: ->
-          return {
-            addTo: ->
-              true
-          }
+      window.L = mockLeaflet()
+
 
 
     it 'inserts a leaflet-map snippet', ->
