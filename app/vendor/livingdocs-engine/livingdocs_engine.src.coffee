@@ -555,6 +555,10 @@ stash = do ->
     JSON.stringify(obj, null, 2) # "\t"
 
 
+  trim: (str) ->
+    str.replace(/^\s+|\s+$/g, '')
+
+
   # camelize: (str) ->
   #   $.trim(str).replace(/[-_\s]+(.)?/g, (match, c) ->
   #     c.toUpperCase()
@@ -942,19 +946,19 @@ class SnippetModel
 
 
   set: (name, value) ->
-    if @content?.hasOwnProperty(name)
-      if @content[name] != value
-        @content[name] = value
-        @snippetTree.contentChanging(this, name) if @snippetTree
-    else
-      log.error("set error: #{ @identifier } has no content named #{ name }")
+    assert @content?.hasOwnProperty(name),
+      "set error: #{ @identifier } has no content named #{ name }"
+
+    if @content[name] != value
+      @content[name] = value
+      @snippetTree.contentChanging(this, name) if @snippetTree
 
 
   get: (name) ->
-    if @content?.hasOwnProperty(name)
-      @content[name]
-    else
-      log.error("get error: #{ @identifier } has no name named #{ name }")
+    assert @content?.hasOwnProperty(name),
+      "get error: #{ @identifier } has no content named #{ name }"
+
+    @content[name]
 
 
   data: (name, value) ->
@@ -1143,10 +1147,9 @@ SnippetModel.fromJson = (json, design) ->
   model = new SnippetModel({ template, id: json.id })
 
   for name, value of json.content
-    if model.content.hasOwnProperty(name)
-      model.content[name] = value
-    else
-      log.error("error while deserializing snippet: unknown content '#{ name }'")
+    assert model.content.hasOwnProperty(name),
+      "error while deserializing snippet: unknown content '#{ name }'"
+    model.content[name] = value
 
   for styleName, value of json.styles
     model.style(styleName, value)
@@ -1465,15 +1468,12 @@ class DirectiveCollection
 
   # @api private
   assertNameNotUsed: (directive) ->
-    if @all[directive.name]
-      log.error(
-        """
-        #{directive.type} Template parsing error:
-        #{ docAttr[directive.type] }="#{ directive.name }".
-        "#{ directive.name }" is a duplicate name.
-        """
-      )
-
+    assert not @all[directive.name],
+      """
+      #{directive.type} Template parsing error:
+      #{ docAttr[directive.type] }="#{ directive.name }".
+      "#{ directive.name }" is a duplicate name.
+      """
 
 # Directive Iterator
 # ---------------------
@@ -1722,7 +1722,10 @@ class Template
     $elem = $(elem)
     $elem.addClass(docClass.editable)
 
-    defaultValue = elem.innerHTML
+
+    defaultValue = words.trim(elem.innerHTML)
+    elem.innerHTML = defaultValue
+
     # not sure how to deal with default values in editables...
     # elem.innerHTML = ''
 
@@ -1775,9 +1778,6 @@ Template.parseIdentifier = (identifier) ->
     { namespace: parts[0], id: parts[1] }
   else
     log.error("could not parse snippet template identifier: #{ identifier }")
-    { namespace: undefined , id: undefined }
-
-
 
 class Design
 
@@ -1833,8 +1833,11 @@ class Design
       templates = {}
       for templateId in group.templates
         templateDefinition = @templateDefinitions[templateId]
-        template = @add(templateDefinition, groupStyles)
-        templates[template.id] = template
+        if templateDefinition
+          template = @add(templateDefinition, groupStyles)
+          templates[template.id] = template
+        else
+          log.warn("The template '#{templateId}' referenced in the group '#{groupName}' does not exist.")
 
       @addGroup(groupName, group, templates)
 
@@ -2368,6 +2371,7 @@ class DragDrop
         direct: false
         preventDefault: true
         createPlaceholder: DragDrop.placeholder
+        scrollNearEdge: 50
       }, options)
 
     # per drag properties
@@ -2383,7 +2387,12 @@ class DragDrop
     @reset()
     @drag.initialized = true
     @options = $.extend({}, @defaultOptions, options)
-    @drag.startPoint = { left: event.pageX, top: event.pageY }
+    if event.type == 'touchstart'
+      @drag.startPoint =
+        left: event.originalEvent.changedTouches[0].pageX
+        top: event.originalEvent.changedTouches[0].pageY
+    else
+      @drag.startPoint = { left: event.pageX, top: event.pageY }
     @$origin = $origin
 
     if @options.longpressDelay and @options.longpressDistanceLimit
@@ -2424,6 +2433,27 @@ class DragDrop
       @$origin?.addClass(docClass.dragged)
 
 
+  # only vertical scrolling
+  scrollIntoView: (top, event) ->
+    if @lastScrollPosition
+      delta = top - @lastScrollPosition
+      viewportTop = $(window).scrollTop()
+      viewportBottom = viewportTop + $(window).height()
+
+      shouldScroll =
+        if delta < 0 # upward movement
+          inScrollUpArea = top < viewportTop + @defaultOptions.scrollNearEdge
+          viewportTop != 0 && inScrollUpArea
+        else # downward movement
+          abovePageBottom = viewportBottom - $(window).height() < ($(window.document).height())
+          inScrollDownArea = top > viewportBottom - @defaultOptions.scrollNearEdge
+          abovePageBottom && inScrollDownArea
+
+      window.scrollBy(0, delta) if shouldScroll
+
+    @lastScrollPosition = top
+
+
   move: (mouseLeft, mouseTop, event) ->
     if @drag.started
       if @drag.mouseToSnippet
@@ -2441,6 +2471,7 @@ class DragDrop
       top = 2 if top < 2
 
       @$dragged.css({ position:'absolute', left:"#{ left }px", top:"#{ top }px" })
+      @scrollIntoView(top, event)
       @dropTarget(mouseLeft, mouseTop, event) if !@direct
 
     else if @drag.initialized
@@ -2467,12 +2498,18 @@ class DragDrop
   dropTarget: (mouseLeft, mouseTop, event) ->
     if @$dragged && event
       elem = undefined
+      if event.type == 'touchstart' || event.type == 'touchmove'
+        x = event.originalEvent.changedTouches[0].clientX
+        y = event.originalEvent.changedTouches[0].clientY
+      else
+        x = event.clientX
+        y = event.clientY
 
       # get the element we're currently hovering
-      if event.clientX && event.clientY
+      if x && y
         @$dragged.hide()
         # todo: Safari 4 and Opera 10.10 need pageX/Y.
-        elem = window.document.elementFromPoint(event.clientX, event.clientY)
+        elem = window.document.elementFromPoint(x, y)
         @$dragged.show()
 
       # check if a drop is possible
@@ -2580,14 +2617,17 @@ class EditableController
     @selection = $.Callbacks()
 
     Editable
-      .focus($.proxy(@focus, @))
-      .blur($.proxy(@blur, @))
-      .insert($.proxy(@insert, @))
-      .merge($.proxy(@merge, @))
-      .split($.proxy(@split, @))
-      .selection($.proxy(@selectionChanged, @))
+      .focus(@withContext(@focus))
+      .blur(@withContext(@blur))
+      .insert(@withContext(@insert))
+      .merge(@withContext(@merge))
+      .split(@withContext(@split))
+      .selection(@withContext(@selectionChanged))
+      .newline(@withContext(@newline))
 
 
+  # Register DOM nodes with EditableJS.
+  # After that Editable will fire events for that node.
   add: (nodes) ->
     Editable.add(nodes)
 
@@ -2600,21 +2640,39 @@ class EditableController
     $('[contenteditable]').attr('contenteditable', 'true')
 
 
-  focus: (element) ->
-    snippetView = dom.findSnippetView(element)
-    @page.focus.editableFocused(element, snippetView)
+  # Get view and editableName from the DOM element passed by EditableJS
+  #
+  # All listeners params get transformed so they get view and editableName
+  # instead of element:
+  #
+  # Example: listener(view, editableName, otherParams...)
+  withContext: (func) ->
+    (element, args...) =>
+      view = dom.findSnippetView(element)
+      editableName = element.getAttribute(docAttr.editable)
+      args.unshift(view, editableName)
+      func.apply(this, args)
 
 
-  blur: (element) ->
-    snippetView = dom.findSnippetView(element)
-    @page.focus.editableBlurred(element, snippetView)
-    editableName = element.getAttribute(docAttr.editable)
-    snippetView.model.set(editableName, element.innerHTML)
+  updateModel: (view, editableName) ->
+    view.model.set(editableName, view.get(editableName))
 
 
-  insert: (element, direction, cursor) ->
-    view = dom.findSnippetView(element)
-    if view.model.editableCount == 1
+  focus: (view, editableName) ->
+    element = view.directives.get(editableName).elem
+    @page.focus.editableFocused(element, view)
+    true # enable editableJS default behaviour
+
+
+  blur: (view, editableName) ->
+    element = view.directives.get(editableName).elem
+    @page.focus.editableBlurred(element, view)
+    @updateModel(view, editableName)
+    true # enable editableJS default behaviour
+
+
+  insert: (view, editableName, direction, cursor) ->
+    if @hasSingleEditable(view)
 
       # todo: make this configurable
       template = document.design.get('text')
@@ -2632,24 +2690,31 @@ class EditableController
     false # disable editableJS default behaviour
 
 
-  merge: (element, direction, cursor) ->
-    view = dom.findSnippetView(element)
-    if view.model.editableCount == 1
+  merge: (view, editableName, direction, cursor) ->
+    if @hasSingleEditable(view)
       mergedView = if direction == 'before' then view.prev() else view.next()
-      mergedView.focus() if mergedView
 
-      # todo: check if mergedView is of same type or of type text
       if mergedView.template == view.template
+
+        # create document fragment
+        contents = $(view.directives.get(editableName).elem).contents()
+        frag = @page.document.createDocumentFragment()
+        for el in contents
+          frag.appendChild(el)
+
+        mergedView.focus()
+        elem = mergedView.directives.get(editableName).elem
+        cursor = Editable.createCursor(elem, if direction == 'before' then 'end' else 'beginning')
+        cursor[ if direction == 'before' then 'insertAfter' else 'insertBefore' ](frag)
+
         view.model.remove()
+        cursor.setSelection()
 
-
-    log('engine: merge')
     false # disable editableJS default behaviour
 
 
-  split: (element, before, after, cursor) ->
-    view = dom.findSnippetView(element)
-    if view.model.editableCount == 1
+  split: (view, editableName, before, after, cursor) ->
+    if @hasSingleEditable(view)
       copy = view.template.createModel()
 
       # get content out of 'before' and 'after'
@@ -2657,7 +2722,6 @@ class EditableController
       afterContent = after.querySelector('*').innerHTML
 
       # set editable of snippets to innerHTML of fragments
-      editableName = Object.keys(view.template.editables)[0]
       view.model.set(editableName, beforeContent)
       copy.set(editableName, afterContent)
 
@@ -2668,9 +2732,17 @@ class EditableController
     false # disable editableJS default behaviour
 
 
-  selectionChanged: (element, selection) ->
-    snippetView = dom.findSnippetView(element)
-    @selection.fire(snippetView, element, selection)
+  selectionChanged: (view, editableName, selection) ->
+    element = view.directives.get(editableName).elem
+    @selection.fire(view, element, selection)
+
+
+  newline: (view, editable, cursor) ->
+    false # disable editableJS default behaviour
+
+
+  hasSingleEditable: (view) ->
+    view.directives.length == 1 && view.directives[0].type == 'editable'
 
 # Document Focus
 # --------------
@@ -2898,10 +2970,12 @@ class Loader
 # Defines the API between the DOM and the document
 class Page
 
+  LEFT_MOUSE_BUTTON = 1
 
   constructor: ->
-    @$document = $(window.document)
-    @$body = $(window.document.body)
+    @document = window.document
+    @$document = $(@document)
+    @$body = $(@document.body)
 
     @loader = new Loader()
     @focus = new Focus()
@@ -2914,9 +2988,10 @@ class Page
       preventDefault: false
 
     @$document
-      .on('click.livingdocs', $.proxy(@click, @))
-      .on('mousedown.livingdocs', $.proxy(@mousedown, @))
-      .on('dragstart', $.proxy(@browserDragStart, @))
+      .on('click.livingdocs', $.proxy(@click, this))
+      .on('mousedown.livingdocs', $.proxy(@mousedown, this))
+      .on('touchstart.livingdocs', $.proxy(@mousedown, this))
+      .on('dragstart', $.proxy(@browserDragStart, this))
 
 
   # prevent the browser Drag&Drop from interfering
@@ -2943,25 +3018,46 @@ class Page
 
 
   mousedown: (event) ->
-    return if event.which != 1 # only respond to left mouse button
+    return if event.which != LEFT_MOUSE_BUTTON && event.type == 'mousedown' # only respond to left mouse button
     snippetView = dom.findSnippetView(event.target)
 
     if snippetView
-      @startDrag(snippetView: snippetView, dragDrop: @snippetDragDrop)
+      @startDrag
+        snippetView: snippetView
+        dragDrop: @snippetDragDrop
+        event: event
 
 
-  startDrag: ({ snippet, snippetView, dragDrop }) ->
-    return unless snippet || snippetView
-    snippet = snippetView.model if snippetView
-
-    @$document.on 'mousemove.livingdocs-drag', (event) ->
-      dragDrop.move(event.pageX, event.pageY, event)
-
-    @$document.on 'mouseup.livingdocs-drag', =>
+  # These events are initialized immediately to allow a long-press finish
+  registerDragStopEvents: (dragDrop, event) ->
+    eventNames =
+      if event.type == 'touchstart'
+        'touchend.livingdocs-drag touchcancel.livingdocs-drag touchleave.livingdocs-drag'
+      else
+        'mouseup.livingdocs-drag'
+    @$document.on eventNames, =>
       dragDrop.drop()
       @$document.off('.livingdocs-drag')
 
-    snippetDrag = new SnippetDrag({ snippet: snippet, page: this })
+
+  # These events are possibly initialized with a delay in snippetDrag#onStart
+  registerDragStartEvents: (dragDrop, event) ->
+    if event.type == 'touchstart'
+      @$document.on 'touchmove.livingdocs-drag', (event) ->
+        event.preventDefault()
+        dragDrop.move(event.originalEvent.changedTouches[0].pageX, event.originalEvent.changedTouches[0].pageY, event)
+
+    else # all other input devices behave like a mouse
+      @$document.on 'mousemove.livingdocs-drag', (event) ->
+        dragDrop.move(event.pageX, event.pageY, event)
+
+
+  startDrag: ({ snippet, snippetView, dragDrop, event }) ->
+    return unless snippet || snippetView
+    snippet = snippetView.model if snippetView
+
+    @registerDragStopEvents(dragDrop, event)
+    snippetDrag = new SnippetDrag({ snippet: snippet, page: this, registerDragStartEvents: $.proxy(@registerDragStartEvents, this, dragDrop, event)})
 
     $snippet = snippetView.$html if snippetView
     dragDrop.mousedown $snippet, event,
@@ -3020,16 +3116,16 @@ class Renderer
   # ---------------------------
 
   setupPageListeners: ->
-    @page.focus.snippetFocus.add( $.proxy(this, 'highlightSnippet') )
-    @page.focus.snippetBlur.add( $.proxy(this, 'removeSnippetHighlight') )
+    @page.focus.snippetFocus.add( $.proxy(@highlightSnippet, this) )
+    @page.focus.snippetBlur.add( $.proxy(@removeSnippetHighlight, this) )
 
 
   setupSnippetTreeListeners: ->
-    @snippetTree.snippetAdded.add( $.proxy(this, 'snippetAdded') )
-    @snippetTree.snippetRemoved.add( $.proxy(this, 'snippetRemoved') )
-    @snippetTree.snippetMoved.add( $.proxy(this, 'snippetMoved') )
-    @snippetTree.snippetContentChanged.add( $.proxy(this, 'snippetContentChanged') )
-    @snippetTree.snippetHtmlChanged.add( $.proxy(this, 'snippetHtmlChanged') )
+    @snippetTree.snippetAdded.add( $.proxy(@snippetAdded, this) )
+    @snippetTree.snippetRemoved.add( $.proxy(@snippetRemoved, this) )
+    @snippetTree.snippetMoved.add( $.proxy(@snippetMoved, this) )
+    @snippetTree.snippetContentChanged.add( $.proxy(@snippetContentChanged, this) )
+    @snippetTree.snippetHtmlChanged.add( $.proxy(@snippetHtmlChanged, this) )
 
 
   snippetAdded: (model) ->
@@ -3172,17 +3268,19 @@ class Renderer
 class SnippetDrag
 
 
-  constructor: ({ snippet, page }) ->
+  constructor: ({ snippet, page, registerDragStartEvents }) ->
+    @registerDragStartEvents = registerDragStartEvents
     @snippet = snippet
     @page = page
     @$highlightedContainer = {}
-    @onStart = $.proxy(@onStart, @)
-    @onDrag = $.proxy(@onDrag, @)
-    @onDrop = $.proxy(@onDrop, @)
+    @onStart = $.proxy(@onStart, this)
+    @onDrag = $.proxy(@onDrag, this)
+    @onDrop = $.proxy(@onDrop, this)
     @classAdded = []
 
 
   onStart: () ->
+    @registerDragStartEvents()
     @$insertPreview = $("<div class='doc-drag-preview'>")
     @page.$body
       .append(@$insertPreview)
