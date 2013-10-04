@@ -1,23 +1,8 @@
 angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile) ->
 
-  # Private Scope
-  LEAFLET_MAP_TEMPLATE = """
-    <div ng-controller="MapController">
-      <leaflet center="center" geojson="geojson">
-      </leaflet>
-    </div>
-  """
-
-  CHOROPLETH_MAP_TEMPLATE = """
-    <div ng-controller="ChoroplethController">
-      <choropleth></choropleth>
-    </div>
-  """
-
   # Service
 
-  mapScopes: {}
-  choroplethScopes: {}
+  templateInstances: {}
 
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
@@ -29,9 +14,9 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     for node in snippetView.$html.find('*[data-is]')
       switch $(node).data('is')
         when 'leaflet-map'
-          @loadTemplate($(node), $.proxy(@insertMap, this, snippetModel, $(node)))
+          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new Map))
         when 'd3-choropleth'
-          @loadTemplate($(node), $.proxy(@insertChoropleth, this, snippetModel, $(node)))
+          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new Choropleth))
         else
           alert("unknown template value #{$(node).data('is')}")
 
@@ -50,63 +35,19 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
       callback()
 
 
-  insertChoropleth: (snippetModel, $directiveRoot) ->
-    template = CHOROPLETH_MAP_TEMPLATE
-    choroplethScope = $rootScope.$new()
-    @choroplethScopes[snippetModel.id] = choroplethScope
-    $compile(template)(choroplethScope, (choropleth, childScope) =>
+  insertTemplateInstance: (snippetModel, $directiveRoot, instance) ->
+    instanceScope = $rootScope.$new()
+    $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
       childScope.snippetModel = snippetModel
-
-      # TODO: listen to changes
-
-      $directiveRoot.html(choropleth)
+      instance.wasInserted(snippetModel, childScope)
+      $directiveRoot.html(instanceHtml)
+      @templateInstances[snippetModel.id] =
+        instance: instance
+        scope: instanceScope
     )
-
-
-  insertMap: (snippetModel, $directiveRoot) ->
-    template = LEAFLET_MAP_TEMPLATE
-    mapScope = $rootScope.$new()
-    @mapScopes[snippetModel.id] = mapScope
-    $compile(template)(mapScope, (map, childScope) =>
-      childScope.center =  # my home
-        lat: 47.388778
-        lng: 8.541971
-        zoom: 12
-
-      childScope.snippetModel = snippetModel
-      childScope.$watch('snippetModel.data("dataIdentifier")', (newVal) =>
-        @populateData(snippetModel, childScope)
-      )
-      childScope.$watch('snippetModel.data("popupContentProperty")', (newVal) =>
-        @populateData(snippetModel, childScope)
-      )
-
-      @setupGeojsonListeners(childScope)
-
-      $directiveRoot.html(map)
-    )
-
-
-  populateData: (snippetModel, scope) ->
-    newData = snippetModel.data('geojson')
-    if newData
-      scope.geojson =
-        data: newData
-        popupContentProperty: snippetModel.data('popupContentProperty')
 
 
   removeAngularTemplate: (snippetModel) ->
-    @removeMap(snippetModel)
-
-
-  removeMap: (snippetModel) ->
-    scope = @mapScopes[snippetModel.id]
+    scope = @templateInstances[snippetModel.id].scope
     scope.$destroy()
-    @mapScopes[snippetModel.id] = undefined
-
-
-  setupGeojsonListeners: (scope)->
-    # scope.$on "leafletDirectiveMap.geojsonClick", (ev, featureSelected, leafletEvent) ->
-    #   console.log(featureSelected)
-
-
+    @templateInstances[snippetModel.id] = undefined
