@@ -14,5 +14,5 @@ angular.module('ldEditor').directive 'snippetDrag', ->
       $(element).on 'mousedown', (event) ->
         if identifier?
           newSnippet = doc.create(identifier)
-          doc.startDrag(snippet: newSnippet, dragDrop: dragDrop)
+          doc.startDrag(snippet: newSnippet, dragDrop: dragDrop, event: event)
   }
