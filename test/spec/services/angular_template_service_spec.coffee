@@ -100,7 +100,7 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a leaflet-map snippet', ->
-      service.insertMap(@snippetModel, @$directiveRoot)
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new Map)
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="MapController" class="ng-scope">
           <div class="angular-leaflet-map" center="center" geojson="geojson"></div>
@@ -109,10 +109,11 @@ describe 'angularTemplateService', ->
 
 
     it 'reacts to changes on the maps dataIdentifier', ->
-      service.insertMap(@snippetModel, @$directiveRoot)
-      populateData = sinon.spy(service, 'populateData')
+      map = new Map
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, map)
+      populateData = sinon.spy(map, 'populateData')
       @snippetModel.storedData.dataIdentifier = 'changedTestData'
-      service.mapScopes[@snippetModel.id].$digest() # force the digest from the tests
+      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
       expect(populateData).to.have.been.called
 
 
@@ -130,31 +131,13 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a d3-choropleth snippet', ->
-      service.insertChoropleth(@snippetModel, @$directiveRoot)
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new Choropleth)
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="ChoroplethController" class="ng-scope">
-          <choropleth></choropleth>
+          <choropleth>
+          </choropleth>
         </div>
       """)
 
 
     it 'reacts to changes on the choropleths dataIdentifier'
-
-
-  describe 'populating data from snippet model', ->
-
-    beforeEach ->
-      @scope = {}
-      @snippetModel =
-        data: (type) ->
-          if type == 'geojson'
-            return { someData: 'this would be geojson' }
-          if type == 'popupContentProperty'
-            return { popupContentProperty: 'name' }
-
-
-    it 'does populate the scope with the snippet models data', ->
-      service.populateData(@snippetModel, @scope)
-      expect(@scope.geojson.data).to.eql(@snippetModel.data('geojson'))
-      expect(@scope.geojson.popupContentProperty).to.eql(@snippetModel.data('popupContentProperty'))
-
