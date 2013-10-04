@@ -14,12 +14,16 @@ class Choropleth
 
   # CLASS INTERFACE
 
-  insert: ->
+  wasInserted: ->
     # todo
 
 
   remove: ->
     # todo
+
+
+  getTemplate: ->
+    template
 
 
   # IMPLEMENTATION DETAILS
