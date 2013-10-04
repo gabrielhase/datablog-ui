@@ -8,9 +8,16 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     </div>
   """
 
+  CHOROPLETH_MAP_TEMPLATE = """
+    <div ng-controller="ChoroplethController">
+      <choropleth></choropleth>
+    </div>
+  """
+
   # Service
 
   mapScopes: {}
+  choroplethScopes: {}
 
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
@@ -23,6 +30,8 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
       switch $(node).data('is')
         when 'leaflet-map'
           @loadTemplate($(node), $.proxy(@insertMap, this, snippetModel, $(node)))
+        when 'd3-choropleth'
+          @loadTemplate($(node), $.proxy(@insertChoropleth, this, snippetModel, $(node)))
         else
           alert("unknown template value #{$(node).data('is')}")
 
@@ -39,6 +48,19 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
       }]
     else
       callback()
+
+
+  insertChoropleth: (snippetModel, $directiveRoot) ->
+    template = CHOROPLETH_MAP_TEMPLATE
+    choroplethScope = $rootScope.$new()
+    @choroplethScopes[snippetModel.id] = choroplethScope
+    $compile(template)(choroplethScope, (choropleth, childScope) =>
+      childScope.snippetModel = snippetModel
+
+      # TODO: listen to changes
+
+      $directiveRoot.html(choropleth)
+    )
 
 
   insertMap: (snippetModel, $directiveRoot) ->
