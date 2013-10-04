@@ -6,43 +6,57 @@ do ->
   @config = {
     wordSeparators: "./\\()\"':,.;<>~!#%^&*|+=[]{}`~?"
     attributePrefix: 'data'
+
+    # Here you find everything that can end up in the html
+    # the engine spits out or works with.
+    html:
+
+      # css classes injected by the engine
+      css:
+        # document classes
+        section: 'doc-section'
+
+        # snippet classes
+        snippet: 'doc-snippet'
+        editable: 'doc-editable'
+        interface: 'doc-ui'
+
+        # highlight classes
+        snippetHighlight: 'doc-snippet-highlight'
+        containerHighlight: 'doc-container-highlight'
+
+        # drag & drop
+        draggedPlaceholder: 'doc-dragged-placeholder'
+        dragged: 'doc-dragged'
+        beforeDrop: 'doc-before-drop'
+        afterDrop: 'doc-after-drop'
+
+        # utility classes
+        preventSelection: 'doc-no-selection'
+        maximizedContainer: 'doc-js-maximized-container'
+        interactionBlocker: 'doc-interaction-blocker'
+
+
+    template:
+
+      # attributes used in templates to define directives
+      directives:
+        editable: 'doc-editable'
+        container: 'doc-container'
+        image: 'doc-image'
+        html: 'doc-html'
+
+      defaultValues:
+        editable: 'default'
+        container: 'default'
+        image: 'image'
+        html: 'default'
   }
 
-  # constants for classes used in a document
-  @docClass =
-
-    # document classes
-    section: 'doc-section'
-
-    # snippet classes
-    snippet: 'doc-snippet'
-    editable: 'doc-editable'
-    interface: 'doc-ui'
-
-    # highlight classes
-    snippetHighlight: 'doc-snippet-highlight'
-    containerHighlight: 'doc-container-highlight'
-
-    # drag & drop
-    draggedPlaceholder: 'doc-dragged-placeholder'
-    dragged: 'doc-dragged'
-    beforeDrop: 'doc-before-drop'
-    afterDrop: 'doc-after-drop'
-
-    # utility classes
-    preventSelection: 'doc-no-selection'
-    maximizedContainer: 'doc-js-maximized-container'
-
-
-  # constants for attributes used in a template
-  @templateAttr =
-    editable: 'doc-editable'
-    container: 'doc-container'
-    image: 'doc-image'
-    defaultValues:
-      editable: 'default'
-      container: 'default'
-      image: 'image'
+  # shorthands
+  @docClass = config.html.css
+  @templateAttr = config.template.directives
+  @templateAttr.defaultValues = config.template.defaultValues
 
   @templateAttrLookup = {}
 
@@ -92,6 +106,18 @@ chainableProxy = (chainedObj) ->
       chainedObj
 
     proxy
+
+eventing = do ->
+
+  # Add an event listener to a $.Callbacks object that will
+  # remove itself from its $.Callbacks after the first call.
+  callOnce: (callbacks, listener) ->
+    selfRemovingFunc = (args...) ->
+      callbacks.remove(selfRemovingFunc)
+      listener.apply(this, args)
+
+    callbacks.add(selfRemovingFunc)
+    selfRemovingFunc
 
 guid = do ->
 
@@ -869,7 +895,6 @@ class SnippetContainer
 # # @prop parentContainer: parent SnippetContainer
 class SnippetModel
 
-
   constructor: ({ @template, id } = {}) ->
     assert @template, 'cannot instantiate snippet without template reference'
 
@@ -892,7 +917,7 @@ class SnippetModel
           @containers[directive.name] = new SnippetContainer
             name: directive.name
             parentSnippet: this
-        when 'editable', 'image'
+        when 'editable', 'image', 'html'
           @content ||= {}
           @content[directive.name] = undefined
         else
@@ -905,6 +930,10 @@ class SnippetModel
 
   hasEditables: ->
     @template.directives.count('editable') > 0
+
+
+  hasHtml: ->
+    @template.directives.count('html') > 0
 
 
   hasImages: ->
@@ -1435,7 +1464,7 @@ class DirectiveCollection
     @all[directive.name] = directive
 
     # index by type
-    # directive.type is one of those 'container', 'editable', 'image'
+    # directive.type is one of those 'container', 'editable', 'image', 'html'
     this[directive.type] ||= []
     this[directive.type].push(directive)
 
@@ -1464,6 +1493,11 @@ class DirectiveCollection
       this[type]?.length
     else
       @length
+
+
+  each: (callback) ->
+    for directive in this
+      callback(directive)
 
 
   # @api private
@@ -1696,13 +1730,12 @@ class Template
     elem = @$template[0]
     @directives = @getDirectives(elem)
 
-    if editables = @directives.editable
-      for directive in editables
-        @formatEditable(directive.name, directive.elem)
-
-    if containers = @directives.container
-      for directive in containers
-        @formatContainer(directive.name, directive.elem)
+    @directives.each (directive) =>
+      switch directive.type
+        when 'editable'
+          @formatEditable(directive.name, directive.elem)
+        when 'container'
+          @formatContainer(directive.name, directive.elem)
 
 
   # Find and store all DOM nodes which are editables or containers
@@ -2163,6 +2196,31 @@ dom = do ->
     return undefined
 
 
+  findNodeContext: (node) ->
+    node = @getElementNode(node)
+
+    while node && node.nodeType == 1 # Node.ELEMENT_NODE == 1
+
+      nodeContext = @getNodeContext(node)
+      return nodeContext if nodeContext
+
+      node = node.parentNode
+
+    return undefined
+
+
+  getNodeContext: (node) ->
+    for key, contextAttr of docAttr
+      continue if key == 'template'
+      if node.hasAttribute(contextAttr)
+        return {
+          contextAttr: contextAttr
+          attrName: node.getAttribute(contextAttr)
+        }
+
+    return undefined
+
+
   # Find the container this node is contained within.
   findContainer: (node) ->
     node = @getElementNode(node)
@@ -2188,6 +2246,12 @@ dom = do ->
     if node.hasAttribute(docAttr.image)
       imageName = node.getAttribute(docAttr.image)
       return imageName
+
+
+  getHtmlElementName: (node) ->
+    if node.hasAttribute(docAttr.html)
+      htmlElementName = node.getAttribute(docAttr.html)
+      return htmlElementName
 
 
   getEditableName: (node) ->
@@ -2707,6 +2771,12 @@ class EditableController
         cursor = Editable.createCursor(elem, if direction == 'before' then 'end' else 'beginning')
         cursor[ if direction == 'before' then 'insertAfter' else 'insertBefore' ](frag)
 
+        # Make sure the model of the mergedView is up to date
+        # otherwise bugs like in issue #56 can occur.
+        cursor.save()
+        @updateModel(mergedView, editableName)
+        cursor.restore()
+
         view.model.remove()
         cursor.setSelection()
 
@@ -2979,8 +3049,13 @@ class Page
 
     @loader = new Loader()
     @focus = new Focus()
-    @imageClick = $.Callbacks()
     @editableController = new EditableController(this)
+
+    # events
+    @imageClick = $.Callbacks() # (snippetView, fieldName, event) ->
+    @htmlElementClick = $.Callbacks() # (snippetView, fieldName, event) ->
+    @snippetWillBeDragged = $.Callbacks() # (snippetModel) ->
+    @snippetWasDropped = $.Callbacks() # (snippetModel) ->
 
     @snippetDragDrop = new DragDrop
       longpressDelay: 400
@@ -3041,7 +3116,7 @@ class Page
 
 
   # These events are possibly initialized with a delay in snippetDrag#onStart
-  registerDragStartEvents: (dragDrop, event) ->
+  registerDragMoveEvents: (dragDrop, event) ->
     if event.type == 'touchstart'
       @$document.on 'touchmove.livingdocs-drag', (event) ->
         event.preventDefault()
@@ -3056,8 +3131,9 @@ class Page
     return unless snippet || snippetView
     snippet = snippetView.model if snippetView
 
+    @registerDragMoveEvents(dragDrop, event)
     @registerDragStopEvents(dragDrop, event)
-    snippetDrag = new SnippetDrag({ snippet: snippet, page: this, registerDragStartEvents: $.proxy(@registerDragStartEvents, this, dragDrop, event)})
+    snippetDrag = new SnippetDrag({ snippet: snippet, page: this })
 
     $snippet = snippetView.$html if snippetView
     dragDrop.mousedown $snippet, event,
@@ -3068,6 +3144,7 @@ class Page
 
   click: (event) ->
     snippetView = dom.findSnippetView(event.target)
+    nodeContext = dom.findNodeContext(event.target)
 
     # todo: if a user clicked on a margin of a snippet it should
     # still get selected. (if a snippet is found by parentSnippet
@@ -3083,8 +3160,11 @@ class Page
     if snippetView
       @focus.snippetFocused(snippetView)
 
-      if imageName = dom.getImageName(event.target)
-        @imageClick.fire(snippetView, imageName, event)
+      switch nodeContext.contextAttr
+        when docAttr.image
+          @imageClick.fire(snippetView, nodeContext.attrName, event)
+        when docAttr.html
+          @htmlElementClick.fire(snippetView, nodeContext.attrName, event)
     else
       @focus.blur()
 
@@ -3268,8 +3348,7 @@ class Renderer
 class SnippetDrag
 
 
-  constructor: ({ snippet, page, registerDragStartEvents }) ->
-    @registerDragStartEvents = registerDragStartEvents
+  constructor: ({ snippet, page }) ->
     @snippet = snippet
     @page = page
     @$highlightedContainer = {}
@@ -3280,7 +3359,8 @@ class SnippetDrag
 
 
   onStart: () ->
-    @registerDragStartEvents()
+    @page.snippetWillBeDragged.fire(@snippet)
+
     @$insertPreview = $("<div class='doc-drag-preview'>")
     @page.$body
       .append(@$insertPreview)
@@ -3357,6 +3437,8 @@ class SnippetDrag
           snippetView.model.after(@snippet)
       else if target.containerName
         target.parent.model.append(target.containerName, @snippet)
+
+      @page.snippetWasDropped.fire(@snippet)
     else
       #consider: maybe add a 'drop failed' effect
 
@@ -3426,6 +3508,7 @@ class SnippetView
     switch directive.type
       when 'editable' then @setEditable(name, value)
       when 'image' then @setImage(name, value)
+      when 'html' then @setHtml(name, value)
 
 
   get: (name) ->
@@ -3433,6 +3516,7 @@ class SnippetView
     switch directive.type
       when 'editable' then @getEditable(name)
       when 'image' then @getImage(name)
+      when 'html' then @getHtml(name)
 
 
   getEditable: (name) ->
@@ -3445,6 +3529,35 @@ class SnippetView
     $(elem).html(value)
 
 
+  getHtml: (name) ->
+    elem = @directives.get(name).elem
+    $(elem).html()
+
+
+  setHtml: (name, value) ->
+    elem = @directives.get(name).elem
+    $elem = $(elem)
+    $elem.html(value)
+    @blockInteraction($elem)
+
+    @directivesToReset ||= {}
+    @directivesToReset[name] = name
+
+
+  # Reset directives that contain arbitrary html after the view is moved in
+  # the DOM to recreate iframes. In the case of twitter where the iframes
+  # don't have a src the reloading that happens when one moves an iframe clears
+  # all content (Maybe we could limit resetting to iframes without a src).
+  #
+  # Some more info about the issue on stackoverflow:
+  # http://stackoverflow.com/questions/8318264/how-to-move-an-iframe-in-the-dom-without-losing-its-state
+  resetDirectives: ->
+    for name of @directivesToReset
+      elem = @directives.get(name).elem
+      if $(elem).find('iframe').length
+        @set(name, @model.content[name])
+
+
   getImage: (name) ->
     elem = @directives.get(name).elem
     $(elem).attr('src')
@@ -3455,23 +3568,22 @@ class SnippetView
     $elem = $(elem)
 
     if value
+      @cancelDelayed(name)
       @setImageAttribute($elem, value)
     else
-      if @attachedToDom
-        @setPlaceholderImage($elem)
-      else
-        @wasAttachedToDom.add($.proxy(@setPlaceholderImage, @, $elem))
+      setPlaceholder = $.proxy(@setPlaceholderImage, this, $elem)
+      @delayUntilAttached(name, setPlaceholder)
 
 
   setImageAttribute: ($elem, value) ->
-    if $elem.context.tagName == 'IMG'
+    if $elem[0].nodeName == 'IMG'
       $elem.attr('src', value)
     else
       $elem.attr('style', "background-image:url(#{value})")
 
 
   setPlaceholderImage: ($elem) ->
-    if $elem.context.tagName == 'IMG'
+    if $elem[0].nodeName == 'IMG'
       width = $elem.width()
       height = $elem.height()
     else
@@ -3488,6 +3600,36 @@ class SnippetView
         @$html.removeClass(removeClass)
 
     @$html.addClass(changes.add)
+
+
+  # Disable tabbing for the children of an element.
+  # This is used for html content so it does not disrupt the user
+  # experience. The timeout is used for cases like tweets where the
+  # iframe is generated by a script with a delay.
+  disableTabbing: ($elem) ->
+    setTimeout( =>
+      $elem.find('iframe').attr('tabindex', '-1')
+    , 400)
+
+
+  # Append a child to the element which will block user interaction
+  # like click or touch events. Also try to prevent the user from getting
+  # focus on a child elemnt through tabbing.
+  blockInteraction: ($elem) ->
+    @ensureRelativePosition($elem)
+    $blocker = $("<div class='#{ docClass.interactionBlocker }'>")
+      .attr('style', 'position: absolute; top: 0; bottom: 0; left: 0; right: 0;')
+    $elem.append($blocker)
+
+    @disableTabbing($elem)
+
+
+  # Make sure that all absolute positioned children are positioned
+  # relative to $elem.
+  ensureRelativePosition: ($elem) ->
+    position = $elem.css('position')
+    if position != 'absolute' && position != 'fixed' && position != 'relative'
+      $elem.css('position', 'relative')
 
 
   append: (containerName, $elem) ->
@@ -3515,6 +3657,7 @@ class SnippetView
       @appendToContainer(parentContainer, renderer)
       @attachedToDom = true
 
+    @resetDirectives()
     @wasAttachedToDom.fire()
 
     this
@@ -3536,6 +3679,22 @@ class SnippetView
   get$container: ->
     $(dom.findContainer(@$html[0]).node)
 
+
+  delayUntilAttached: (name, func) ->
+    if @attachedToDom
+      func()
+    else
+      @cancelDelayed(name)
+      @delayed ||= {}
+      @delayed[name] = eventing.callOnce @wasAttachedToDom, =>
+        @delayed[name] = undefined
+        func()
+
+
+  cancelDelayed: (name) ->
+    if @delayed?[name]
+      @wasAttachedToDom.remove(@delayed[name])
+      @delayed[name] = undefined
 
 # Public API
 # ----------
@@ -3632,14 +3791,25 @@ pageReady = ->
   # callback: (snippetModel) ->
   @snippetAdded = chainable(document.snippetTree.snippetAdded, 'add')
 
-  # Raised when a snippet is being dragged
+  # Call to start a drag operation
   @startDrag = $.proxy(page, 'startDrag')
+
+  # Snippet Drag & Drop events
+  @snippetWillBeDragged = $.proxy(page.snippetWillBeDragged, 'add')
+  @snippetWillBeDragged.remove = $.proxy(page.snippetWillBeDragged, 'remove')
+  @snippetWasDropped = $.proxy(page.snippetWasDropped, 'add')
+  @snippetWasDropped.remove = $.proxy(page.snippetWasDropped, 'remove')
 
   # Raised when a user clicks on an editable image
   # example callback method:
   # (snippetView, imageName) -> snippetView.model.set(imageName, imageSrc)
   @imageClick = chainable(page.imageClick, 'add')
 
+
+  # Raised when a user click on an editable html element or one of its children
+  # example callback methods:
+  # (snippetView, htmlElementName, event) -> # your code here
+  @htmlElementClick = chainable(page.htmlElementClick, 'add')
 
   # Text Events
   # -----------
