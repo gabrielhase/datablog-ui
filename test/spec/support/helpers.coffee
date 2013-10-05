@@ -63,6 +63,18 @@ retrieveFilter = (name) ->
   inject ($filter) -> filter = $filter(name)
   filter
 
+# Retrieve a directive given its markup.
+# Compiles the directive and makes sure the scope is up-to-date
+# @example
+#   retrieveDirective('<choropleth></choropleth>') # => compiled choropleth directive
+retrieveDirective = (markup) ->
+  directive = angular.element(markup)
+  inject ($rootScope, $compile) ->
+    $compile(directive)($rootScope)
+    $rootScope.$digest()
+  directive
+
+
 # Instantiates an angular controller. The dependencies can be specified by an
 # object where the key is the name of the service to inject and the value
 # is the object to be injected in lieu of that service.
