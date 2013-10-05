@@ -1,5 +1,4 @@
-angular.module('ldLocalApi').factory 'dataService', ($q) ->
-
+angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
 
   mockData =
     "playgrounds":
@@ -242,15 +241,22 @@ angular.module('ldLocalApi').factory 'dataService', ($q) ->
 
 
   get: (key) ->
+
+    data = $q.defer()
+
     switch key
-      when 'playgrounds' then mockData.playgrounds
-      when 'overlooks' then mockData.overlooks
-      when 'bikes' then mockData.bikes
-      when 'pools' then mockData.pools
-      when 'cargo' then mockData.cargo
+      when 'playgrounds' then data.resolve(mockData.playgrounds)
+      when 'overlooks' then data.resolve(mockData.overlooks)
+      when 'bikes' then data.resolve(mockData.bikes)
+      when 'pools' then data.resolve(mockData.pools)
+      when 'cargo' then data.resolve(mockData.cargo)
+      when 'usCounties'
+        $http.get('data/us-counties.json').then (usCountiesData) ->
+          data.resolve(usCountiesData.data)
       else
         'undefined key'
 
+    return data.promise
 
   options: () ->
     return [

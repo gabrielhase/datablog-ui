@@ -9,12 +9,20 @@ angular.module('ldEditor').directive 'choropleth', ->
       inMap: 'properties.id'
       inData: 'id'
 
+
+  resizeMap = ->
+    newHeight = svg.node().getBBox().height
+    svg.attr('height', newHeight)
+
+
   renderDataMap = (scope, map, data) ->
     path = d3.geo.path()
     mapGroup.selectAll('path')
         .data(map.features)
       .enter().append('path')
         .attr('d', d3.geo.path())
+
+    resizeMap()
 
     if data
       quantize = d3.scale.quantize()
@@ -42,7 +50,6 @@ angular.module('ldEditor').directive 'choropleth', ->
       svg = d3.select(element[0])
         .append("svg")
           .attr("width", '100%')
-          .attr("height", '200px') # TODO should height be a param?
       mapGroup = svg.append("g")
         .attr('class', 'map')
 

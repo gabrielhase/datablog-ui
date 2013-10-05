@@ -171,6 +171,7 @@ module.exports = (grunt) ->
             'images/{,*/}*.{gif,webp,svg,png}'
             'styles/fonts/*'
             'vendor/**/*'
+            'data/**/*'
             '*.html'
           ]
         ,
