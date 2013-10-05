@@ -1,4 +1,4 @@
-angularTemplates.flowtextOptions = """
+htmlTemplates.flowtextOptions = """
 <div ng-controller='FlowtextOptionsController'>
   <div ng-show="!linkMode" class='upfront-btn-group'>
     <a ng-click='toggleBold()'

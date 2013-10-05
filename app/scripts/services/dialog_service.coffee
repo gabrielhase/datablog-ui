@@ -7,7 +7,7 @@ angular.module('ldEditor').factory 'dialogService', ($dialog, uiStateService) ->
       backdrop: true
       keyboard: true
       backdropClick: true
-      template: angularTemplates.imageGallery
+      template: htmlTemplates.imageGallery
       controller: 'ImageGalleryController'
       dialogClass: 'upfront-modal'
       backdropClass: 'upfront-modal-backdrop'
