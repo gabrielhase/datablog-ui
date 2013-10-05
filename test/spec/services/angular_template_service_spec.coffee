@@ -131,7 +131,7 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a d3-choropleth snippet', ->
-      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new Choropleth)
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap)
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="ChoroplethController" class="ng-scope">
           <choropleth>
@@ -140,4 +140,10 @@ describe 'angularTemplateService', ->
       """)
 
 
-    it 'reacts to changes on the choropleths dataIdentifier'
+    it 'reacts to changes on the choropleths dataIdentifier', ->
+      choropleth = new ChoroplethMap
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, choropleth)
+      populateData = sinon.spy(choropleth, 'populateData')
+      @snippetModel.storedData.dataIdentifier = 'changedTestData'
+      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
+      expect(populateData).to.have.been.called

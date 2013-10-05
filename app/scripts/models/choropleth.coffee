@@ -1,8 +1,9 @@
-class Choropleth
+class ChoroplethMap
 
   template = """
     <div ng-controller="ChoroplethController">
-      <choropleth></choropleth>
+      <choropleth>
+      </choropleth>
     </div>
   """
 
@@ -14,16 +15,16 @@ class Choropleth
 
   # CLASS INTERFACE
 
-  wasInserted: ->
-    # todo
-
-
-  remove: ->
-    # todo
+  wasInserted: (snippetModel, scope) ->
+    scope.$watch('snippetModel.data("dataIdentifier")', (newVal) =>
+      @populateData(snippetModel, scope)
+    )
 
 
   getTemplate: ->
     template
 
 
-  # IMPLEMENTATION DETAILS
+  populateData: ->
+    # nothing here yet
+
