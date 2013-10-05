@@ -28,7 +28,7 @@ class SnippetInsertor
   renderInsertPoint: (scope, $container, snippetContainer) ->
     insertScope = scope.$new()
     insertScopes.push(insertScope)
-    @$compile(angularTemplates.addButton)(insertScope, (button, childScope) =>
+    @$compile(htmlTemplates.addButton)(insertScope, (button, childScope) =>
       $container.append(button)
       childScope.container = $container
       childScope.insertSnippet = ($event) =>

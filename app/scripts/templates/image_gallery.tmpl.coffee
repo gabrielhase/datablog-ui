@@ -1,4 +1,4 @@
-angularTemplates.imageGallery = """
+htmlTemplates.imageGallery = """
 <div>
   <div class="upfront-modal-header">
     <h3>Some great example pictures</h3>

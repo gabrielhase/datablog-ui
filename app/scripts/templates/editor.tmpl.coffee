@@ -1,4 +1,4 @@
-angularTemplates.editor = """
+htmlTemplates.editor = """
 <div>
   <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>
 
