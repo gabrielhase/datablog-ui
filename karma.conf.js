@@ -29,6 +29,9 @@ module.exports = function(config) {
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',
 
+      // D3
+      'http://d3js.org/d3.v3.js',
+
       // API
       'app/scripts/components/environment/constants.js',
 

@@ -161,12 +161,10 @@ describe 'angularTemplateService', ->
 
     it 'inserts a d3-choropleth snippet', ->
       service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap)
-      expect(@$directiveRoot.html()).to.eq("""
-        <div ng-controller="ChoroplethController" class="ng-scope">
-          <choropleth>
-          </choropleth>
-        </div>
-      """)
+      controller = @$directiveRoot.find('div').attr('ng-controller')
+      cssClass = @$directiveRoot.find('div').attr('class')
+      expect(controller).to.eql('ChoroplethController')
+      expect(cssClass).to.eql('ng-scope')
 
 
     it 'reacts to changes on the choropleths dataIdentifier', ->

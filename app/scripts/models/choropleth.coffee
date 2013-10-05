@@ -2,7 +2,7 @@ class ChoroplethMap
 
   template = """
     <div ng-controller="ChoroplethController">
-      <choropleth>
+      <choropleth data="data" map="geojsonMap">
       </choropleth>
     </div>
   """
