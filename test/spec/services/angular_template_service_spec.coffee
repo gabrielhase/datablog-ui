@@ -83,6 +83,35 @@ describe 'angularTemplateService', ->
       expect(@loadTemplate).not.to.have.been.called
 
 
+  describe 'loading dependencies', ->
+
+    beforeEach ->
+      @yepnope = sinon.stub(window, 'yepnope', (arr) ->
+        # call complete directly
+        arr[0].complete()
+      )
+      @$depNode = $("<div data-dependency='Test' data-dependency-resources='TestResUrl'></div>")
+      @$nonDepNode = $("<div></div>")
+
+
+    afterEach ->
+      @yepnope.restore()
+
+
+    it 'loads dependencies for a template', (done) ->
+      service.loadTemplate(@$depNode, done)
+      expect(@yepnope).to.have.been.calledOnce
+      expect(callback).to.have.been.calledOnce
+
+
+    it "doesn't call yepnope when no dependencies given", ->
+      window.Test = {}
+      callback = sinon.spy()
+      service.loadTemplate(@$nonDepNode, callback)
+      expect(@yepnope).not.to.have.been.called
+      expect(callback).to.have.been.calledOnce
+
+
   describe 'inserting a map', ->
 
     beforeEach ->
