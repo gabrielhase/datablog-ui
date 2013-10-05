@@ -16,7 +16,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
         when 'leaflet-map'
           @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new Map))
         when 'd3-choropleth'
-          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new Choropleth))
+          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new ChoroplethMap))
         else
           alert("unknown template value #{$(node).data('is')}")
 
