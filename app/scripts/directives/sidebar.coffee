@@ -6,7 +6,7 @@ angular.module('ldEditor').directive 'sidebar', ($compile) ->
       scope: {
         'foldedOut': '='
       }
-      template: angularTemplates.sidebar
+      template: htmlTemplates.sidebar
       replace: true
       transclude: true
       controller: 'SidebarController'

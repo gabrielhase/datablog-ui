@@ -5,7 +5,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
     scope: {
       snippet: '='
     }
-    template: angularTemplates.propertiesPanel
+    template: htmlTemplates.propertiesPanel
     replace: true
     controller: PropertiesPanelController
     require: '^sidebar'

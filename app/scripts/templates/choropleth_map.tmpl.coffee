@@ -1,4 +1,4 @@
-angularTemplates.choroplethMap = """
+htmlTemplates.choroplethMap = """
   <div>
     test
   </div>

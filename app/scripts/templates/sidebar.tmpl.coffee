@@ -1,4 +1,4 @@
-angularTemplates.sidebar = """
+htmlTemplates.sidebar = """
 <div class="upfront-sidebar" id="{{controlId}}"
   ng-class="{'upfront-sidebar-hidden': !foldedOut}">
   <div class="upfront-sidebar-nav">
