@@ -23,6 +23,9 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
               ,
                 "identifier": "livingmaps.title"
                 "content": {"title": "livingmaps"}
+              ,
+                "identifier": "livingmaps.choropleth"
+                "content": {"title": "a sample choropleth"}
               ]
           },
           {
