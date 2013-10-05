@@ -15,6 +15,7 @@ class ChoroplethMap
 
   # CLASS INTERFACE
 
+
   wasInserted: (snippetModel, scope) ->
     scope.$watch('snippetModel.data("dataIdentifier")', (newVal) =>
       @populateData(snippetModel, scope)
@@ -23,6 +24,9 @@ class ChoroplethMap
 
   getTemplate: ->
     template
+
+
+  # IMPLEMENTATION DETAILS
 
 
   populateData: ->
