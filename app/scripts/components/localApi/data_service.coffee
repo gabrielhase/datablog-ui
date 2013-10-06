@@ -253,6 +253,14 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       when 'usCounties'
         $http.get('data/us-counties.json').then (usCountiesData) ->
           data.resolve(usCountiesData.data)
+      when 'usUnemployment'
+        d3.tsv 'data/us-unemployment-by-county.tsv', (tsvData) ->
+          jsonData = []
+          for tsvDataPoint in tsvData
+            jsonData.push
+              id: tsvDataPoint.id
+              value: tsvDataPoint.rate
+          data.resolve(jsonData)
       else
         'undefined key'
 
