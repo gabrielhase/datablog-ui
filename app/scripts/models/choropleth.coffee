@@ -18,7 +18,7 @@ class ChoroplethMap
 
   wasInserted: (snippetModel, scope) ->
     snippetModel.data('lastPositioned', (new Date()).toJSON())
-    scope.$watch('snippetModel.data("dataTimestamp")', (newVal) =>
+    scope.$watch('snippetModel.data("lastChangeTime")', (newVal) =>
       @populateData(snippetModel, scope)
     )
 
