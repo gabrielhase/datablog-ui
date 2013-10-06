@@ -20,9 +20,12 @@ angular.module('ldEditor').factory 'livingdocsService',
           # TODO: bootsrap some test data -> needs to be replaced with persistence layer
           if snippet.identifier == 'livingmaps.choropleth'
             dataService.get('usCounties').then (map) ->
-              snippet.data('map', map)
-              snippet.data('mapIdentifier', 'usCounties')
-              snippet.data('lastChangeTime', (new Date()).toJSON())
+              dataService.get('usUnemployment').then (data) ->
+                snippet.data('map', map)
+                snippet.data('mapIdentifier', 'usCounties')
+                snippet.data('data', data)
+                snippet.data('dataIdentifier', 'usUnemployment')
+                snippet.data('lastChangeTime', (new Date()).toJSON())
 
           angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 

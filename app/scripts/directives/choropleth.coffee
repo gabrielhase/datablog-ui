@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'choropleth', ->
+angular.module('ldEditor').directive 'choropleth', ($timeout) ->
 
   svg = null
   mapGroup = null
@@ -39,9 +39,11 @@ angular.module('ldEditor').directive 'choropleth', ->
         )
       valueById = d3.map()
       data.forEach (d) ->
-        valueById.set(eval("d.#{defaults.mappingValue.inData}"), +d.value)
+        # TODO: for now id's are always numeric -> make this an interface property
+        # TODO: make value an interface property
+        valueById.set(+eval("d.#{defaults.mappingValue.inData}"), +d.value)
       mapGroup.selectAll('path')
-        .attr('class', (d) -> quantize(valueById.get(eval("d.#{defaults.mappingValue.inMap}"))))
+        .attr('class', (d) -> quantize(valueById.get(+eval("d.#{defaults.mappingValue.inMap}"))))
         # TODO: use default value when quantize does not return a value
 
 
@@ -64,11 +66,13 @@ angular.module('ldEditor').directive 'choropleth', ->
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
-        # element.append("""
-        #   <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
-        # """)
-        renderDataMap(scope, newVal, scope.data)
-        #$(element).find('#loader').remove()
+        element.findIn('.choropleth-map').append("""
+          <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
+        """)
+        $timeout ->
+          renderDataMap(scope, newVal, scope.data)
+          $(element).find('#loader').remove()
+        , 100
       )
 
       scope.$watch('data', (newVal, oldVal) ->
