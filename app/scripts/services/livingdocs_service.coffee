@@ -22,7 +22,7 @@ angular.module('ldEditor').factory 'livingdocsService',
             dataService.get('usCounties').then (map) ->
               snippet.data('map', map)
               snippet.data('mapIdentifier', 'usCounties')
-              snippet.data('dataTimestamp', (new Date()).toJSON())
+              snippet.data('lastChangeTime', (new Date()).toJSON())
 
           angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
@@ -50,7 +50,7 @@ angular.module('ldEditor').factory 'livingdocsService',
       doc.snippetWasDropped (snippet) ->
         if snippet.identifier == 'livingmaps.choropleth'
           snippet.data('lastPositioned', (new Date()).toJSON())
-          snippet.data('dataTimestamp', (new Date()).toJSON())
+          snippet.data('lastChangeTime', (new Date()).toJSON())
 
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
