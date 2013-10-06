@@ -47,6 +47,11 @@ angular.module('ldEditor').factory 'livingdocsService',
       doc.snippetAdded (snippet) ->
         angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
+      doc.snippetWasDropped (snippet) ->
+        if snippet.identifier == 'livingmaps.choropleth'
+          snippet.data('lastPositioned', (new Date()).toJSON())
+          snippet.data('dataTimestamp', (new Date()).toJSON())
+
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
           action: 'imageClick'

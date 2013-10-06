@@ -2,7 +2,7 @@ class ChoroplethMap
 
   template = """
     <div ng-controller="ChoroplethController">
-      <choropleth data="data" map="map">
+      <choropleth data="data" map="map" last-positioned="lastPositioned">
       </choropleth>
     </div>
   """
@@ -17,6 +17,7 @@ class ChoroplethMap
 
 
   wasInserted: (snippetModel, scope) ->
+    snippetModel.data('lastPositioned', (new Date()).toJSON())
     scope.$watch('snippetModel.data("dataTimestamp")', (newVal) =>
       @populateData(snippetModel, scope)
     )
@@ -30,6 +31,7 @@ class ChoroplethMap
 
 
   populateData: (snippetModel, scope) ->
-    newData = snippetModel.data('map')
-    if newData
-      scope.map = newData
+    for trackedProperty in ['map', 'data', 'lastPositioned']
+      newVal = snippetModel.data(trackedProperty)
+      if newVal
+        scope[trackedProperty] = newVal
