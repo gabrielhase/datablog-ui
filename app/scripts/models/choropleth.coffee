@@ -17,7 +17,7 @@ class ChoroplethMap
 
 
   wasInserted: (snippetModel, scope) ->
-    scope.$watch('snippetModel.data("dataIdentifier")', (newVal) =>
+    scope.$watch('snippetModel.data("dataTimestamp")', (newVal) =>
       @populateData(snippetModel, scope)
     )
 
@@ -29,6 +29,7 @@ class ChoroplethMap
   # IMPLEMENTATION DETAILS
 
 
-  populateData: ->
-    # nothing here yet
-
+  populateData: (snippetModel, scope) ->
+    newData = snippetModel.data('map')
+    if newData
+      scope.map = newData

@@ -21,9 +21,7 @@ angular.module('ldEditor').directive 'choropleth', ->
         .data(map.features)
       .enter().append('path')
         .attr('d', d3.geo.path())
-
     resizeMap()
-
     if data
       quantize = d3.scale.quantize()
         .domain([0, d3.max(data, (d) -> d.value)])
@@ -36,15 +34,14 @@ angular.module('ldEditor').directive 'choropleth', ->
       mapGroup.selectAll('path')
         .attr('class', (d) -> quantize(valueById.get(eval("d.#{defaults.mappingValue.inMap}"))))
 
-
   return {
     restrict: 'EA'
     scope: {
       data: '=data'
       map: '=map'
     }
-    template: htmlTemplates.choroplethMap
     replace: true
+    template: "<div style='position:relative'></div>"
     link: (scope, element, attrs) ->
       # set up initial svg object
       svg = d3.select(element[0])
@@ -55,7 +52,11 @@ angular.module('ldEditor').directive 'choropleth', ->
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
+        # element.append("""
+        #   <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
+        # """)
         renderDataMap(scope, newVal, scope.data)
+        #$(element).find('#loader').remove()
       )
 
       scope.$watch('data', (newVal, oldVal) ->

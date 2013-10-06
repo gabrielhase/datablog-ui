@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, dataService) ->
 
     # Service
     # -------
@@ -10,7 +10,21 @@ angular.module('ldEditor').factory 'livingdocsService',
 
 
     setup: ->
+      @loadAngularTemplates()
       @setupEvents()
+
+
+    loadAngularTemplates: ->
+      $timeout ->
+        doc.document.snippetTree.root.each (snippet) ->
+          # TODO: bootsrap some test data -> needs to be replaced with persistence layer
+          if snippet.identifier == 'livingmaps.choropleth'
+            dataService.get('usCounties').then (map) ->
+              snippet.data('map', map)
+              snippet.data('mapIdentifier', 'usCounties')
+              snippet.data('dataTimestamp', (new Date()).toJSON())
+
+          angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
 
     setupEvents: ->
@@ -49,8 +63,3 @@ angular.module('ldEditor').factory 'livingdocsService',
             imagePath: imagePath
           )
         )
-
-      # NOTE: since we need the renderer to replace directives we need to wait for doc.ready
-      doc.ready ->
-        doc.document.snippetTree.root.each (snippet) ->
-          angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
