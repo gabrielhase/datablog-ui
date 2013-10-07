@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, dataService) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, choroplethDataService) ->
 
     # Service
     # -------
@@ -17,16 +17,7 @@ angular.module('ldEditor').factory 'livingdocsService',
     loadAngularTemplates: ->
       $timeout ->
         doc.document.snippetTree.root.each (snippet) ->
-          # TODO: bootsrap some test data -> needs to be replaced with persistence layer
-          if snippet.identifier == 'livingmaps.choropleth'
-            dataService.get('usCounties').then (map) ->
-              dataService.get('usUnemployment').then (data) ->
-                snippet.data('map', map)
-                snippet.data('mapIdentifier', 'usCounties')
-                snippet.data('data', data)
-                snippet.data('dataIdentifier', 'usUnemployment')
-                snippet.data('lastChangeTime', (new Date()).toJSON())
-
+          choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
           angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
 
@@ -48,6 +39,7 @@ angular.module('ldEditor').factory 'livingdocsService',
         )
 
       doc.snippetAdded (snippet) ->
+        choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
         angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
       doc.snippetWasDropped (snippet) ->
