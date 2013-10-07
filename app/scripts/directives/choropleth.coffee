@@ -17,7 +17,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout) ->
     svgWidth = svg.node().getBBox().width
     svg.attr('viewBox', "0 0 #{svgWidth} #{svgHeight}")
     ratio = $(svg.node()).width() / svgWidth
-    svg.attr('height', ratio * $(svg.node()).height())
+    svg.attr('height', ratio * svgHeight)
 
 
   renderDataMap = (scope, map, data) ->
@@ -66,13 +66,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout) ->
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
-        element.findIn('.choropleth-map').append("""
-          <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
-        """)
-        $timeout ->
-          renderDataMap(scope, newVal, scope.data)
-          $(element).find('#loader').remove()
-        , 100
+        # element.findIn('.choropleth-map').append("""
+        #   <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
+        # """)
+        #$timeout ->
+        renderDataMap(scope, newVal, scope.data)
+          # $(element).find('#loader').remove()
+        #, 100
       )
 
       scope.$watch('data', (newVal, oldVal) ->
