@@ -17,7 +17,8 @@
         "title": "maps",
         "templates": [
           "choropleth",
-          "map"
+          "map",
+          "unemploymentChoropleth"
         ]
       },
       "others": {
@@ -57,6 +58,11 @@
       "title": "Map",
       "id": "map",
       "html": "<div data-template=\"\"><h3 doc-editable=\"title\">Title</h3><div data-is=\"leaflet-map\" data-dependency=\"L\" data-dependency-resources=\"http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js;http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css\"><iframe style=\"width: 100%\" frameborder=\"0\" scrolling=\"no\" marginheight=\"0\" marginwidth=\"0\" src=\"https://maps.google.ch/maps?hl=de&amp;ie=UTF8&amp;ll=46.362093,9.036255&amp;spn=8.279854,10.612793&amp;t=h&amp;z=7&amp;output=embed\"></iframe></div></div>"
+    },
+    {
+      "title": "UnemploymentChoropleth",
+      "id": "unemploymentChoropleth",
+      "html": "<div data-template=\"\"><h3 doc-editable=\"title\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div></div>"
     },
     {
       "title": "Button",
