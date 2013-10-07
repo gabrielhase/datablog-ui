@@ -27,7 +27,10 @@ describe 'Choropleth', ->
   describe 'resizing map', ->
 
     beforeEach ->
+      # NOTE: body has an initial width of 384px, maybe this is due to icon offsets
+      $('body').attr('style', 'width: 1000px')
       $('body').append(directiveElem)
+      $('body').append('<div id="wideContainer" style="width: 800px"></div>')
       $('body').append('<div id="narrowContainer" style="width: 200px"></div>')
 
 
@@ -62,13 +65,29 @@ describe 'Choropleth', ->
     it 'should lower the height property on dropping into a narrower container', ->
       directiveScope.map = sampleMap
       directiveScope.$digest()
-      expect($('svg').height()).to.eql(246)
+      expect($('svg').height()).to.eql(312)
+
       # simulate drag&drop
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
       directiveScope.lastPositioned = (new Date()).toJSON()
       directiveScope.$digest()
-      expect($('#narrowContainer svg').height()).to.eql(105)
+      expect($('#narrowContainer svg').height()).to.eql(62)
+
+
+
+    it 'should raise the height property on dropping into a wider container', ->
+      $('body').find(directiveElem).remove()
+      $('#narrowContainer').append(directiveElem)
+      directiveScope.map = sampleMap
+      directiveScope.$digest()
+      expect($('#narrowContainer svg').height()).to.eql(62)
+
+      $('#narrowContainer').find(directiveElem).remove()
+      $('#wideContainer').append(directiveElem)
+      directiveScope.lastPositioned = (new Date()).toJSON()
+      directiveScope.$digest()
+      expect($('#wideContainer svg').height()).to.eql(250)
 
 
   describe 'visualizing data on a map', ->
