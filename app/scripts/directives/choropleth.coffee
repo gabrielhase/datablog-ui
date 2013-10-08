@@ -28,7 +28,6 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     mapPaths.enter().append('path')
       .attr('d', d3.geo.path())
     mapPaths.exit().remove()
-
     resizeMap()
 
     if data
@@ -68,11 +67,18 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       svg = d3.select(element[0])
         .append("svg")
           .attr("width", '100%')
+          .attr("height", '0px')
       mapGroup = svg.append("g")
         .attr('class', 'map')
 
+      $(element).append("""
+        <img class="placeholder-image" src="http://placehold.it/#{$(element).width()}x200}/F55CB7/ffffff&text=select%20this%20snippet%20and%20choose%20a%20map%20in%20the%20sidebar" />
+      """)
+
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
+        $placeholder = $(element).find('.placeholder-image')
+        $placeholder.remove() if $placeholder
         if newVal != oldVal # to prevent init redraw
           renderDataMap(scope, newVal, scope.data)
           stopProgressBar()
