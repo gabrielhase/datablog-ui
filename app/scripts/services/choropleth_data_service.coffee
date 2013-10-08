@@ -1,4 +1,4 @@
-angular.module('ldEditor').service 'choroplethDataService', (dataService) ->
+angular.module('ldEditor').service 'choroplethDataService', (dataService, ngProgress) ->
 
   prefilledChoropleths = ['livingmaps.unemploymentChoropleth']
 
@@ -10,6 +10,7 @@ angular.module('ldEditor').service 'choroplethDataService', (dataService) ->
   prefill: (snippetModel) ->
     switch snippetModel.identifier
       when 'livingmaps.unemploymentChoropleth'
+        #ngProgress.start()
         dataService.get('usCounties').then (map) ->
           dataService.get('usUnemployment').then (data) ->
             snippetModel.data('map', map)

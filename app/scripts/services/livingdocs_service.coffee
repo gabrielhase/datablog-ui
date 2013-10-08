@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, choroplethDataService) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, choroplethDataService, ngProgress) ->
 
     # Service
     # -------
@@ -44,6 +44,7 @@ angular.module('ldEditor').factory 'livingdocsService',
 
       doc.snippetWasDropped (snippet) ->
         if snippet.identifier == 'livingmaps.choropleth' || choroplethDataService.isPrefilledChoropleth(snippet)
+          #ngProgress.start()
           snippet.data('lastPositioned', (new Date()).toJSON())
           snippet.data('lastChangeTime', (new Date()).toJSON())
 
