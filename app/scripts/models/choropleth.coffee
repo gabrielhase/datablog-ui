@@ -41,7 +41,7 @@ class ChoroplethMap
   shouldRenderLoadingBar: (snippetModel) ->
     if snippetModel.data('map')
       true
-    else if ChoroplethMap.getPrefilledMapNames.indexOf(snippetModel.identifier) != -1
+    else if ChoroplethMap.getPrefilledMapNames().indexOf(snippetModel.identifier) != -1
       true
     else
       false
