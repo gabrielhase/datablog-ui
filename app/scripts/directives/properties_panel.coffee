@@ -5,7 +5,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
     scope: {
       snippet: '='
     }
-    template: angularTemplates.propertiesPanel
+    template: htmlTemplates.propertiesPanel
     replace: true
     controller: PropertiesPanelController
     require: '^sidebar'
@@ -76,12 +76,13 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
 
           childScope.$watch('selectedData', (newVal, oldVal) ->
             snippet.model.data('dataIdentifier', newVal)
-            snippet.model.data('geojson', dataService.get(newVal))
-            if newVal != oldVal
-              snippet.model.data('popupContentProperty', null)
-              scope.propertySelectElem.remove() if scope.propertySelectElem
-              propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
-              $(".upfront-properties-form .propertySelect").append(propertySelect)
+            dataService.get(newVal).then (data) ->
+              snippet.model.data('geojson', data)
+              if newVal != oldVal
+                snippet.model.data('popupContentProperty', null)
+                scope.propertySelectElem.remove() if scope.propertySelectElem
+                propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
+                $(".upfront-properties-form .propertySelect").append(propertySelect)
           )
 
           $(".upfront-properties-form").append(select)

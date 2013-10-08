@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, choroplethDataService, ngProgress) ->
 
     # Service
     # -------
@@ -10,7 +10,15 @@ angular.module('ldEditor').factory 'livingdocsService',
 
 
     setup: ->
+      @loadAngularTemplates()
       @setupEvents()
+
+
+    loadAngularTemplates: ->
+      $timeout ->
+        doc.document.snippetTree.root.each (snippet) ->
+          choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
+          angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
 
     setupEvents: ->
@@ -31,7 +39,14 @@ angular.module('ldEditor').factory 'livingdocsService',
         )
 
       doc.snippetAdded (snippet) ->
+        choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
         angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
+
+      doc.snippetWasDropped (snippet) ->
+        if snippet.identifier == 'livingmaps.choropleth' || choroplethDataService.isPrefilledChoropleth(snippet)
+          #ngProgress.start()
+          snippet.data('lastPositioned', (new Date()).toJSON())
+          snippet.data('lastChangeTime', (new Date()).toJSON())
 
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
@@ -49,8 +64,3 @@ angular.module('ldEditor').factory 'livingdocsService',
             imagePath: imagePath
           )
         )
-
-      # NOTE: since we need the renderer to replace directives we need to wait for doc.ready
-      doc.ready ->
-        doc.document.snippetTree.root.each (snippet) ->
-          angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)

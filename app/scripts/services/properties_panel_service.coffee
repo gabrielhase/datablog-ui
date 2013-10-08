@@ -16,7 +16,7 @@ angular.module('ldEditor').factory 'propertiesPanelService',
     drawEditButton: (snippet, imagePath) ->
         insertScope = $rootScope.$new()
         lastEditBtnScope = insertScope
-        $compile(angularTemplates.editButton)(insertScope, (button, childScope) ->
+        $compile(htmlTemplates.editButton)(insertScope, (button, childScope) ->
           $('body').append(button)
           childScope.button = button
           childScope.buttonStyle =

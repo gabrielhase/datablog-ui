@@ -1,4 +1,4 @@
-angularTemplates.snippetPanel = """
+htmlTemplates.snippetPanel = """
 <div id="{{ controlId }}">
   <div class="upfront-sidebar-header" style="display: block;"
     ng-click="hideSidebar()">

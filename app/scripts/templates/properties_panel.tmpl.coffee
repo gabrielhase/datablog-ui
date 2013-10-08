@@ -1,4 +1,4 @@
-angularTemplates.propertiesPanel = """
+htmlTemplates.propertiesPanel = """
 <div>
   <div class="upfront-sidebar-header" style="display: block;"
     ng-click="hideSidebar()">

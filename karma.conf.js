@@ -16,7 +16,7 @@ module.exports = function(config) {
 
       // the big guns
       'app/vendor/jquery-1.9.1.js',
-      'app/vendor/angular/angular.js',
+      "https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.min.js",
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
 
@@ -28,6 +28,12 @@ module.exports = function(config) {
 
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',
+
+      // D3
+      'http://d3js.org/d3.v3.js',
+
+      // ngProgress
+      'app/vendor/ngProgress/ngProgress.js',
 
       // API
       'app/scripts/components/environment/constants.js',

@@ -19,7 +19,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
             "identifier": "livingmaps.column"
             "containers":
               "default": [
-                "identifier": "livingmaps.map"
+                "identifier": "livingmaps.unemploymentChoropleth"
+                "content": {"title": "US Unemployment"}
               ,
                 "identifier": "livingmaps.title"
                 "content": {"title": "livingmaps"}
@@ -37,6 +38,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
              ],
              "sidebar": [
               "identifier": "livingmaps.image"
+             ,
+              "identifier": "livingmaps.map"
              ]
           }
 
