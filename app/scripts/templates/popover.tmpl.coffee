@@ -1,4 +1,4 @@
-angularTemplates.popover = """
+htmlTemplates.popover = """
 <div class='upfront-popover-panel upfront-popover'
   style='position: absolute; left: {{left}}px; top: {{top}}px'>
   <div class='arrow' ng-class="arrowCss"></div>

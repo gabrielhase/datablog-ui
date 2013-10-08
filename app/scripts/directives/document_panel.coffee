@@ -3,7 +3,7 @@ angular.module('ldEditor').directive 'documentPanel', ->
   return {
     restrict: 'A'
     scope: {}
-    template: angularTemplates.documentPanel
+    template: htmlTemplates.documentPanel
     replace: true
     controller: 'DocumentPanelController'
     require: '^sidebar' # the ^ enables lookup in the parent directive

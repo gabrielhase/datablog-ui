@@ -11,7 +11,7 @@ angular.module('ldEditor').directive 'popover', ->
       'arrowDistance': '@'
     }
     transclude: true
-    template: angularTemplates.popover
+    template: htmlTemplates.popover
     controller: 'PopoverController'
     link: (scope, element, attrs) ->
 

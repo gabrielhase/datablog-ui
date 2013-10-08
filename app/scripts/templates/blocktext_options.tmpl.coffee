@@ -1,4 +1,4 @@
-angularTemplates.blocktextOptions = """
+htmlTemplates.blocktextOptions = """
 <div ng-controller='BlocktextOptionsController'>
   <button>
     H1

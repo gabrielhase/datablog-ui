@@ -1,5 +1,5 @@
 angular
-  .module('ldEditor', ['envApi', 'ui.bootstrap.dialog', 'ui.bootstrap.pagination', 'leaflet-directive'])
+  .module('ldEditor', ['envApi', 'ui.bootstrap.dialog', 'ui.bootstrap.pagination', 'leaflet-directive', 'ngProgress'])
   .config ($httpProvider, $locationProvider) ->
     $locationProvider.html5Mode(true)
 
@@ -7,7 +7,7 @@ angular
   .run ($templateCache, documentService, livingdocsService, editorService) ->
 
     # preload templates
-    for templateName, template of angularTemplates
+    for templateName, template of htmlTemplates
       # put templates in cache by their name
       # flowtextOptions -> flowtext-options.html
       fileName = "#{ livingmapsWords.snakeCase(templateName) }.html"
@@ -27,7 +27,7 @@ angular
 # global variables
 # ===============
 @upfront = @upfront || {}
-angularTemplates = {}
+htmlTemplates = {}
 
 upfront.variables = do () ->
   apiDomain: 'thelivingdoc.com'

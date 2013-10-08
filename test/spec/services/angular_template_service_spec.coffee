@@ -31,10 +31,14 @@ describe 'angularTemplateService', ->
   describe 'recognizing the correct template type', ->
 
     beforeEach ->
-      @templatedSnippetModel =
-        id: 'testModel'
+      @leafletTemplateSnippetModel =
+        id: 'leafletTestModel'
         template:
           $template: $('<div data-template><div data-is="leaflet-map"><p>fallback placeholder</p></div></div>')
+      @choroplethTemplateSnippetModel =
+        id: 'choroplethTestModel'
+        template:
+          $template: $('<div data-template><div data-is="d3-choropleth"><p>fallback placeholder</p></div></div>')
       @emptyTemplatedSnippetModel =
         id: 'emptyTestModel'
         template:
@@ -47,8 +51,10 @@ describe 'angularTemplateService', ->
       doc.document =
         renderer:
           snippets:
-            testModel:
+            leafletTestModel:
               $html: $('<div data-template><div data-is="leaflet-map"><p>fallback placeholder</p></div></div>')
+            choroplethTestModel:
+              $html: $('<div data-template><div data-is="d3-choropleth"><p>fallback placeholder</p></div></div>')
             emptyTestModel:
               $html: $('<div data-template><div><p>fallback placeholder</p></div></div>')
             unknownTestModel:
@@ -58,7 +64,12 @@ describe 'angularTemplateService', ->
 
 
     it 'loads the template for an angular-leaflet map', ->
-      service.insertAngularTemplate(@templatedSnippetModel)
+      service.insertAngularTemplate(@leafletTemplateSnippetModel)
+      expect(@loadTemplate).to.have.been.calledOnce
+
+
+    it 'loads the template for a d3 choropleth map', ->
+      service.insertAngularTemplate(@choroplethTemplateSnippetModel)
       expect(@loadTemplate).to.have.been.calledOnce
 
 
@@ -70,6 +81,35 @@ describe 'angularTemplateService', ->
     it 'does not load an unkown template markup', ->
       service.insertAngularTemplate(@unknownTemplatedSnippetModel)
       expect(@loadTemplate).not.to.have.been.called
+
+
+  describe 'loading dependencies', ->
+
+    beforeEach ->
+      @yepnope = sinon.stub(window, 'yepnope', (arr) ->
+        # call complete directly
+        arr[0].complete()
+      )
+      @$depNode = $("<div data-dependency='Test' data-dependency-resources='TestResUrl'></div>")
+      @$nonDepNode = $("<div></div>")
+
+
+    afterEach ->
+      @yepnope.restore()
+
+
+    it 'loads dependencies for a template', (done) ->
+      service.loadTemplate(@$depNode, done)
+      expect(@yepnope).to.have.been.calledOnce
+      expect(callback).to.have.been.calledOnce
+
+
+    it "doesn't call yepnope when no dependencies given", ->
+      window.Test = {}
+      callback = sinon.spy()
+      service.loadTemplate(@$nonDepNode, callback)
+      expect(@yepnope).not.to.have.been.called
+      expect(callback).to.have.been.calledOnce
 
 
   describe 'inserting a map', ->
@@ -89,7 +129,7 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a leaflet-map snippet', ->
-      service.insertMap(@snippetModel, @$directiveRoot)
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new Map)
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="MapController" class="ng-scope">
           <div class="angular-leaflet-map" center="center" geojson="geojson"></div>
@@ -97,30 +137,40 @@ describe 'angularTemplateService', ->
       """)
 
 
-    it 'reacts to changes on the snippets dataIdentifier', ->
-      service.insertMap(@snippetModel, @$directiveRoot)
-      populateData = sinon.spy(service, 'populateData')
+    it 'reacts to changes on the maps dataIdentifier', ->
+      map = new Map
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, map)
+      populateData = sinon.spy(map, 'populateData')
       @snippetModel.storedData.dataIdentifier = 'changedTestData'
-      service.mapScopes[@snippetModel.id].$digest() # force the digest from the tests
+      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
       expect(populateData).to.have.been.called
 
 
-  describe 'populating data from snippet model', ->
-
+  describe 'inserting a choropleth', ->
     beforeEach ->
-      @scope = {}
       @snippetModel =
+        id: 'testChoropleth'
+        storedData:
+          lastChangeTime: '2013-10-06T09:12:45.129Z'
         data: (type) ->
-          if type == 'geojson'
-            return { someData: 'this would be geojson' }
-          if type == 'popupContentProperty'
-            return { popupContentProperty: 'name' }
+          if type == 'lastChangeTime'
+            @storedData.lastChangeTime
+
+      @$directiveRoot = $('<div></div>')
 
 
-    it 'does populate the scope with the snippet models data', ->
-      service.populateData(@snippetModel, @scope)
-      expect(@scope.geojson.data).to.eql(@snippetModel.data('geojson'))
-      expect(@scope.geojson.popupContentProperty).to.eql(@snippetModel.data('popupContentProperty'))
+    it 'inserts a d3-choropleth snippet', ->
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap)
+      controller = @$directiveRoot.find('div').attr('ng-controller')
+      cssClass = @$directiveRoot.find('div').attr('class')
+      expect(controller).to.eql('ChoroplethController')
+      expect(cssClass).to.eql('ng-scope')
 
 
-
+    it 'reacts to changes on the choropleths lastChangeTime', ->
+      choropleth = new ChoroplethMap
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, choropleth)
+      populateData = sinon.spy(choropleth, 'populateData')
+      @snippetModel.storedData.lastChangeTime = '2013-10-06T09:12:46.129Z'
+      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
+      expect(populateData).to.have.been.called

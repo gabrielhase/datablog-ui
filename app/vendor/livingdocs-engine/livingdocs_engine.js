@@ -1,37 +1,47 @@
 (function() {
-  var Design, DesignStyle, Directive, DirectiveCollection, DirectiveIterator, DragDrop, EditableController, Focus, History, HistoryAction, InterfaceInjector, LimitedLocalstore, Loader, ModelDirectives, Page, Renderer, SnippetArray, SnippetContainer, SnippetDrag, SnippetModel, SnippetSelection, SnippetTemplateList, SnippetTree, SnippetView, Template, assert, chainable, chainableProxy, directiveParser, document, dom, guid, htmlCompare, kickstart, localstore, log, mixins, pageReady, setupApi, stash,
+  var Design, DesignStyle, Directive, DirectiveCollection, DirectiveIterator, DragDrop, EditableController, Focus, History, HistoryAction, InterfaceInjector, LimitedLocalstore, Loader, ModelDirectives, Page, Renderer, SnippetArray, SnippetContainer, SnippetDrag, SnippetModel, SnippetSelection, SnippetTemplateList, SnippetTree, SnippetView, Template, assert, chainable, chainableProxy, directiveParser, document, dom, eventing, guid, htmlCompare, kickstart, localstore, log, mixins, pageReady, setupApi, stash,
     __slice = [].slice;
 
   (function() {
     var key, n, name, v, value, _ref, _ref1, _ref2, _results;
     this.config = {
       wordSeparators: "./\\()\"':,.;<>~!#%^&*|+=[]{}`~?",
-      attributePrefix: 'data'
-    };
-    this.docClass = {
-      section: 'doc-section',
-      snippet: 'doc-snippet',
-      editable: 'doc-editable',
-      "interface": 'doc-ui',
-      snippetHighlight: 'doc-snippet-highlight',
-      containerHighlight: 'doc-container-highlight',
-      draggedPlaceholder: 'doc-dragged-placeholder',
-      dragged: 'doc-dragged',
-      beforeDrop: 'doc-before-drop',
-      afterDrop: 'doc-after-drop',
-      preventSelection: 'doc-no-selection',
-      maximizedContainer: 'doc-js-maximized-container'
-    };
-    this.templateAttr = {
-      editable: 'doc-editable',
-      container: 'doc-container',
-      image: 'doc-image',
-      defaultValues: {
-        editable: 'default',
-        container: 'default',
-        image: 'image'
+      attributePrefix: 'data',
+      html: {
+        css: {
+          section: 'doc-section',
+          snippet: 'doc-snippet',
+          editable: 'doc-editable',
+          "interface": 'doc-ui',
+          snippetHighlight: 'doc-snippet-highlight',
+          containerHighlight: 'doc-container-highlight',
+          draggedPlaceholder: 'doc-dragged-placeholder',
+          dragged: 'doc-dragged',
+          beforeDrop: 'doc-before-drop',
+          afterDrop: 'doc-after-drop',
+          preventSelection: 'doc-no-selection',
+          maximizedContainer: 'doc-js-maximized-container',
+          interactionBlocker: 'doc-interaction-blocker'
+        }
+      },
+      template: {
+        directives: {
+          editable: 'doc-editable',
+          container: 'doc-container',
+          image: 'doc-image',
+          html: 'doc-html'
+        },
+        defaultValues: {
+          editable: 'default',
+          container: 'default',
+          image: 'image',
+          html: 'default'
+        }
       }
     };
+    this.docClass = config.html.css;
+    this.templateAttr = config.template.directives;
+    this.templateAttr.defaultValues = config.template.defaultValues;
     this.templateAttrLookup = {};
     this.docAttr = {
       template: 'doc-template'
@@ -79,6 +89,22 @@
       return proxy;
     };
   };
+
+  eventing = (function() {
+    return {
+      callOnce: function(callbacks, listener) {
+        var selfRemovingFunc;
+        selfRemovingFunc = function() {
+          var args;
+          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+          callbacks.remove(selfRemovingFunc);
+          return listener.apply(this, args);
+        };
+        callbacks.add(selfRemovingFunc);
+        return selfRemovingFunc;
+      }
+    };
+  })();
 
   guid = (function() {
     var idCounter, lastId;
@@ -895,6 +921,7 @@
             break;
           case 'editable':
           case 'image':
+          case 'html':
             this.content || (this.content = {});
             _results.push(this.content[directive.name] = void 0);
             break;
@@ -911,6 +938,10 @@
 
     SnippetModel.prototype.hasEditables = function() {
       return this.template.directives.count('editable') > 0;
+    };
+
+    SnippetModel.prototype.hasHtml = function() {
+      return this.template.directives.count('html') > 0;
     };
 
     SnippetModel.prototype.hasImages = function() {
@@ -1511,6 +1542,16 @@
       }
     };
 
+    DirectiveCollection.prototype.each = function(callback) {
+      var directive, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = this.length; _i < _len; _i++) {
+        directive = this[_i];
+        _results.push(callback(directive));
+      }
+      return _results;
+    };
+
     DirectiveCollection.prototype.assertNameNotUsed = function(directive) {
       return assert(!this.all[directive.name], "" + directive.type + " Template parsing error:\n" + docAttr[directive.type] + "=\"" + directive.name + "\".\n\"" + directive.name + "\" is a duplicate name.");
     };
@@ -1719,23 +1760,18 @@
     };
 
     Template.prototype.parseTemplate = function() {
-      var containers, directive, editables, elem, _i, _j, _len, _len1, _results;
+      var elem,
+        _this = this;
       elem = this.$template[0];
       this.directives = this.getDirectives(elem);
-      if (editables = this.directives.editable) {
-        for (_i = 0, _len = editables.length; _i < _len; _i++) {
-          directive = editables[_i];
-          this.formatEditable(directive.name, directive.elem);
+      return this.directives.each(function(directive) {
+        switch (directive.type) {
+          case 'editable':
+            return _this.formatEditable(directive.name, directive.elem);
+          case 'container':
+            return _this.formatContainer(directive.name, directive.elem);
         }
-      }
-      if (containers = this.directives.container) {
-        _results = [];
-        for (_j = 0, _len1 = containers.length; _j < _len1; _j++) {
-          directive = containers[_j];
-          _results.push(this.formatContainer(directive.name, directive.elem));
-        }
-        return _results;
-      }
+      });
     };
 
     Template.prototype.getDirectives = function(elem) {
@@ -2236,6 +2272,34 @@
         }
         return void 0;
       },
+      findNodeContext: function(node) {
+        var nodeContext;
+        node = this.getElementNode(node);
+        while (node && node.nodeType === 1) {
+          nodeContext = this.getNodeContext(node);
+          if (nodeContext) {
+            return nodeContext;
+          }
+          node = node.parentNode;
+        }
+        return void 0;
+      },
+      getNodeContext: function(node) {
+        var contextAttr, key;
+        for (key in docAttr) {
+          contextAttr = docAttr[key];
+          if (key === 'template') {
+            continue;
+          }
+          if (node.hasAttribute(contextAttr)) {
+            return {
+              contextAttr: contextAttr,
+              attrName: node.getAttribute(contextAttr)
+            };
+          }
+        }
+        return void 0;
+      },
       findContainer: function(node) {
         var containerName, view;
         node = this.getElementNode(node);
@@ -2260,6 +2324,13 @@
         if (node.hasAttribute(docAttr.image)) {
           imageName = node.getAttribute(docAttr.image);
           return imageName;
+        }
+      },
+      getHtmlElementName: function(node) {
+        var htmlElementName;
+        if (node.hasAttribute(docAttr.html)) {
+          htmlElementName = node.getAttribute(docAttr.html);
+          return htmlElementName;
         }
       },
       getEditableName: function(node) {
@@ -2787,6 +2858,9 @@
           elem = mergedView.directives.get(editableName).elem;
           cursor = Editable.createCursor(elem, direction === 'before' ? 'end' : 'beginning');
           cursor[direction === 'before' ? 'insertAfter' : 'insertBefore'](frag);
+          cursor.save();
+          this.updateModel(mergedView, editableName);
+          cursor.restore();
           view.model.remove();
           cursor.setSelection();
         }
@@ -3094,8 +3168,11 @@
       this.$body = $(this.document.body);
       this.loader = new Loader();
       this.focus = new Focus();
-      this.imageClick = $.Callbacks();
       this.editableController = new EditableController(this);
+      this.imageClick = $.Callbacks();
+      this.htmlElementClick = $.Callbacks();
+      this.snippetWillBeDragged = $.Callbacks();
+      this.snippetWasDropped = $.Callbacks();
       this.snippetDragDrop = new DragDrop({
         longpressDelay: 400,
         longpressDistanceLimit: 10,
@@ -3151,7 +3228,7 @@
       });
     };
 
-    Page.prototype.registerDragStartEvents = function(dragDrop, event) {
+    Page.prototype.registerDragMoveEvents = function(dragDrop, event) {
       if (event.type === 'touchstart') {
         return this.$document.on('touchmove.livingdocs-drag', function(event) {
           event.preventDefault();
@@ -3173,11 +3250,11 @@
       if (snippetView) {
         snippet = snippetView.model;
       }
+      this.registerDragMoveEvents(dragDrop, event);
       this.registerDragStopEvents(dragDrop, event);
       snippetDrag = new SnippetDrag({
         snippet: snippet,
-        page: this,
-        registerDragStartEvents: $.proxy(this.registerDragStartEvents, this, dragDrop, event)
+        page: this
       });
       if (snippetView) {
         $snippet = snippetView.$html;
@@ -3190,12 +3267,16 @@
     };
 
     Page.prototype.click = function(event) {
-      var imageName, snippetView;
+      var nodeContext, snippetView;
       snippetView = dom.findSnippetView(event.target);
+      nodeContext = dom.findNodeContext(event.target);
       if (snippetView) {
         this.focus.snippetFocused(snippetView);
-        if (imageName = dom.getImageName(event.target)) {
-          return this.imageClick.fire(snippetView, imageName, event);
+        switch (nodeContext.contextAttr) {
+          case docAttr.image:
+            return this.imageClick.fire(snippetView, nodeContext.attrName, event);
+          case docAttr.html:
+            return this.htmlElementClick.fire(snippetView, nodeContext.attrName, event);
         }
       } else {
         return this.focus.blur();
@@ -3408,9 +3489,8 @@
 
   SnippetDrag = (function() {
     function SnippetDrag(_arg) {
-      var page, registerDragStartEvents, snippet;
-      snippet = _arg.snippet, page = _arg.page, registerDragStartEvents = _arg.registerDragStartEvents;
-      this.registerDragStartEvents = registerDragStartEvents;
+      var page, snippet;
+      snippet = _arg.snippet, page = _arg.page;
       this.snippet = snippet;
       this.page = page;
       this.$highlightedContainer = {};
@@ -3421,7 +3501,7 @@
     }
 
     SnippetDrag.prototype.onStart = function() {
-      this.registerDragStartEvents();
+      this.page.snippetWillBeDragged.fire(this.snippet);
       this.$insertPreview = $("<div class='doc-drag-preview'>");
       this.page.$body.append(this.$insertPreview).css('cursor', 'pointer');
       this.page.editableController.disableAll();
@@ -3496,13 +3576,14 @@
       if (target && this.isValidTarget(target)) {
         if (snippetView = target.snippetView) {
           if (target.position === 'before') {
-            return snippetView.model.before(this.snippet);
+            snippetView.model.before(this.snippet);
           } else {
-            return snippetView.model.after(this.snippet);
+            snippetView.model.after(this.snippet);
           }
         } else if (target.containerName) {
-          return target.parent.model.append(target.containerName, this.snippet);
+          target.parent.model.append(target.containerName, this.snippet);
         }
+        return this.page.snippetWasDropped.fire(this.snippet);
       } else {
 
       }
@@ -3583,6 +3664,8 @@
           return this.setEditable(name, value);
         case 'image':
           return this.setImage(name, value);
+        case 'html':
+          return this.setHtml(name, value);
       }
     };
 
@@ -3594,6 +3677,8 @@
           return this.getEditable(name);
         case 'image':
           return this.getImage(name);
+        case 'html':
+          return this.getHtml(name);
       }
     };
 
@@ -3609,6 +3694,36 @@
       return $(elem).html(value);
     };
 
+    SnippetView.prototype.getHtml = function(name) {
+      var elem;
+      elem = this.directives.get(name).elem;
+      return $(elem).html();
+    };
+
+    SnippetView.prototype.setHtml = function(name, value) {
+      var $elem, elem;
+      elem = this.directives.get(name).elem;
+      $elem = $(elem);
+      $elem.html(value);
+      this.blockInteraction($elem);
+      this.directivesToReset || (this.directivesToReset = {});
+      return this.directivesToReset[name] = name;
+    };
+
+    SnippetView.prototype.resetDirectives = function() {
+      var elem, name, _results;
+      _results = [];
+      for (name in this.directivesToReset) {
+        elem = this.directives.get(name).elem;
+        if ($(elem).find('iframe').length) {
+          _results.push(this.set(name, this.model.content[name]));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
     SnippetView.prototype.getImage = function(name) {
       var elem;
       elem = this.directives.get(name).elem;
@@ -3616,22 +3731,20 @@
     };
 
     SnippetView.prototype.setImage = function(name, value) {
-      var $elem, elem;
+      var $elem, elem, setPlaceholder;
       elem = this.directives.get(name).elem;
       $elem = $(elem);
       if (value) {
+        this.cancelDelayed(name);
         return this.setImageAttribute($elem, value);
       } else {
-        if (this.attachedToDom) {
-          return this.setPlaceholderImage($elem);
-        } else {
-          return this.wasAttachedToDom.add($.proxy(this.setPlaceholderImage, this, $elem));
-        }
+        setPlaceholder = $.proxy(this.setPlaceholderImage, this, $elem);
+        return this.delayUntilAttached(name, setPlaceholder);
       }
     };
 
     SnippetView.prototype.setImageAttribute = function($elem, value) {
-      if ($elem.context.tagName === 'IMG') {
+      if ($elem[0].nodeName === 'IMG') {
         return $elem.attr('src', value);
       } else {
         return $elem.attr('style', "background-image:url(" + value + ")");
@@ -3640,7 +3753,7 @@
 
     SnippetView.prototype.setPlaceholderImage = function($elem) {
       var height, value, width;
-      if ($elem.context.tagName === 'IMG') {
+      if ($elem[0].nodeName === 'IMG') {
         width = $elem.width();
         height = $elem.height();
       } else {
@@ -3662,6 +3775,29 @@
         }
       }
       return this.$html.addClass(changes.add);
+    };
+
+    SnippetView.prototype.disableTabbing = function($elem) {
+      var _this = this;
+      return setTimeout(function() {
+        return $elem.find('iframe').attr('tabindex', '-1');
+      }, 400);
+    };
+
+    SnippetView.prototype.blockInteraction = function($elem) {
+      var $blocker;
+      this.ensureRelativePosition($elem);
+      $blocker = $("<div class='" + docClass.interactionBlocker + "'>").attr('style', 'position: absolute; top: 0; bottom: 0; left: 0; right: 0;');
+      $elem.append($blocker);
+      return this.disableTabbing($elem);
+    };
+
+    SnippetView.prototype.ensureRelativePosition = function($elem) {
+      var position;
+      position = $elem.css('position');
+      if (position !== 'absolute' && position !== 'fixed' && position !== 'relative') {
+        return $elem.css('position', 'relative');
+      }
     };
 
     SnippetView.prototype.append = function(containerName, $elem) {
@@ -3688,6 +3824,7 @@
         this.appendToContainer(parentContainer, renderer);
         this.attachedToDom = true;
       }
+      this.resetDirectives();
       this.wasAttachedToDom.fire();
       return this;
     };
@@ -3709,6 +3846,28 @@
 
     SnippetView.prototype.get$container = function() {
       return $(dom.findContainer(this.$html[0]).node);
+    };
+
+    SnippetView.prototype.delayUntilAttached = function(name, func) {
+      var _this = this;
+      if (this.attachedToDom) {
+        return func();
+      } else {
+        this.cancelDelayed(name);
+        this.delayed || (this.delayed = {});
+        return this.delayed[name] = eventing.callOnce(this.wasAttachedToDom, function() {
+          _this.delayed[name] = void 0;
+          return func();
+        });
+      }
+    };
+
+    SnippetView.prototype.cancelDelayed = function(name) {
+      var _ref;
+      if ((_ref = this.delayed) != null ? _ref[name] : void 0) {
+        this.wasAttachedToDom.remove(this.delayed[name]);
+        return this.delayed[name] = void 0;
+      }
     };
 
     return SnippetView;
@@ -3758,7 +3917,12 @@
     this.snippetBlurred = chainable(page.focus.snippetBlur, 'add');
     this.snippetAdded = chainable(document.snippetTree.snippetAdded, 'add');
     this.startDrag = $.proxy(page, 'startDrag');
+    this.snippetWillBeDragged = $.proxy(page.snippetWillBeDragged, 'add');
+    this.snippetWillBeDragged.remove = $.proxy(page.snippetWillBeDragged, 'remove');
+    this.snippetWasDropped = $.proxy(page.snippetWasDropped, 'add');
+    this.snippetWasDropped.remove = $.proxy(page.snippetWasDropped, 'remove');
     this.imageClick = chainable(page.imageClick, 'add');
+    this.htmlElementClick = chainable(page.htmlElementClick, 'add');
     return this.textSelection = chainable(page.editableController.selection, 'add');
   };
 

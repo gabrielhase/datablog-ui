@@ -1,0 +1,2 @@
+describe 'ChoroplethMap', ->
+  # nothing here
