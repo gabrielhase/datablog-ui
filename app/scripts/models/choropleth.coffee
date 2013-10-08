@@ -7,6 +7,14 @@ class ChoroplethMap
     </div>
   """
 
+  prefilledMaps = [
+    {
+      name: 'livingmaps.unemploymentChoropleth'
+      map: 'usCounties'
+      data: 'usUnemployment'
+    }
+  ]
+
   constructor: ({
 
   }) ->
@@ -30,11 +38,28 @@ class ChoroplethMap
   # IMPLEMENTATION DETAILS
 
 
+  shouldRenderLoadingBar: (snippetModel) ->
+    if snippetModel.data('map')
+      true
+    else if ChoroplethMap.getPrefilledMapNames.indexOf(snippetModel.identifier) != -1
+      true
+    else
+      false
+
+
   populateData: (snippetModel, scope, ngProgress) ->
     for trackedProperty in ['map', 'data', 'lastPositioned']
       newVal = snippetModel.data(trackedProperty)
       if newVal
-        if ngProgress.status() == 0
+        if ngProgress.status() == 0 && @shouldRenderLoadingBar(snippetModel)
           ngProgress.start()
           ngProgress.set(10)
         scope[trackedProperty] = newVal
+
+
+  @getPrefilledMaps: ->
+    prefilledMaps
+
+
+  @getPrefilledMapNames: ->
+    prefilledMaps.map (map) -> map.name
