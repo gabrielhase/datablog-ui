@@ -16,10 +16,10 @@ class ChoroplethMap
   # CLASS INTERFACE
 
 
-  wasInserted: (snippetModel, scope) ->
+  wasInserted: (snippetModel, scope, ngProgress) ->
     snippetModel.data('lastPositioned', (new Date()).toJSON())
     scope.$watch('snippetModel.data("lastChangeTime")', (newVal) =>
-      @populateData(snippetModel, scope)
+      @populateData(snippetModel, scope, ngProgress)
     )
 
 
@@ -30,8 +30,11 @@ class ChoroplethMap
   # IMPLEMENTATION DETAILS
 
 
-  populateData: (snippetModel, scope) ->
+  populateData: (snippetModel, scope, ngProgress) ->
     for trackedProperty in ['map', 'data', 'lastPositioned']
       newVal = snippetModel.data(trackedProperty)
       if newVal
+        if ngProgress.status() == 0
+          ngProgress.start()
+          ngProgress.set(10)
         scope[trackedProperty] = newVal

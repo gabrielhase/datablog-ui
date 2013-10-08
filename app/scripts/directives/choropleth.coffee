@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'choropleth', ($timeout) ->
+angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   svg = null
   mapGroup = null
@@ -47,6 +47,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout) ->
         # TODO: use default value when quantize does not return a value
 
 
+  # Stop progress bar with a timeout to prevent running conditions
+  stopProgressBar = ->
+    $timeout ->
+      ngProgress.complete()
+    , 1000
+
+
   return {
     restrict: 'EA'
     scope: {
@@ -66,22 +73,22 @@ angular.module('ldEditor').directive 'choropleth', ($timeout) ->
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
-        # element.findIn('.choropleth-map').append("""
-        #   <img id='loader' style="position: absolute; top: 100px; left: 300px;" src="images/ajax-loader.gif"></img>
-        # """)
-        #$timeout ->
-        renderDataMap(scope, newVal, scope.data)
-          # $(element).find('#loader').remove()
-        #, 100
+        if newVal != oldVal # to prevent init redraw
+          renderDataMap(scope, newVal, scope.data)
+          stopProgressBar()
       )
 
       scope.$watch('data', (newVal, oldVal) ->
         return unless newVal && scope.map
-        renderDataMap(scope, scope.map, newVal)
+        if newVal != oldVal # to prevent init redraw
+          renderDataMap(scope, scope.map, newVal)
+          stopProgressBar()
       )
 
       scope.$watch('lastPositioned', (newVal, oldVal) ->
         return unless scope?.map
-        renderDataMap(scope, scope.map, scope.data)
+        if newVal != oldVal # to prevent init redraw
+          renderDataMap(scope, scope.map, scope.data)
+          stopProgressBar()
       )
   }
