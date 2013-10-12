@@ -14,4 +14,5 @@ angular.module('ldEditor').service 'choroplethDataService', (dataService) ->
             snippetModel.data('mapIdentifier', 'usCounties')
             snippetModel.data('data', data)
             snippetModel.data('dataIdentifier', 'usUnemployment')
+            snippetModel.data('projection', prefilledMap.projection)
             snippetModel.data('lastChangeTime', (new Date()).toJSON())
