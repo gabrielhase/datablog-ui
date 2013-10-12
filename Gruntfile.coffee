@@ -108,7 +108,7 @@ module.exports = (grunt) ->
             'app/scripts/models/*.coffee'
             'app/scripts/services/*.coffee'
             'app/scripts/filters/*.coffee'
-            'app/scripts/templates/*.coffee'
+            'app/scripts/templates/**/*.coffee'
             'app/scripts/components/**/component.coffee'
             'app/scripts/components/**/*.coffee'
           ]
