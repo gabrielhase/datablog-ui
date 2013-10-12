@@ -15,7 +15,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
       # changes in the selected snippet trigger a re-render of the properties panel
       scope.$watch('snippet', (newVal, oldVal) ->
         if newVal
-          renderData(newVal.data, newVal) if newVal.model.identifier == 'livingmaps.map'
+          renderData(newVal.data, newVal)
       )
 
       formElementScopes = [] # stores the scopes of all dynamically added form elements
@@ -90,7 +90,17 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
         )
 
 
+      renderChoroplethForm = ->
+        insertScope = scope.$new()
+        formElementScopes.push(insertScope)
+        $compile(htmlTemplates.choroplethSidebarForm)(insertScope, (form, childScope) ->
+          $(".visual-form-placeholder").append(form)
+        )
+
+
       renderData = (data, snippet) ->
         cleanForm()
-        renderDataSelect('Mock Data', dataService.options(), snippet)
+        switch snippet.model.identifier
+          when 'livingmaps.choropleth' then renderChoroplethForm()
+          when 'livingmaps.map' then renderDataSelect('Mock Data', dataService.options(), snippet)
   }
