@@ -1,4 +1,4 @@
-describe 'Choropleth', ->
+describe 'Choropleth for USA (albersUsa projection)', ->
 
   directiveElem = null
   directiveScope = null
@@ -7,6 +7,7 @@ describe 'Choropleth', ->
     choropleth = new ChoroplethMap
     module('ldEditor')
     { directiveElem, directiveScope } = retrieveDirective(choropleth.getTemplate())
+    directiveScope.projection = d3.geo.albersUsa()
 
 
   describe 'rendering a map', ->
@@ -45,9 +46,9 @@ describe 'Choropleth', ->
       # the SVG DOM API here
       viewBox = $('svg')[0].viewBox
       expect(viewBox.baseVal.width).to.eql(467.88330078125)
-      expect(viewBox.baseVal.height).to.eql(146.29037475585938)
-      expect(viewBox.baseVal.x).to.eql(0)
-      expect(viewBox.baseVal.y).to.eql(0)
+      expect(viewBox.baseVal.height).to.eql(146.29034423828125)
+      expect(viewBox.baseVal.x).to.eql(195.8579864501953)
+      expect(viewBox.baseVal.y).to.eql(256.8436584472656)
 
 
     it 'should change the viewBox property on the svg when the map changes', ->
@@ -56,10 +57,10 @@ describe 'Choropleth', ->
       directiveScope.map = smallerSampleMap
       directiveScope.$digest()
       viewBox = $('svg')[0].viewBox
-      expect(viewBox.baseVal.width).to.eql(56.938720703125)
-      expect(viewBox.baseVal.height).to.eql(91.67935180664063)
-      expect(viewBox.baseVal.x).to.eql(0)
-      expect(viewBox.baseVal.y).to.eql(0)
+      expect(viewBox.baseVal.width).to.eql(100.67922973632813)
+      expect(viewBox.baseVal.height).to.eql(117.65719604492188)
+      expect(viewBox.baseVal.x).to.eql(195.88800048828125)
+      expect(viewBox.baseVal.y).to.eql(256.83514404296875)
 
 
     it 'should lower the height property on dropping into a narrower container', ->
