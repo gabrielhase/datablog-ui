@@ -5480,3 +5480,8 @@ h6 {
 .row {
   margin-bottom: 40px;
 }
+
+path {
+  stroke: #000;
+  fill: #ccc;
+}

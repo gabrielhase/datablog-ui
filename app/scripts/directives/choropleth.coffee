@@ -4,6 +4,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
   mapGroup = null
 
   defaults =
+    projection: d3.geo.mercator()
     colorSteps: 9
     mappingValue:
       inMap: 'properties.id'
@@ -12,23 +13,33 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   # sets the viewBox attribute on the svg element to cover the whole map
   # dynamically adjusts the snippet height to the ratio to the viewBox
-  resizeMap = ->
-    svgHeight = svg.node().getBBox().height
-    svgWidth = svg.node().getBBox().width
-    svg.attr('viewBox', "0 0 #{svgWidth} #{svgHeight}")
+  resizeMap = (bounds) ->
+    svgHeight = bounds[1][1] - bounds[0][1]
+    svgWidth = bounds[1][0] - bounds[0][0]
+    svg.attr('viewBox', "#{bounds[0][0]} #{bounds[0][1]} #{svgWidth} #{svgHeight}")
     ratio = $(svg.node()).width() / svgWidth
+    svg.attr('stroke-width', (1 / ratio) )
     svg.attr('height', ratio * svgHeight)
 
 
   renderDataMap = (scope, map, data) ->
-    path = d3.geo.path()
+    path = d3.geo.path().projection(scope.projection || defaults.projection)
 
     mapPaths = mapGroup.selectAll('path')
         .data(map.features)
     mapPaths.enter().append('path')
-      .attr('d', d3.geo.path())
+      .attr('d', path)
     mapPaths.exit().remove()
-    resizeMap()
+
+    minX = d3.min(map.features[0].geometry.coordinates[0], (d) ->
+      d[0]
+    )
+    minY = d3.max(map.features[0].geometry.coordinates[0], (d) ->
+      d[1]
+    )
+
+    bounds =  path.bounds(map)
+    resizeMap(bounds)
 
     if data
       quantize = d3.scale.quantize()
@@ -59,6 +70,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       data: '=data'
       map: '=map'
       lastPositioned: '=lastPositioned'
+      projection: '=projection'
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"

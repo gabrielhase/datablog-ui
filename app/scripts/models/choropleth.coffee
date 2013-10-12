@@ -2,7 +2,7 @@ class ChoroplethMap
 
   template = """
     <div ng-controller="ChoroplethController">
-      <choropleth data="data" map="map" last-positioned="lastPositioned">
+      <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
       </choropleth>
     </div>
   """
@@ -12,6 +12,7 @@ class ChoroplethMap
       name: 'livingmaps.unemploymentChoropleth'
       map: 'usCounties'
       data: 'usUnemployment'
+      projection: 'albersUsa'
     }
   ]
 
@@ -47,9 +48,18 @@ class ChoroplethMap
       false
 
 
+  processValue: (property, value) ->
+    switch property
+      when 'projection'
+        if value
+          eval("d3.geo.#{value}()")
+      else
+        value
+
+
   populateData: (snippetModel, scope, ngProgress) ->
-    for trackedProperty in ['map', 'data', 'lastPositioned']
-      newVal = snippetModel.data(trackedProperty)
+    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection']
+      newVal = @processValue(trackedProperty, snippetModel.data(trackedProperty))
       if newVal
         if ngProgress.status() == 0 && @shouldRenderLoadingBar(snippetModel)
           ngProgress.start()
