@@ -151,10 +151,10 @@ describe 'angularTemplateService', ->
       @snippetModel =
         id: 'testChoropleth'
         storedData:
-          lastChangeTime: '2013-10-06T09:12:45.129Z'
+          map: 'aMap'
         data: (type) ->
-          if type == 'lastChangeTime'
-            @storedData.lastChangeTime
+          if type == 'map'
+            @storedData.map
 
       @$directiveRoot = $('<div></div>')
 
@@ -167,10 +167,9 @@ describe 'angularTemplateService', ->
       expect(cssClass).to.eql('ng-scope')
 
 
-    it 'reacts to changes on the choropleths lastChangeTime', ->
-      choropleth = new ChoroplethMap
+    it 'reacts to changes on the choropleths map', ->
+      choropleth = new ChoroplethMap()
       service.insertTemplateInstance(@snippetModel, @$directiveRoot, choropleth)
       populateData = sinon.spy(choropleth, 'populateData')
-      @snippetModel.storedData.lastChangeTime = '2013-10-06T09:12:46.129Z'
-      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
+      doc.changeSnippetData.fire(@snippetModel, ['map'])
       expect(populateData).to.have.been.called

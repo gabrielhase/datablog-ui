@@ -381,6 +381,13 @@ jsonHelper = do ->
 
     copy
 
+
+  # very primitive implementation that does NOT work when contents come
+  # in a different order, e.g. {a: 1, b: 2} != {b: 2, a: 1}
+  # a better solution is here: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+  deepEquals: (o1, o2) ->
+    JSON.stringify(o1) == JSON.stringify(o2)
+
 # LimitedLocalstore is a wrapper around localstore that
 # saves only a limited number of entries and discards
 # the oldest ones after that.
@@ -1249,18 +1256,25 @@ class SnippetModel
     @content[name]
 
 
-  data: (name, value) ->
-    if arguments.length == 1
-      @dataValues[name]
+  # can be called with a string or a hash
+  data: (arg) ->
+    if typeof(arg) == 'object'
+      changedDataProperties = []
+      for name, value of arg
+        if @changeData(name, value)
+          changedDataProperties.push(name)
+      if @snippetTree && changedDataProperties.length > 0
+        @snippetTree.dataChanging(this, changedDataProperties)
     else
-      @setData(name, value)
+      @dataValues[arg]
 
 
-  setData: (name, value) ->
-    if @dataValues[name] != value
+  changeData: (name, value) ->
+    if !jsonHelper.deepEquals(@dataValues[name], value)
       @dataValues[name] = value
-      if @snippetTree
-        @snippetTree.dataChanging(this)
+      true
+    else
+      false
 
 
   isEmpty: (name) ->
@@ -1429,8 +1443,10 @@ SnippetModel.fromJson = (json, design) ->
   for styleName, value of json.styles
     model.style(styleName, value)
 
-  for dataName, value of json.data
-    model.data(dataName, value)
+
+  model.data(json.data) if json.data
+  #for dataName, value of json.data
+  #  model.data(dataName, value)
 
   for containerName, snippetArray of json.containers
     assert model.containers.hasOwnProperty(containerName),
@@ -1636,8 +1652,8 @@ class SnippetTree
     @fireEvent('snippetHtmlChanged', snippet)
 
 
-  dataChanging: (snippet) ->
-    @fireEvent('snippetDataChanged', snippet)
+  dataChanging: (snippet, changedProperties) ->
+    @fireEvent('snippetDataChanged', snippet, changedProperties)
 
 
   # Serialization
@@ -3980,6 +3996,10 @@ pageReady = ->
   # Raised when a snippet is inserted into the snippetTree
   # callback: (snippetModel) ->
   @snippetAdded = chainable(document.snippetTree.snippetAdded, 'add')
+
+  # Raised when the data of a snippet has changed
+  # callback: (event, snippetModel, changedProperties) ->
+  @snippetDataChanged = chainable(document.snippetTree.snippetDataChanged, 'add')
 
   # Raised when a snippet is being dragged
   # Call to start a drag operation

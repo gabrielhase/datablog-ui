@@ -70,10 +70,11 @@ class ChoroplethMap
 
 
   wasInserted: (snippetModel, scope, ngProgress) ->
-    snippetModel.data('lastPositioned', (new Date()).toJSON())
-    scope.$watch('snippetModel.data("lastChangeTime")', (newVal) =>
-      @populateData(snippetModel, scope, ngProgress)
-    )
+    snippetModel.data
+      lastPositioned: (new Date()).toJSON()
+    doc.snippetDataChanged (snippet, changedProperties) =>
+      if snippet.id == snippetModel.id
+        @populateData(snippetModel, scope, ngProgress)
 
 
   getTemplate: ->

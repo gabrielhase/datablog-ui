@@ -363,6 +363,9 @@
           copy[name] = value;
         }
         return copy;
+      },
+      deepEquals: function(o1, o2) {
+        return JSON.stringify(o1) === JSON.stringify(o2);
       }
     };
   })();
@@ -1262,20 +1265,30 @@
       return this.content[name];
     };
 
-    SnippetModel.prototype.data = function(name, value) {
-      if (arguments.length === 1) {
-        return this.dataValues[name];
+    SnippetModel.prototype.data = function(arg) {
+      var changedDataProperties, name, value;
+      if (typeof arg === 'object') {
+        changedDataProperties = [];
+        for (name in arg) {
+          value = arg[name];
+          if (this.changeData(name, value)) {
+            changedDataProperties.push(name);
+          }
+        }
+        if (this.snippetTree && changedDataProperties.length > 0) {
+          return this.snippetTree.dataChanging(this, changedDataProperties);
+        }
       } else {
-        return this.setData(name, value);
+        return this.dataValues[arg];
       }
     };
 
-    SnippetModel.prototype.setData = function(name, value) {
-      if (this.dataValues[name] !== value) {
+    SnippetModel.prototype.changeData = function(name, value) {
+      if (!jsonHelper.deepEquals(this.dataValues[name], value)) {
         this.dataValues[name] = value;
-        if (this.snippetTree) {
-          return this.snippetTree.dataChanging(this);
-        }
+        return true;
+      } else {
+        return false;
       }
     };
 
@@ -1471,7 +1484,7 @@
   })();
 
   SnippetModel.fromJson = function(json, design) {
-    var child, containerName, dataName, model, name, snippetArray, styleName, template, value, _i, _len, _ref, _ref1, _ref2, _ref3;
+    var child, containerName, model, name, snippetArray, styleName, template, value, _i, _len, _ref, _ref1, _ref2;
     template = design.get(json.identifier);
     assert(template, "error while deserializing snippet: unknown template identifier '" + json.identifier + "'");
     model = new SnippetModel({
@@ -1489,14 +1502,12 @@
       value = _ref1[styleName];
       model.style(styleName, value);
     }
-    _ref2 = json.data;
-    for (dataName in _ref2) {
-      value = _ref2[dataName];
-      model.data(dataName, value);
+    if (json.data) {
+      model.data(json.data);
     }
-    _ref3 = json.containers;
-    for (containerName in _ref3) {
-      snippetArray = _ref3[containerName];
+    _ref2 = json.containers;
+    for (containerName in _ref2) {
+      snippetArray = _ref2[containerName];
       assert(model.containers.hasOwnProperty(containerName), "error while deserializing snippet: unknown container " + containerName);
       if (snippetArray) {
         assert($.isArray(snippetArray), "error while deserializing snippet: container is not array " + containerName);
@@ -1660,8 +1671,8 @@
       return this.fireEvent('snippetHtmlChanged', snippet);
     };
 
-    SnippetTree.prototype.dataChanging = function(snippet) {
-      return this.fireEvent('snippetDataChanged', snippet);
+    SnippetTree.prototype.dataChanging = function(snippet, changedProperties) {
+      return this.fireEvent('snippetDataChanged', snippet, changedProperties);
     };
 
     SnippetTree.prototype.printJson = function() {
@@ -4138,6 +4149,7 @@
     this.snippetFocused = chainable(page.focus.snippetFocus, 'add');
     this.snippetBlurred = chainable(page.focus.snippetBlur, 'add');
     this.snippetAdded = chainable(document.snippetTree.snippetAdded, 'add');
+    this.snippetDataChanged = chainable(document.snippetTree.snippetDataChanged, 'add');
     this.startDrag = $.proxy(page, 'startDrag');
     this.snippetWillBeDragged = $.proxy(page.snippetWillBeDragged, 'add');
     this.snippetWillBeDragged.remove = $.proxy(page.snippetWillBeDragged, 'remove');

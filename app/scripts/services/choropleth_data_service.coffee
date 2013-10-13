@@ -10,9 +10,9 @@ angular.module('ldEditor').service 'choroplethDataService', (dataService) ->
       if prefilledMap.name == snippetModel.identifier
         dataService.get(prefilledMap.map).then (map) ->
           dataService.get(prefilledMap.data).then (data) ->
-            snippetModel.data('map', map)
-            snippetModel.data('mapIdentifier', 'usCounties')
-            snippetModel.data('data', data)
-            snippetModel.data('dataIdentifier', 'usUnemployment')
-            snippetModel.data('projection', prefilledMap.projection)
-            snippetModel.data('lastChangeTime', (new Date()).toJSON())
+            snippetModel.data
+              map: map
+              mapIdentifier: 'usCounties'
+              data: data
+              dataIdentifier: 'usUnemployment'
+              projection: prefilledMap.projection

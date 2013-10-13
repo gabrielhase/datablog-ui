@@ -6,6 +6,7 @@ expect = chai.expect
 # mock doc (livingdocs-engine) globally
 # specific doc behavior can be "over-mocked" in specific specs
 doc =
+  changeSnippetData: $.Callbacks()
   ready: ->
     true
   init: ->
@@ -14,6 +15,8 @@ doc =
     true
   DragDrop: ->
     true
+  snippetDataChanged: (cb) ->
+    @changeSnippetData.add(cb)
 
 mockLeaflet = ->
   return {
