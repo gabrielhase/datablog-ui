@@ -44,8 +44,8 @@ angular.module('ldEditor').factory 'livingdocsService',
 
       doc.snippetWasDropped (snippet) ->
         if snippet.identifier == 'livingmaps.choropleth' || choroplethDataService.isPrefilledChoropleth(snippet)
-          snippet.data('lastPositioned', (new Date()).toJSON())
-          snippet.data('lastChangeTime', (new Date()).toJSON())
+          snippet.data
+            lastPositioned: (new Date()).toJSON()
 
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =
