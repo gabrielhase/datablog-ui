@@ -10,7 +10,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
 
 
   insertAngularTemplate: (snippetModel) ->
-    snippetView = doc.document.renderer.snippets[snippetModel.id]
+    snippetView = doc.document.renderer.snippetViews[snippetModel.id]
     for node in snippetView.$html.find('*[data-is]')
       switch $(node).data('is')
         when 'leaflet-map'

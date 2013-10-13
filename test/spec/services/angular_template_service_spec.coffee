@@ -50,7 +50,7 @@ describe 'angularTemplateService', ->
 
       doc.document =
         renderer:
-          snippets:
+          snippetViews:
             leafletTestModel:
               $html: $('<div data-template><div data-is="leaflet-map"><p>fallback placeholder</p></div></div>')
             choroplethTestModel:
