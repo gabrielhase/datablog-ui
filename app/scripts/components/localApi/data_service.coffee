@@ -251,7 +251,7 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       when 'pools' then data.resolve(mockData.pools)
       when 'cargo' then data.resolve(mockData.cargo)
       when 'usCounties'
-        $http.get('data/us-counties.json').then (usCountiesData) ->
+        $http.get('data/us-counties.geojson').then (usCountiesData) ->
           data.resolve(usCountiesData.data)
       when 'usUnemployment'
         d3.tsv 'data/us-unemployment-by-county.tsv', (tsvData) ->
