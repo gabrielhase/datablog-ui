@@ -105,4 +105,12 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
           renderDataMap(scope, scope.map, scope.data)
           stopProgressBar()
       )
+
+      scope.$watch('projection', (newVal, oldVal) ->
+        return unless scope?.map
+        if newVal != oldVal
+          removeExistingMap(scope.mapGroup)
+          renderDataMap(scope, scope.map, scope.data)
+          stopProgressBar()
+      )
   }
