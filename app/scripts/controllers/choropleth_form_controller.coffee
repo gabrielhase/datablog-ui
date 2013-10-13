@@ -3,6 +3,17 @@ class ChoroplethFormController
 
   constructor: (@$scope, @$http, @ngProgress) ->
     @$scope.setMap = (data, error) => @setMap(data, error)
+    @setupProjections()
+
+
+  setupProjections: ->
+    @$scope.projections = ChoroplethMap.getProjections()
+    @$scope.selectedProjection = @$scope.snippet.model.data('projection')
+    @$scope.$watch('selectedProjection', (newVal, oldVal) =>
+      if newVal
+        @$scope.snippet.model.data('projection', newVal)
+        @$scope.snippet.model.data('lastChangeTime', (new Date()).toJSON())
+    )
 
 
   setMap: (data, error) ->

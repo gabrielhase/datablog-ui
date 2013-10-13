@@ -16,6 +16,20 @@ class ChoroplethMap
     }
   ]
 
+  availableProjections = [
+    name: 'USA (only US maps)'
+    value: 'albersUsa'
+  ,
+    name: 'Mercator'
+    value: 'mercator'
+  ,
+    name: 'Orthographical'
+    value: 'orthographic'
+  ,
+    name: 'Plate carrée'
+    value: 'equirectangular'
+  ]
+
   constructor: ({
 
   }) ->
@@ -73,3 +87,7 @@ class ChoroplethMap
 
   @getPrefilledMapNames: ->
     prefilledMaps.map (map) -> map.name
+
+
+  @getProjections: ->
+    availableProjections
