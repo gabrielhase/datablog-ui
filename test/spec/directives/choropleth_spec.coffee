@@ -1,7 +1,43 @@
-describe 'Choropleth for USA (albersUsa projection)', ->
+describe 'Choropleth', ->
 
   directiveElem = null
   directiveScope = null
+
+  # TODO: this might be rewritten as a chai.js extension
+  equalPath = (path1, path2, delta) ->
+    arr1 = path1.split(',')
+    arr2 = path2.split(',')
+    # take away beginning and end markers
+    arr1[0] = arr1[0].replace('M', '')
+    arr2[0] = arr2[0].replace('M', '')
+    arr1[arr1.length - 1] = arr1[arr1.length - 1].replace('Z', '')
+    arr2[arr2.length - 1] = arr2[arr2.length - 1].replace('Z', '')
+    # map values
+    xVals1 = arr1.map (entry) -> entry.split('L')[0]
+    yVals1 = arr1.map (entry) ->
+      val = entry.split('L')[1]
+      if val
+        val
+      else
+        '0'
+    xVals2 = arr2.map (entry) -> entry.split('L')[0]
+    yVals2 = arr2.map (entry) ->
+      val = entry.split('L')[1]
+      if val
+        val
+      else
+        '0'
+    # expect same number of values in both paths
+    expect(xVals1.length).to.eql(xVals2.length)
+    expect(yVals1.length).to.eql(yVals2.length)
+    # compare values for delta
+    for xVal1, i in xVals1
+      xVal2 = xVals2[i]
+      expect(+xVal1).to.be.within(+xVal2-delta, +xVal2+delta)
+    for yVal1, i in yVals1
+      yVal2 = yVals2[i]
+      expect(+yVal1).to.be.within(+yVal1-delta, +yVal2+delta)
+
 
   beforeEach ->
     choropleth = new ChoroplethMap
@@ -103,5 +139,27 @@ describe 'Choropleth for USA (albersUsa projection)', ->
       paths = directiveElem.find('path')
       expect($(paths[0]).attr('class')).to.eql('q3-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+  describe 'changing the projection of a map', ->
+
+    beforeEach ->
+      directiveScope.map = zurichSampleMap
+      directiveScope.projection = d3.geo.mercator()
+
+
+    it 'should render the map with mercator projection', ->
+      directiveScope.$digest()
+      pathValues = directiveElem.find('path').attr('d')
+      equalPath(pathValues, zurichMercator, 0.0001)
+
+
+    it 'should re-render the map with orthographical projection', ->
+      directiveScope.$digest()
+      directiveScope.projection = d3.geo.orthographic()
+      directiveScope.$digest()
+      pathValues = directiveElem.find('path').attr('d')
+      equalPath(pathValues, zurichOrthographical, 0.0001)
+
 
 
