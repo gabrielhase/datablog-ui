@@ -5426,6 +5426,11 @@ a.badge:hover {
   fill: #08306b;
 }
 
+path {
+  stroke: #000000;
+  fill: #eeeeee;
+}
+
 .pull-right {
   float: right;
 }
@@ -5479,9 +5484,4 @@ h6 {
 
 .row {
   margin-bottom: 40px;
-}
-
-path {
-  stroke: #000;
-  fill: #ccc;
 }
