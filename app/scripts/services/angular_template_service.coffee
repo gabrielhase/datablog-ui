@@ -45,7 +45,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
         instance: instance
         scope: instanceScope
     )
-    instanceScope.$digest() # digest immediately to get maps loading
+    $rootScope.$$phase || instanceScope.$digest() # digest immediately to get maps loading
 
 
   removeAngularTemplate: (snippetModel) ->
