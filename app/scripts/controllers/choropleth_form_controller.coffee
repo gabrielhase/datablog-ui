@@ -1,16 +1,34 @@
 angular.module('ldEditor').controller 'ChoroplethFormController',
 class ChoroplethFormController
 
-  constructor: (@$scope, @$http, @ngProgress) ->
+  constructor: (@$scope, @$http, @ngProgress, @dataService) ->
     @$scope.setMap = (data, error) => @setMap(data, error)
     @setupProjections()
+    @setupPredefinedMaps()
+
+
+  setupPredefinedMaps: ->
+    @$scope.predefinedMaps = ChoroplethMap.getAvailableMaps()
+    @$scope.selectedMap = @$scope.snippet.model.data('dataIdentifier')
+    @$scope.$watch('selectedMap', (newVal, oldVal) =>
+      if newVal && newVal != oldVal
+        @ngProgress.start()
+        @dataService.get(newVal.map).then (data) =>
+          @ngProgress.complete()
+          @$scope.snippet.model.data('map', data)
+          @$scope.snippet.model.data('dataIdentifier', newVal)
+          @$scope.snippet.model.data('projection', newVal.projection)
+          @$scope.snippet.model.data('lastChangeTime', (new Date()).toJSON())
+
+          @$scope.selectedProjection = newVal.projection
+    )
 
 
   setupProjections: ->
     @$scope.projections = ChoroplethMap.getProjections()
     @$scope.selectedProjection = @$scope.snippet.model.data('projection')
     @$scope.$watch('selectedProjection', (newVal, oldVal) =>
-      if newVal
+      if newVal && newVal != oldVal
         @$scope.snippet.model.data('projection', newVal)
         @$scope.snippet.model.data('lastChangeTime', (new Date()).toJSON())
     )
