@@ -22,6 +22,12 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     svg.attr('height', ratio * svgHeight)
 
 
+  removeExistingMap = ->
+    mapPaths = mapGroup.selectAll('path')
+      .data([])
+    mapPaths.exit().remove()
+
+
   renderDataMap = (scope, map, data) ->
     path = d3.geo.path().projection(scope.projection || defaults.projection)
 
@@ -29,14 +35,6 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         .data(map.features)
     mapPaths.enter().append('path')
       .attr('d', path)
-    mapPaths.exit().remove()
-
-    minX = d3.min(map.features[0].geometry.coordinates[0], (d) ->
-      d[0]
-    )
-    minY = d3.max(map.features[0].geometry.coordinates[0], (d) ->
-      d[1]
-    )
 
     bounds =  path.bounds(map)
     resizeMap(bounds)
@@ -92,6 +90,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         $placeholder = $(element).find('.placeholder-image')
         $placeholder.remove() if $placeholder
         if newVal != oldVal # to prevent init redraw
+          removeExistingMap()
           renderDataMap(scope, newVal, scope.data)
           stopProgressBar()
       )
