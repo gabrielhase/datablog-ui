@@ -47,7 +47,8 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
           childScope.selectedProperty = snippet.model.data('popupContentProperty')
 
           childScope.$watch('selectedProperty', (newVal, oldVal) ->
-            snippet.model.data('popupContentProperty', newVal)
+            snippet.model.data
+              popupContentProperty: newVal
           )
 
           return select;
@@ -75,11 +76,14 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
             propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
 
           childScope.$watch('selectedData', (newVal, oldVal) ->
-            snippet.model.data('dataIdentifier', newVal)
+            snippet.model.data
+              dataIdentifier: newVal
             dataService.get(newVal).then (data) ->
-              snippet.model.data('geojson', data)
+              snippet.model.data
+                geojson: data
               if newVal != oldVal
-                snippet.model.data('popupContentProperty', null)
+                snippet.model.data
+                  popupContentProperty: null
                 scope.propertySelectElem.remove() if scope.propertySelectElem
                 propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
                 $(".upfront-properties-form .propertySelect").append(propertySelect)
