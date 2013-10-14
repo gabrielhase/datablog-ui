@@ -75,8 +75,8 @@ retrieveDirective = (markup) ->
   directiveScope = null
   inject ($rootScope, $compile) ->
     $compile(directiveElem)($rootScope)
-    $rootScope.$digest()
     directiveScope = $rootScope
+    $rootScope.$digest()
   return { directiveElem, directiveScope }
 
 

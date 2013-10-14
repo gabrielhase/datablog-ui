@@ -11,12 +11,8 @@ class ChoroplethMap
   # CLASS INTERFACE
 
 
-  wasInserted: (snippetModel, scope, ngProgress) ->
-    snippetModel.data
-      lastPositioned: (new Date()).toJSON()
-    doc.snippetDataChanged (snippet, changedProperties) =>
-      if snippet.id == snippetModel.id
-        @populateData(snippetModel, scope, ngProgress)
+  wasInserted: (snippetModel, scope) ->
+    # deprecated
 
 
   getTemplate: ->
@@ -43,14 +39,3 @@ class ChoroplethMap
           eval("d3.geo.#{value}()")
       else
         value
-
-
-  populateData: (snippetModel, scope, ngProgress) ->
-    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection']
-      newVal = @processValue(trackedProperty, snippetModel.data(trackedProperty))
-      if newVal
-        if ngProgress.status() == 0 && @shouldRenderLoadingBar(snippetModel)
-          ngProgress.start()
-          ngProgress.set(10)
-        scope[trackedProperty] = newVal
-

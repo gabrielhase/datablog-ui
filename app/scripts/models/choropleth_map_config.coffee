@@ -3,10 +3,15 @@ do ->
   @choroplethMapConfig =
 
     template: """
-      <div ng-controller="ChoroplethController">
+      <div ng-controller="ChoroplethMapController">
         <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
         </choropleth>
       </div>
+    """
+
+    directive: """
+      <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
+      </choropleth>
     """
 
     prefilledMaps: [
