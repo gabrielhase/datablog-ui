@@ -1,63 +1,5 @@
 class ChoroplethMap
 
-  # STATIC DATA
-
-  template = """
-    <div ng-controller="ChoroplethController">
-      <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
-      </choropleth>
-    </div>
-  """
-
-  prefilledMaps = [
-    {
-      name: 'livingmaps.unemploymentChoropleth'
-      map: 'usCounties'
-      data: 'usUnemployment'
-      projection: 'albersUsa'
-    }
-  ]
-
-  availableMaps = [
-    name: 'Austria'
-    map: 'austriaBundeslaender'
-    projection: 'mercator'
-  ,
-    name: 'Germany'
-    map: 'germanyBundeslaender'
-    projection: 'mercator'
-  ,
-    name: 'Switzerland'
-    map: 'switzerlandCantons'
-    projection: 'mercator'
-  ,
-    name: 'US States'
-    map: 'usStates'
-    projection: 'albersUsa'
-  ,
-    name: 'US Counties'
-    map: 'usCounties'
-    projection: 'albersUsa'
-  ,
-    name: 'World'
-    map: 'world'
-    projection: 'orthographic'
-  ]
-
-  availableProjections = [
-    name: 'USA (only US maps)'
-    value: 'albersUsa'
-  ,
-    name: 'Mercator'
-    value: 'mercator'
-  ,
-    name: 'Orthographical'
-    value: 'orthographic'
-  ,
-    name: 'Plate carrée'
-    value: 'equirectangular'
-  ]
-
   # CLASS DEFINITION
 
   constructor: ({
@@ -78,16 +20,17 @@ class ChoroplethMap
 
 
   getTemplate: ->
-    template
+    choroplethMapConfig.template
 
 
   # IMPLEMENTATION DETAILS
 
 
   shouldRenderLoadingBar: (snippetModel) ->
+    prefilledMapNames = choroplethMapConfig.prefilledMaps.map (map) -> map.name
     if snippetModel.data('map')
       true
-    else if ChoroplethMap.getPrefilledMapNames().indexOf(snippetModel.identifier) != -1
+    else if prefilledMapNames.indexOf(snippetModel.identifier) != -1
       true
     else
       false
@@ -111,18 +54,3 @@ class ChoroplethMap
           ngProgress.set(10)
         scope[trackedProperty] = newVal
 
-
-  @getPrefilledMaps: ->
-    prefilledMaps
-
-
-  @getPrefilledMapNames: ->
-    prefilledMaps.map (map) -> map.name
-
-
-  @getProjections: ->
-    availableProjections
-
-
-  @getAvailableMaps: ->
-    availableMaps
