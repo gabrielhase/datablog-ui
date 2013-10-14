@@ -8,7 +8,7 @@ class ChoroplethFormController
 
 
   setupPredefinedMaps: ->
-    @$scope.predefinedMaps = ChoroplethMap.getAvailableMaps()
+    @$scope.predefinedMaps = choroplethMapConfig.availableMaps
     @$scope.selectedMap = @$scope.snippet.model.data('dataIdentifier')
     @$scope.$watch('selectedMap', (newVal, oldVal) =>
       if newVal && newVal != oldVal
@@ -25,7 +25,7 @@ class ChoroplethFormController
 
 
   setupProjections: ->
-    @$scope.projections = ChoroplethMap.getProjections()
+    @$scope.projections = choroplethMapConfig.availableProjections
     @$scope.selectedProjection = @$scope.snippet.model.data('projection')
     @$scope.$watch('selectedProjection', (newVal, oldVal) =>
       if newVal && newVal != oldVal
