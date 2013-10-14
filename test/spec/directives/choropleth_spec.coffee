@@ -1,4 +1,4 @@
-describe 'Choropleth', ->
+describe 'Choropleth directive', ->
 
   directiveElem = null
   directiveScope = null
@@ -42,7 +42,7 @@ describe 'Choropleth', ->
   beforeEach ->
     choropleth = new ChoroplethMap
     module('ldEditor')
-    { directiveElem, directiveScope } = retrieveDirective(choropleth.getTemplate())
+    { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = d3.geo.albersUsa()
 
 
@@ -107,7 +107,7 @@ describe 'Choropleth', ->
       # simulate drag&drop
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
-      directiveScope.lastPositioned = (new Date()).toJSON()
+      directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
       expect($('#narrowContainer svg').height()).to.eql(62)
 
@@ -122,7 +122,7 @@ describe 'Choropleth', ->
 
       $('#narrowContainer').find(directiveElem).remove()
       $('#wideContainer').append(directiveElem)
-      directiveScope.lastPositioned = (new Date()).toJSON()
+      directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
       expect($('#wideContainer svg').height()).to.eql(250)
 
