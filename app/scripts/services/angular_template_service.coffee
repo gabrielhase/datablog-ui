@@ -1,4 +1,4 @@
-angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, ngProgress) ->
+angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile) ->
 
   # Service
 
@@ -39,7 +39,8 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     instanceScope = $rootScope.$new()
     $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
       childScope.snippetModel = snippetModel
-      instance.wasInserted(snippetModel, childScope, ngProgress)
+      childScope.templateInstance = instance
+      instance.wasInserted(snippetModel, childScope)
       $directiveRoot.html(instanceHtml)
       @templateInstances[snippetModel.id] =
         instance: instance
