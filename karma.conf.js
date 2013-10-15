@@ -33,7 +33,7 @@ module.exports = function(config) {
       'http://d3js.org/d3.v3.js',
 
       // ngProgress
-      'app/vendor/ngProgress/ngProgress.js',
+      'app/vendor/ng_progress/ng_progress.js',
 
       // API
       'app/scripts/components/environment/constants.js',

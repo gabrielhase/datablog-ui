@@ -1,9 +1,7 @@
 angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
-  svg = null
-  mapGroup = null
-
   defaults =
+    projection: d3.geo.mercator()
     colorSteps: 9
     mappingValue:
       inMap: 'properties.id'
@@ -12,23 +10,31 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   # sets the viewBox attribute on the svg element to cover the whole map
   # dynamically adjusts the snippet height to the ratio to the viewBox
-  resizeMap = ->
-    svgHeight = svg.node().getBBox().height
-    svgWidth = svg.node().getBBox().width
-    svg.attr('viewBox', "0 0 #{svgWidth} #{svgHeight}")
+  resizeMap = (svg, bounds) ->
+    svgHeight = bounds[1][1] - bounds[0][1]
+    svgWidth = bounds[1][0] - bounds[0][0]
+    svg.attr('viewBox', "#{bounds[0][0]} #{bounds[0][1]} #{svgWidth} #{svgHeight}")
     ratio = $(svg.node()).width() / svgWidth
+    svg.attr('stroke-width', (1 / ratio) )
     svg.attr('height', ratio * svgHeight)
 
 
-  renderDataMap = (scope, map, data) ->
-    path = d3.geo.path()
-
+  removeExistingMap = (mapGroup) ->
     mapPaths = mapGroup.selectAll('path')
+      .data([])
+    mapPaths.exit().remove()
+
+
+  renderDataMap = (scope, map, data) ->
+    path = d3.geo.path().projection(scope.projection || defaults.projection)
+
+    mapPaths = scope.mapGroup.selectAll('path')
         .data(map.features)
     mapPaths.enter().append('path')
-      .attr('d', d3.geo.path())
-    mapPaths.exit().remove()
-    resizeMap()
+      .attr('d', path)
+
+    bounds =  path.bounds(map)
+    resizeMap(scope.svg, bounds)
 
     if data
       quantize = d3.scale.quantize()
@@ -41,7 +47,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         # TODO: for now id's are always numeric -> make this an interface property
         # TODO: make value an interface property
         valueById.set(+eval("d.#{defaults.mappingValue.inData}"), +d.value)
-      mapGroup.selectAll('path')
+      scope.mapGroup.selectAll('path')
         .attr('class', (d) -> quantize(valueById.get(+eval("d.#{defaults.mappingValue.inMap}"))))
         # TODO: use default value when quantize does not return a value
 
@@ -59,16 +65,17 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       data: '=data'
       map: '=map'
       lastPositioned: '=lastPositioned'
+      projection: '=projection'
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
     link: (scope, element, attrs) ->
       # set up initial svg object
-      svg = d3.select(element[0])
+      scope.svg = d3.select(element[0])
         .append("svg")
           .attr("width", '100%')
           .attr("height", '0px')
-      mapGroup = svg.append("g")
+      scope.mapGroup = scope.svg.append("g")
         .attr('class', 'map')
 
       $(element).append("""
@@ -80,6 +87,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         $placeholder = $(element).find('.placeholder-image')
         $placeholder.remove() if $placeholder
         if newVal != oldVal # to prevent init redraw
+          removeExistingMap(scope.mapGroup)
           renderDataMap(scope, newVal, scope.data)
           stopProgressBar()
       )
@@ -94,6 +102,14 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       scope.$watch('lastPositioned', (newVal, oldVal) ->
         return unless scope?.map
         if newVal != oldVal # to prevent init redraw
+          renderDataMap(scope, scope.map, scope.data)
+          stopProgressBar()
+      )
+
+      scope.$watch('projection', (newVal, oldVal) ->
+        return unless scope?.map
+        if newVal != oldVal
+          removeExistingMap(scope.mapGroup)
           renderDataMap(scope, scope.map, scope.data)
           stopProgressBar()
       )

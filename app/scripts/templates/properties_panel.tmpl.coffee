@@ -6,10 +6,12 @@ htmlTemplates.propertiesPanel = """
     <h3><span>Properties for {{snippet.template.title}}</span></h3>
   </div>
   <div>
-    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visuelles</div>
+    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>
+    <div class="visual-form-placeholder">
+    </div>
     <form class="upfront-properties-form upfront-form">
     </form>
-    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Aktionen</div>
+    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>
     <ul class="upfront-action-list" style="text-align: center">
       <li ng-show="isDeletable(snippet)">
         <button class="upfront-btn upfront-control upfront-btn-danger"

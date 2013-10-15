@@ -240,6 +240,11 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       ]
 
 
+  getMap: (url, data) ->
+    $http.get(url).then (remoteData) ->
+      data.resolve(remoteData.data)
+
+
   get: (key) ->
 
     data = $q.defer()
@@ -250,9 +255,12 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       when 'bikes' then data.resolve(mockData.bikes)
       when 'pools' then data.resolve(mockData.pools)
       when 'cargo' then data.resolve(mockData.cargo)
-      when 'usCounties'
-        $http.get('data/us-counties.json').then (usCountiesData) ->
-          data.resolve(usCountiesData.data)
+      when 'austriaBundeslaender' then @getMap('data/austria-bundeslaender.geojson', data)
+      when 'germanyBundeslaender' then @getMap('data/germany-bundeslaender.geojson', data)
+      when 'switzerlandCantons' then @getMap('data/switzerland-cantons.geojson', data)
+      when 'usStates' then @getMap('data/us-states.geojson', data)
+      when 'usCounties' then @getMap('data/us-counties.geojson', data)
+      when 'world' then @getMap('data/world.geojson', data)
       when 'usUnemployment'
         d3.tsv 'data/us-unemployment-by-county.tsv', (tsvData) ->
           jsonData = []
