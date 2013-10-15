@@ -5426,6 +5426,11 @@ a.badge:hover {
   fill: #08306b;
 }
 
+path {
+  stroke: #000000;
+  fill: #eeeeee;
+}
+
 .pull-right {
   float: right;
 }

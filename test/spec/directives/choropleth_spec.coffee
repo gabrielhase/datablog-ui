@@ -1,12 +1,49 @@
-describe 'Choropleth', ->
+describe 'Choropleth directive', ->
 
   directiveElem = null
   directiveScope = null
 
+  # TODO: this might be rewritten as a chai.js extension
+  equalPath = (path1, path2, delta) ->
+    arr1 = path1.split(',')
+    arr2 = path2.split(',')
+    # take away beginning and end markers
+    arr1[0] = arr1[0].replace('M', '')
+    arr2[0] = arr2[0].replace('M', '')
+    arr1[arr1.length - 1] = arr1[arr1.length - 1].replace('Z', '')
+    arr2[arr2.length - 1] = arr2[arr2.length - 1].replace('Z', '')
+    # map values
+    xVals1 = arr1.map (entry) -> entry.split('L')[0]
+    yVals1 = arr1.map (entry) ->
+      val = entry.split('L')[1]
+      if val
+        val
+      else
+        '0'
+    xVals2 = arr2.map (entry) -> entry.split('L')[0]
+    yVals2 = arr2.map (entry) ->
+      val = entry.split('L')[1]
+      if val
+        val
+      else
+        '0'
+    # expect same number of values in both paths
+    expect(xVals1.length).to.eql(xVals2.length)
+    expect(yVals1.length).to.eql(yVals2.length)
+    # compare values for delta
+    for xVal1, i in xVals1
+      xVal2 = xVals2[i]
+      expect(+xVal1).to.be.within(+xVal2-delta, +xVal2+delta)
+    for yVal1, i in yVals1
+      yVal2 = yVals2[i]
+      expect(+yVal1).to.be.within(+yVal1-delta, +yVal2+delta)
+
+
   beforeEach ->
     choropleth = new ChoroplethMap
     module('ldEditor')
-    { directiveElem, directiveScope } = retrieveDirective(choropleth.getTemplate())
+    { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
+    directiveScope.projection = d3.geo.albersUsa()
 
 
   describe 'rendering a map', ->
@@ -45,9 +82,9 @@ describe 'Choropleth', ->
       # the SVG DOM API here
       viewBox = $('svg')[0].viewBox
       expect(viewBox.baseVal.width).to.eql(467.88330078125)
-      expect(viewBox.baseVal.height).to.eql(146.29037475585938)
-      expect(viewBox.baseVal.x).to.eql(0)
-      expect(viewBox.baseVal.y).to.eql(0)
+      expect(viewBox.baseVal.height).to.eql(146.29034423828125)
+      expect(viewBox.baseVal.x).to.eql(195.8579864501953)
+      expect(viewBox.baseVal.y).to.eql(256.8436584472656)
 
 
     it 'should change the viewBox property on the svg when the map changes', ->
@@ -56,10 +93,10 @@ describe 'Choropleth', ->
       directiveScope.map = smallerSampleMap
       directiveScope.$digest()
       viewBox = $('svg')[0].viewBox
-      expect(viewBox.baseVal.width).to.eql(56.938720703125)
-      expect(viewBox.baseVal.height).to.eql(91.67935180664063)
-      expect(viewBox.baseVal.x).to.eql(0)
-      expect(viewBox.baseVal.y).to.eql(0)
+      expect(viewBox.baseVal.width).to.eql(100.67922973632813)
+      expect(viewBox.baseVal.height).to.eql(117.65719604492188)
+      expect(viewBox.baseVal.x).to.eql(195.88800048828125)
+      expect(viewBox.baseVal.y).to.eql(256.83514404296875)
 
 
     it 'should lower the height property on dropping into a narrower container', ->
@@ -70,7 +107,7 @@ describe 'Choropleth', ->
       # simulate drag&drop
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
-      directiveScope.lastPositioned = (new Date()).toJSON()
+      directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
       expect($('#narrowContainer svg').height()).to.eql(62)
 
@@ -85,7 +122,7 @@ describe 'Choropleth', ->
 
       $('#narrowContainer').find(directiveElem).remove()
       $('#wideContainer').append(directiveElem)
-      directiveScope.lastPositioned = (new Date()).toJSON()
+      directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
       expect($('#wideContainer svg').height()).to.eql(250)
 
@@ -102,5 +139,27 @@ describe 'Choropleth', ->
       paths = directiveElem.find('path')
       expect($(paths[0]).attr('class')).to.eql('q3-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+  describe 'changing the projection of a map', ->
+
+    beforeEach ->
+      directiveScope.map = zurichSampleMap
+      directiveScope.projection = d3.geo.mercator()
+
+
+    it 'should render the map with mercator projection', ->
+      directiveScope.$digest()
+      pathValues = directiveElem.find('path').attr('d')
+      equalPath(pathValues, zurichMercator, 0.0001)
+
+
+    it 'should re-render the map with orthographical projection', ->
+      directiveScope.$digest()
+      directiveScope.projection = d3.geo.orthographic()
+      directiveScope.$digest()
+      pathValues = directiveElem.find('path').attr('d')
+      equalPath(pathValues, zurichOrthographical, 0.0001)
+
 
 

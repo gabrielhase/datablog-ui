@@ -45,7 +45,7 @@ class SnippetInsertor
     # insert points in other snippets
     doc.document.snippetTree.each (snippetModel) =>
       if snippetModel.hasContainers
-        snippetView = doc.document.renderer.snippets[snippetModel.id]
+        snippetView = doc.document.renderer.snippetViews[snippetModel.id]
         if snippetView.directives?.container
           for container in snippetView.directives?.container
             @renderInsertPoint(scope, $(container.elem), snippetModel.containers[container.name])

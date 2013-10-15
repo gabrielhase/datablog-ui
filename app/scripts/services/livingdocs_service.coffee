@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, choroplethDataService, ngProgress) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, prefillChoroplethService, ngProgress) ->
 
     # Service
     # -------
@@ -17,7 +17,7 @@ angular.module('ldEditor').factory 'livingdocsService',
     loadAngularTemplates: ->
       $timeout ->
         doc.document.snippetTree.root.each (snippet) ->
-          choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
+          prefillChoroplethService.prefill(snippet) if prefillChoroplethService.isPrefilledChoropleth(snippet)
           angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
 
@@ -39,14 +39,13 @@ angular.module('ldEditor').factory 'livingdocsService',
         )
 
       doc.snippetAdded (snippet) ->
-        choroplethDataService.prefill(snippet) if choroplethDataService.isPrefilledChoropleth(snippet)
+        prefillChoroplethService.prefill(snippet) if prefillChoroplethService.isPrefilledChoropleth(snippet)
         angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
       doc.snippetWasDropped (snippet) ->
-        if snippet.identifier == 'livingmaps.choropleth' || choroplethDataService.isPrefilledChoropleth(snippet)
-          #ngProgress.start()
-          snippet.data('lastPositioned', (new Date()).toJSON())
-          snippet.data('lastChangeTime', (new Date()).toJSON())
+        if snippet.identifier == 'livingmaps.choropleth' || prefillChoroplethService.isPrefilledChoropleth(snippet)
+          snippet.data
+            lastPositioned: (new Date()).getTime()
 
       doc.imageClick (snippet, imagePath, event) ->
         event.livingdocs =

@@ -15,7 +15,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
       # changes in the selected snippet trigger a re-render of the properties panel
       scope.$watch('snippet', (newVal, oldVal) ->
         if newVal
-          renderData(newVal.data, newVal) if newVal.model.identifier == 'livingmaps.map'
+          renderData(newVal.data, newVal)
       )
 
       formElementScopes = [] # stores the scopes of all dynamically added form elements
@@ -47,7 +47,8 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
           childScope.selectedProperty = snippet.model.data('popupContentProperty')
 
           childScope.$watch('selectedProperty', (newVal, oldVal) ->
-            snippet.model.data('popupContentProperty', newVal)
+            snippet.model.data
+              popupContentProperty: newVal
           )
 
           return select;
@@ -75,11 +76,14 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
             propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
 
           childScope.$watch('selectedData', (newVal, oldVal) ->
-            snippet.model.data('dataIdentifier', newVal)
+            snippet.model.data
+              dataIdentifier: newVal
             dataService.get(newVal).then (data) ->
-              snippet.model.data('geojson', data)
+              snippet.model.data
+                geojson: data
               if newVal != oldVal
-                snippet.model.data('popupContentProperty', null)
+                snippet.model.data
+                  popupContentProperty: null
                 scope.propertySelectElem.remove() if scope.propertySelectElem
                 propertySelect = renderPopupPropertySelect(scope, 'Popup Property', snippet)
                 $(".upfront-properties-form .propertySelect").append(propertySelect)
@@ -90,7 +94,17 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
         )
 
 
+      renderChoroplethForm = ->
+        insertScope = scope.$new()
+        formElementScopes.push(insertScope)
+        $compile(htmlTemplates.choroplethSidebarForm)(insertScope, (form, childScope) ->
+          $(".visual-form-placeholder").append(form)
+        )
+
+
       renderData = (data, snippet) ->
         cleanForm()
-        renderDataSelect('Mock Data', dataService.options(), snippet)
+        switch snippet.model.identifier
+          when 'livingmaps.choropleth' then renderChoroplethForm()
+          when 'livingmaps.map' then renderDataSelect('Mock Data', dataService.options(), snippet)
   }

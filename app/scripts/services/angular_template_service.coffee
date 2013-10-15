@@ -1,4 +1,4 @@
-angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, ngProgress) ->
+angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile) ->
 
   # Service
 
@@ -10,7 +10,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
 
 
   insertAngularTemplate: (snippetModel) ->
-    snippetView = doc.document.renderer.snippets[snippetModel.id]
+    snippetView = doc.document.renderer.snippetViews[snippetModel.id]
     for node in snippetView.$html.find('*[data-is]')
       switch $(node).data('is')
         when 'leaflet-map'
@@ -39,13 +39,13 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     instanceScope = $rootScope.$new()
     $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
       childScope.snippetModel = snippetModel
-      instance.wasInserted(snippetModel, childScope, ngProgress)
+      childScope.templateInstance = instance
       $directiveRoot.html(instanceHtml)
       @templateInstances[snippetModel.id] =
         instance: instance
         scope: instanceScope
     )
-    instanceScope.$digest() # digest immediately to get maps loading
+    $rootScope.$$phase || instanceScope.$digest() # digest immediately to get maps loading
 
 
   removeAngularTemplate: (snippetModel) ->
