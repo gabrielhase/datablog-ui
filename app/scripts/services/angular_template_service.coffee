@@ -40,7 +40,6 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
       childScope.snippetModel = snippetModel
       childScope.templateInstance = instance
-      instance.wasInserted(snippetModel, childScope)
       $directiveRoot.html(instanceHtml)
       @templateInstances[snippetModel.id] =
         instance: instance
