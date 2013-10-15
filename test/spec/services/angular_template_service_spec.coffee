@@ -137,13 +137,8 @@ describe 'angularTemplateService', ->
       """)
 
 
-    it 'reacts to changes on the maps dataIdentifier', ->
-      map = new Map
-      service.insertTemplateInstance(@snippetModel, @$directiveRoot, map)
-      populateData = sinon.spy(map, 'populateData')
-      @snippetModel.storedData.dataIdentifier = 'changedTestData'
-      service.templateInstances[@snippetModel.id].scope.$digest() # force the digest from the tests
-      expect(populateData).to.have.been.called
+    # TODO: rewrite this as a map controller spec
+    it 'reacts to changes on the maps dataIdentifier'
 
 
   describe 'inserting a choropleth', ->
