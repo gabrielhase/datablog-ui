@@ -8,18 +8,8 @@ class ChoroplethMap
     # nothing here yet
 
 
-  # CLASS INTERFACE
-
-
-  wasInserted: (snippetModel, scope) ->
-    # deprecated
-
-
   getTemplate: ->
     choroplethMapConfig.template
-
-
-  # IMPLEMENTATION DETAILS
 
 
   shouldRenderLoadingBar: (snippetModel) ->
