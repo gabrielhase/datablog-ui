@@ -4,30 +4,30 @@ angular.module('ldEditor').factory 'editableEventsService',
   ($rootScope, uiStateService) ->
 
     currentSelection = undefined
-    # NOTE: mocked selection is a test object that is used to test toggling of
-    # UI states. This will be replaced when the selection from Editable.JS
-    # has the required functionality.
-    mockedSelection =
-      isBold: false
-      isItalic: false
-      isLinked: false
-
 
     # Service
     # -------
 
-    currentTextSelection: {}
+    currentTextSelectionPos: {}
+    currentSelectionStyles:
+      isBold: false
+      isItalic: false
+      isLinked: false
+      link: ''
+      isLinkExternal: false
+    selectionIsOnInputField: false
 
     textSelected: (snippet, elem, selection) ->
-      currentSelection = selection # set the current selection in the scope
       if selection
-        coords = selection.getCoordinates()
-        @currentTextSelection.top = coords.top
-        @currentTextSelection.left = coords.left
-        @currentTextSelection.bottom = coords.bottom
-        @currentTextSelection.width = coords.width
+        currentSelection = selection
+        @setCurrentSelectionStyles()
+        @updateSelectionCoordinates(selection)
+        state = {}
+        @selectionIsOnInputField = false # de-activate link mode when user selects new text
+      else if @selectionIsOnInputField # retain state and currentSelection in link input field (changes selection)
         state = {}
       else
+        currentSelection = undefined
         state = false
 
       $rootScope.$apply(
@@ -35,38 +35,76 @@ angular.module('ldEditor').factory 'editableEventsService',
       )
 
 
+    editLink: ->
+      @selectionIsOnInputField = true
+      currentSelection.save()
+
+
+    endLinkEditing: ->
+      currentSelection.restore()
+      @selectionIsOnInputField = false
+
+
     toggleCurrentSelectionBold: ->
-      log.debug "Calling Editable.JS to make text selection #{currentSelection.text()} bold"
-      # => Editable.JS: toggle the complete selection bold or un-bold depending on current state
-      mockedSelection.isBold = !mockedSelection.isBold
+      currentSelection.toggleBold()
 
 
     toggleCurrentSelectionItalic: ->
-      log.debug "Calling Editable.JS to make text selection #{currentSelection.text()} italic"
-      # => Editable.JS: toggle the complete selection italic or un-italic depending on current state
-      mockedSelection.isItalic = !mockedSelection.isItalic
+      currentSelection.toggleEmphasis()
 
 
     # link is either empty -> reset link, or contains the link to be set
-    toggleCurrentSelectionLink: (link) ->
-      log.debug "Calling Editable.JS to change the link on selection #{currentSelection.text()}"
-      if link
-        mockedSelection.isLinked = link
+    setCurrentSelectionLink: (link, isExternal) ->
+      if link && link != ''
+        target = "_blank" if isExternal
+        currentSelection.link(link, {target: target})
       else
-        mockedSelection.isLinked = false
+        currentSelection.unlink()
 
 
-    expandCurrentSelectionToWord: ->
-      log.debug "Calling Editable.JS to expand the current selection of #{currentSelection.text()} to word boundaries"
+    getCurrentSelectionLink: ->
+      links = currentSelection.getTagsByName('a')
+      if links.length >= 1
+        $(links[0]).attr('href')
+      else
+        ''
+
+
+    updateSelectionCoordinates: (selection) ->
+      coords = selection.getCoordinates()
+      @currentTextSelectionPos.top = coords.top
+      @currentTextSelectionPos.left = coords.left
+      @currentTextSelectionPos.bottom = coords.bottom
+      @currentTextSelectionPos.width = coords.width
+
+
+    setCurrentSelectionStyles: ->
+      @currentSelectionStyles.isBold = @isCurrentSelectionBold()
+      @currentSelectionStyles.isItalic = @isCurrentSelectionItalic()
+      @currentSelectionStyles.isLinked = @isCurrentSelectionLinked()
+      @currentSelectionStyles.link = @getCurrentSelectionLink()
 
 
     isCurrentSelectionBold: ->
-      mockedSelection.isBold
+      @getSelectionState('strong')
 
 
     isCurrentSelectionItalic: ->
-      mockedSelection.isItalic
+      @getSelectionState('em')
 
 
     isCurrentSelectionLinked: ->
-      mockedSelection.isLinked
+      @getSelectionState('a')
+
+
+    getSelectionState: (tag) ->
+      tags = currentSelection.getTagsByName(tag)
+      if tags.length >= 1
+        firstTag = tags[0]
+        if currentSelection.isExactSelection(firstTag, 'visible')
+          true
+        else
+          false
+      else
+        false
+

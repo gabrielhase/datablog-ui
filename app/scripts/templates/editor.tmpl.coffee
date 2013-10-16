@@ -18,7 +18,7 @@ htmlTemplates.editor = """
     </div>
 
     <!-- Selected Text Options -->
-    <div popover ng-if="state.isActive('flowtextPopover')" arrow-distance="10" open-condition="state.flowtextPopover" bounding-box="{{ boundingBox }}">
+    <div popover ng-if="state.isActive('flowtextPopover')" arrow-distance="14" open-condition="state.flowtextPopover" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">
       <ng-include src="'flowtext-options.html'">
       </ng-include>
     </div>
