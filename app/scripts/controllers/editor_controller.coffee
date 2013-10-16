@@ -7,7 +7,7 @@ class EditorController
     @$scope.state = @uiStateService.state
 
     # bounding box is used for text popover placement
-    @$scope.boundingBox = @editableEventsService.currentTextSelection
+    @$scope.textPopoverBoundingBox = @editableEventsService.currentTextSelectionPos
 
     # watchers
     @watchInsertMode()
