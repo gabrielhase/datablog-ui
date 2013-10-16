@@ -1,44 +1,37 @@
 angular.module('ldEditor').controller 'FlowtextOptionsController',
 class FlowtextOptionsController
 
-  constructor: ($scope, uiStateService, editableEventsService) ->
+  constructor: (@$scope, @uiStateService, @editableEventsService) ->
     # UI State
-    $scope.isBold = editableEventsService.isCurrentSelectionBold()
-    $scope.isItalic = editableEventsService.isCurrentSelectionItalic()
-    $scope.isLinked = editableEventsService.isCurrentSelectionLinked()
-    $scope.linkMode = false
+    @$scope.editableEventsService = @editableEventsService
+    @$scope.currentSelectionStyles = @editableEventsService.currentSelectionStyles
 
-    $scope.selectBlockLevel = => @selectBlockLevel(uiStateService)
-    $scope.toggleBold = => @toggleBold($scope, editableEventsService)
-    $scope.toggleItalic = => @toggleItalic($scope, editableEventsService)
-    $scope.toggleLink = => @toggleLink($scope, editableEventsService, uiStateService)
+    @$scope.toggleBold = => @toggleBold()
+    @$scope.toggleItalic = => @toggleItalic()
+    @$scope.openLinkInput = => @openLinkInput()
+    @$scope.setLink = (link, target) => @setLink(link, target)
 
 
-  selectBlockLevel: (uiStateService) ->
-    # TODO: change selection to whole block
+  toggleBold: ->
+    @editableEventsService.toggleCurrentSelectionBold()
 
 
-  toggleBold: (scope, editableEventsService) ->
-    editableEventsService.toggleCurrentSelectionBold()
-    scope.isBold = editableEventsService.isCurrentSelectionBold()
+  toggleItalic: ->
+    @editableEventsService.toggleCurrentSelectionItalic()
 
 
-  toggleItalic: (scope, editableEventsService) ->
-    editableEventsService.toggleCurrentSelectionItalic()
-    scope.isItalic = editableEventsService.isCurrentSelectionItalic()
+  openLinkInput: ->
+    @editableEventsService.editLink()
+
+    # Hack to get the popover to re-evaluate the positioning.
+    # When editing a link the popover can have a different
+    # width and height.
+    @$scope.textPopoverBoundingBox.timestamp = new Date().getTime()
 
 
-  toggleLink: (scope, editableEventsService, uiStateService) ->
-    if editableEventsService.isCurrentSelectionLinked()
-      editableEventsService.toggleCurrentSelectionLink()
-      scope.isLinked = editableEventsService.isCurrentSelectionLinked()
-    else
-      # in link mode, set the link otherwise prepare link selection and
-      # activate link mode.
-      if scope.linkMode
-        editableEventsService.toggleCurrentSelectionLink(scope.link)
-        scope.linkMode = false
-        uiStateService.set('flowtextPopover', false)
-      else
-        editableEventsService.expandCurrentSelectionToWord()
-        scope.linkMode = true
+  setLink: (link, target) ->
+    # in link mode, set the link otherwise prepare link selection and
+    # activate link mode.
+    @editableEventsService.endLinkEditing()
+    @editableEventsService.setCurrentSelectionLink(link, target)
+    @uiStateService.set('flowtextPopover', false)

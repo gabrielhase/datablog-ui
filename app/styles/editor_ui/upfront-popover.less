@@ -14,6 +14,8 @@
     top: 0;
     right: 0;
   }
+
+  z-index: 1010;
 }
 
 /* Arrow - copied from panel */
@@ -56,6 +58,18 @@
     border-top-color: @panelArrowOuterColor;
     bottom: -1px;
     left: -@panelArrowOuterWidth;
+  }
+}
+
+.upfront-popover--image {
+  border: 0;
+
+  .upfront-close { display: none; }
+
+  .upfront-panel-content {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
   }
 }
 
