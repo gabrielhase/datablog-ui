@@ -4,13 +4,25 @@ do ->
 
     template: """
       <div ng-controller="ChoroplethMapController">
-        <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
+        <choropleth map="map"
+                    last-positioned="lastPositioned"
+                    projection="projection"
+                    data="data"
+                    map-mapping-property="mapMappingProperty"
+                    ddata-mapping-property="dataMappingProperty"
+                    ddata-value-property="dataValueProperty">
         </choropleth>
       </div>
     """
 
     directive: """
-      <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
+      <choropleth map="map"
+                  last-positioned="lastPositioned"
+                  projection="projection"
+                  data="data"
+                  map-mapping-property="mapMappingProperty"
+                  ddata-mapping-property="dataMappingProperty"
+                  ddata-value-property="dataValueProperty">
       </choropleth>
     """
 
