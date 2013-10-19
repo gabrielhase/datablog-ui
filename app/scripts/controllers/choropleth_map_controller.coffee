@@ -11,6 +11,7 @@ class ChoroplethMapController
     @setupSnippetChangeListener()
 
 
+  # TODO: use changedProperties to do atomical updates
   setupSnippetChangeListener: ->
     doc.snippetDataChanged (snippet, changedProperties) =>
       if snippet.id == @snippetModel.id
@@ -18,8 +19,8 @@ class ChoroplethMapController
 
 
   populateMap: (snippetModel, scope) ->
-    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection']
-      newVal = @choroplethMapInstance.processValue(trackedProperty, @snippetModel.data(trackedProperty))
+    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection', 'mapMappingProperty', 'dataMappingProperty', 'dataValueProperty']
+      newVal = @snippetModel.data(trackedProperty)
       if newVal
         if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel)
           @ngProgress.start()
