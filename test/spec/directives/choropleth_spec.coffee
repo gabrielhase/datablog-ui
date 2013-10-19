@@ -43,7 +43,7 @@ describe 'Choropleth directive', ->
     choropleth = new ChoroplethMap
     module('ldEditor')
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
-    directiveScope.projection = d3.geo.albersUsa()
+    directiveScope.projection = 'albersUsa'
 
 
   describe 'rendering a map', ->
@@ -141,11 +141,30 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
+    it 'should render data points on a map when selecting the mapping manually', ->
+      directiveScope.data = sample1DData
+      directiveScope.mapMappingProperty = 'id'
+      directiveScope.dataMappingProperty = 'id'
+      directiveScope.$digest()
+      paths = directiveElem.find('path')
+      expect($(paths[0]).attr('class')).to.eql('q3-9')
+      expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    it 'should render data points on a mpa when selecting the value property manually', ->
+      directiveScope.data = sample1DData
+      directiveScope.dataValueProperty = 'value'
+      directiveScope.$digest()
+      paths = directiveElem.find('path')
+      expect($(paths[0]).attr('class')).to.eql('q3-9')
+      expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
   describe 'changing the projection of a map', ->
 
     beforeEach ->
       directiveScope.map = zurichSampleMap
-      directiveScope.projection = d3.geo.mercator()
+      directiveScope.projection = 'mercator'
 
 
     it 'should render the map with mercator projection', ->
@@ -156,7 +175,7 @@ describe 'Choropleth directive', ->
 
     it 'should re-render the map with orthographical projection', ->
       directiveScope.$digest()
-      directiveScope.projection = d3.geo.orthographic()
+      directiveScope.projection = 'orthographic'
       directiveScope.$digest()
       pathValues = directiveElem.find('path').attr('d')
       equalPath(pathValues, zurichOrthographical, 0.0001)

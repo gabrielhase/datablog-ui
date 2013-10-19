@@ -23,21 +23,21 @@ htmlTemplates.choroplethSidebarForm = """
       <legend>Data Visualization</legend>
 
       <label>Select a property that is matched by your data</label>
-      <select ng-model="selectedMapProperty" ng-options="option.value as option.label for option in availableMapProperties">
+      <select ng-model="mapMappingProperty" ng-options="option.value as option.label for option in availableMapProperties">
         <option value="">-- choose Property --</option>
       </select>
 
-      <div ng-show="selectedMapProperty">
+      <div ng-show="mapMappingProperty">
         <label>Upload a data file (csv only, comma-separated)</label>
         <input csv-upload callback="setData(data, error)" type="file" name="data"></input>
 
         <label>Select which (numerical) property you want to visualize</label>
-        <select ng-model="selectedDataValue" ng-options="option.value as option.label for option in availableDataProperties">
+        <select ng-model="dataValueProperty" ng-options="option.key as option.label for option in availableDataProperties">
           <option value="">-- choose Visualization value --</option>
         </select>
 
         <label>Select a property that matches your selected map property</label>
-        <select ng-model="selectedDataMapping" ng-options="option.key as option.label for option in availableDataProperties">
+        <select ng-model="dataMappingProperty" ng-options="option.key as option.label for option in availableDataProperties">
           <option value="">-- choose Visualization value --</option>
         </select>
 

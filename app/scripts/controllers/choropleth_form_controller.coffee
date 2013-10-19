@@ -8,6 +8,19 @@ class ChoroplethFormController
     @setupProjections()
     @setupPredefinedMaps()
     @initMapPropertySelection()
+    # watchers
+    @$scope.$watch('mapMappingProperty', (newVal, oldVal) =>
+      @$scope.snippet.model.data
+        mapMappingProperty: newVal
+    )
+    @$scope.$watch('dataValueProperty', (newVal, oldVal) =>
+      @$scope.snippet.model.data
+        dataValueProperty: newVal
+    )
+    @$scope.$watch('dataMappingProperty', (newVal, oldVal) =>
+      @$scope.snippet.model.data
+        dataMappingProperty: newVal
+    )
 
 
   initMapPropertySelection: ->
