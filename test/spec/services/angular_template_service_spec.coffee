@@ -177,6 +177,6 @@ describe 'angularTemplateService', ->
         status: ->
           true
       choroplethController = instantiateController('ChoroplethMapController', $scope: scope, ngProgress: ngProgress)
-      populateData = sinon.spy(choroplethController, 'populateData')
+      populateData = sinon.spy(choroplethController, 'populateMap')
       doc.changeSnippetData.fire(@snippetModel, ['map'])
       expect(populateData).to.have.been.called
