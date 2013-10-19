@@ -4,6 +4,7 @@ class ChoroplethFormController
   constructor: (@$scope, @$http, @ngProgress, @dataService) ->
     @choroplethInstance = @$scope.snippet.model.uiTemplateInstance
     @$scope.setMap = (data, error) => @setMap(data, error)
+    @$scope.setData = (data, error) => @setData(data, error)
     @setupProjections()
     @setupPredefinedMaps()
     @initMapPropertySelection()
@@ -47,6 +48,22 @@ class ChoroplethFormController
         @$scope.snippet.model.data
           projection: newVal
     )
+
+
+  setData: (data, error) ->
+    if error.message
+      alert(error.message)
+    else
+      @$scope.snippet.model.data
+        data: data
+      @$scope.availableDataProperties = []
+      if data && data.length > 0
+        # NOTE: the last entry is more likely not to be a header row
+        for key, value of data[data.length - 1]
+          @$scope.availableDataProperties.push
+            label: "#{key} (e.g. #{value})"
+            key: key
+            value: value
 
 
   setMap: (data, error) ->
