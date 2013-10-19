@@ -14,10 +14,10 @@ class ChoroplethMapController
   setupSnippetChangeListener: ->
     doc.snippetDataChanged (snippet, changedProperties) =>
       if snippet.id == @snippetModel.id
-        @populateData()
+        @populateMap()
 
 
-  populateData: (snippetModel, scope) ->
+  populateMap: (snippetModel, scope) ->
     for trackedProperty in ['map', 'data', 'lastPositioned', 'projection']
       newVal = @choroplethMapInstance.processValue(trackedProperty, @snippetModel.data(trackedProperty))
       if newVal
