@@ -2,9 +2,23 @@ angular.module('ldEditor').controller 'ChoroplethFormController',
 class ChoroplethFormController
 
   constructor: (@$scope, @$http, @ngProgress, @dataService) ->
+    @choroplethInstance = @$scope.snippet.model.uiTemplateInstance
     @$scope.setMap = (data, error) => @setMap(data, error)
     @setupProjections()
     @setupPredefinedMaps()
+    @initMapPropertySelection()
+
+
+  initMapPropertySelection: ->
+    { propertiesForMapping, propertiesWithMissingEntries } = @choroplethInstance.getPropertiesForMapping(@$scope.snippet.model)
+    if propertiesForMapping && propertiesForMapping.length > 0
+      @$scope.availableMapProperties = []
+      # NOTE: getPropertiesForMapping ensures that the properties are present in
+      # all features so it's safe just to take the first
+      for key, value of propertiesForMapping[0]
+        @$scope.availableMapProperties.push
+          label: "#{key} (e.g. #{value})"
+          value: key
 
 
   setupPredefinedMaps: ->
@@ -21,6 +35,7 @@ class ChoroplethFormController
             projection: newVal.projection
 
           @$scope.selectedProjection = newVal.projection
+          @initMapPropertySelection()
     )
 
 
@@ -47,6 +62,7 @@ class ChoroplethFormController
         if response.status == 'ok'
           @$scope.snippet.model.data
             map: data
+          @initMapPropertySelection()
         else
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()

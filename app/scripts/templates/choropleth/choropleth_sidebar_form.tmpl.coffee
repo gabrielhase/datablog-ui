@@ -18,6 +18,14 @@ htmlTemplates.choroplethSidebarForm = """
       </select>
 
     </fieldset>
+    <fieldset>
+      <legend>Data Visualization</legend>
+
+      <label>Select a property that is matched by your data</label>
+      <select ng-model="selectedMapProperty" ng-options="option.value as option.label for option in availableMapProperties">
+        <option value="">-- choose Property --</option>
+      </select>
+    </fieldset
 
   </form>
 </div>

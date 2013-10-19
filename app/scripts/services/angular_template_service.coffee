@@ -38,6 +38,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
   insertTemplateInstance: (snippetModel, $directiveRoot, instance) ->
     instanceScope = $rootScope.$new()
     $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
+      snippetModel.uiTemplateInstance = instance # connect the snippet model and the business logic model from the UI
       childScope.snippetModel = snippetModel
       childScope.templateInstance = instance
       $directiveRoot.html(instanceHtml)
