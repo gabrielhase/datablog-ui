@@ -49,15 +49,6 @@ class ChoroplethMap
       false
 
 
-  processValue: (property, value) ->
-    switch property
-      when 'projection'
-        if value
-          eval("d3.geo.#{value}()")
-      else
-        value
-
-
     ## PRIVATE FUNCITONS ##
 
 
