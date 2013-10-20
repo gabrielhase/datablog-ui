@@ -7,6 +7,35 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     mappingPropertyOnData: 'id'
     valueProperty: 'value'
 
+  # remove all paths from the svg
+  # this is needed since d3 identifies by array index which is overlapping
+  # across maps
+  removeExistingMap = (mapGroup) ->
+    mapPaths = mapGroup.selectAll('path')
+      .data([])
+    mapPaths.exit().remove()
+
+
+  renderMap = (scope, map, path) ->
+    mapPaths = scope.mapGroup.selectAll('path')
+      .data(map.features)
+    mapPaths.enter().append('path')
+      .attr('d', path)
+
+
+  renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
+    valueById = d3.map()
+    data.forEach (d) ->
+      dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+      val = +d[valueProperty] || +d[defaults.valueProperty]
+      valueById.set(dataPropertyId, val)
+    scope.mapGroup.selectAll('path')
+      .attr('class', (d) ->
+        mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        valFn(valueById.get(mapPropertyId))
+      )
+
+
   # sets the viewBox attribute on the svg element to cover the whole map
   # dynamically adjusts the snippet height to the ratio to the viewBox
   resizeMap = (svg, bounds) ->
@@ -18,44 +47,43 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     svg.attr('height', ratio * svgHeight)
 
 
-  removeExistingMap = (mapGroup) ->
-    mapPaths = mapGroup.selectAll('path')
-      .data([])
-    mapPaths.exit().remove()
-
-
-  renderDataMap = (scope, map, data) ->
-    if scope.projection
-      path = d3.geo.path().projection(eval("d3.geo.#{scope.projection}()"))
+  deducePathProjection = (projection) ->
+    if projection
+      path = d3.geo.path().projection(eval("d3.geo.#{projection}()"))
     else
       path = d3.geo.path().projection(eval("d3.geo.#{defaults.projection}()"))
 
-    mapPaths = scope.mapGroup.selectAll('path')
-        .data(map.features)
-    mapPaths.enter().append('path')
-      .attr('d', path)
+    return path
+
+
+  # for now fixed to quantize
+  deduceValueFunction = (data, valueProperty) ->
+    valFn = d3.scale.quantize()
+      .domain([0, d3.max(data, (d) ->
+        +d[valueProperty] || +d[defaults.valueProperty])])
+      .range(d3.range(defaults.colorSteps).map (i) ->
+        "q#{i}-9"
+      )
+
+    return valFn
+
+
+  renderVisualization = (scope) ->
+    map = scope.map
+    data = scope.data
+    path = deducePathProjection(scope.projection)
+    valueProperty = scope.valueProperty
+    mappingPropertyOnMap = scope.mappingPropertyOnMap
+    mappingPropertyOnData = scope.mappingPropertyOnData
+
+    renderMap(scope, map, path)
 
     bounds =  path.bounds(map)
     resizeMap(scope.svg, bounds)
 
     if data
-      quantize = d3.scale.quantize()
-        .domain([0, d3.max(data, (d) ->
-          +d[scope.valueProperty] || +d[defaults.valueProperty])])
-        .range(d3.range(defaults.colorSteps).map (i) ->
-          "q#{i}-9"
-        )
-      valueById = d3.map()
-      data.forEach (d) ->
-        dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
-        val = +d[scope.valueProperty] || +d[defaults.valueProperty]
-        valueById.set(dataPropertyId, val)
-      scope.mapGroup.selectAll('path')
-        .attr('class', (d) ->
-          mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
-          quantize(valueById.get(mapPropertyId))
-        )
-        # TODO: use default value when quantize does not return a value
+      valFn = deduceValueFunction(data, valueProperty)
+      renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -97,21 +125,21 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         $placeholder.remove() if $placeholder
         if newVal != oldVal # to prevent init redraw
           removeExistingMap(scope.mapGroup)
-          renderDataMap(scope, newVal, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
       scope.$watch('data', (newVal, oldVal) ->
         return unless newVal && scope.map
         if newVal != oldVal # to prevent init redraw
-          renderDataMap(scope, scope.map, newVal)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
       scope.$watch('lastPositioned', (newVal, oldVal) ->
         return unless scope?.map
         if newVal != oldVal # to prevent init redraw
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
@@ -119,7 +147,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         return unless scope?.map
         if newVal != oldVal
           removeExistingMap(scope.mapGroup)
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
@@ -127,7 +155,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnData && scope?.valueProperty
         if newVal != oldVal
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
@@ -135,7 +163,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnMap && scope?.valueProperty
         if newVal != oldVal
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
@@ -143,7 +171,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnData && scope?.mappingPropertyOnMap
         if newVal != oldVal
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
   }
