@@ -3,9 +3,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
   defaults =
     projection: 'mercator'
     colorSteps: 9
-    mapMappingProperty: 'id'
-    dataMappingProperty: 'id'
-    dataValueProperty: 'value'
+    mappingPropertyOnMap: 'id'
+    mappingPropertyOnData: 'id'
+    valueProperty: 'value'
 
   # sets the viewBox attribute on the svg element to cover the whole map
   # dynamically adjusts the snippet height to the ratio to the viewBox
@@ -41,18 +41,18 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     if data
       quantize = d3.scale.quantize()
         .domain([0, d3.max(data, (d) ->
-          +d[scope.dataValueProperty] || +d[defaults.dataValueProperty])])
+          +d[scope.valueProperty] || +d[defaults.valueProperty])])
         .range(d3.range(defaults.colorSteps).map (i) ->
           "q#{i}-9"
         )
       valueById = d3.map()
       data.forEach (d) ->
-        dataPropertyId = d[scope.dataMappingProperty] || +d[defaults.dataMappingProperty]
-        val = +d[scope.dataValueProperty] || +d[defaults.dataValueProperty]
+        dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+        val = +d[scope.valueProperty] || +d[defaults.valueProperty]
         valueById.set(dataPropertyId, val)
       scope.mapGroup.selectAll('path')
         .attr('class', (d) ->
-          mapPropertyId = d.properties[scope.mapMappingProperty] || +d.properties[defaults.mapMappingProperty]
+          mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
           quantize(valueById.get(mapPropertyId))
         )
         # TODO: use default value when quantize does not return a value
@@ -72,9 +72,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       lastPositioned: '=lastPositioned' # timestamp when the maps container (width) changes
       projection: '=projection' # the projection applied to the map
       data: '=data' # data that should be visualized on the map
-      mapMappingProperty: '=mapMappingProperty' # the property on the map that is used to map upon data
-      dataMappingProperty: '=ddataMappingProperty' # the property on the data that is used to map upon the map
-      dataValueProperty: '=ddataValueProperty' # the (numerical) data value to visualize
+      mappingPropertyOnMap: '=mappingPropertyOnMap' # the property on the map that is used to map upon data
+      mappingPropertyOnData: '=mappingPropertyOnData' # the property on the data that is used to map upon the map
+      valueProperty: '=valueProperty' # the (numerical) data value to visualize
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
@@ -123,25 +123,25 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
           stopProgressBar()
       )
 
-      scope.$watch('mapMappingProperty', (newVal, oldVal) ->
+      scope.$watch('mappingPropertyOnMap', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
-        #return unless scope?.map && scope?.dataMappingProperty && scope?.dataValueProperty
+        #return unless scope?.map && scope?.mappingPropertyOnData && scope?.valueProperty
         if newVal != oldVal
           renderDataMap(scope, scope.map, scope.data)
           stopProgressBar()
       )
 
-      scope.$watch('dataMappingProperty', (newVal, oldVal) ->
+      scope.$watch('mappingPropertyOnData', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
-        #return unless scope?.map && scope?.mapMappingProperty && scope?.dataValueProperty
+        #return unless scope?.map && scope?.mappingPropertyOnMap && scope?.valueProperty
         if newVal != oldVal
           renderDataMap(scope, scope.map, scope.data)
           stopProgressBar()
       )
 
-      scope.$watch('dataValueProperty', (newVal, oldVal) ->
+      scope.$watch('valueProperty', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
-        #return unless scope?.map && scope?.dataMappingProperty && scope?.mapMappingProperty
+        #return unless scope?.map && scope?.mappingPropertyOnData && scope?.mappingPropertyOnMap
         if newVal != oldVal
           renderDataMap(scope, scope.map, scope.data)
           stopProgressBar()
