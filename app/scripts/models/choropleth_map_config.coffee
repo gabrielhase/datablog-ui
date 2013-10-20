@@ -26,6 +26,17 @@ do ->
       </choropleth>
     """
 
+    # properties which will trigger a directive change upon changing their value
+    trackedProperties: [
+      'map',
+      'data',
+      'lastPositioned',
+      'projection',
+      'mappingPropertyOnMap',
+      'mappingPropertyOnData',
+      'valueProperty'
+    ]
+
     prefilledMaps: [
       {
         name: 'livingmaps.unemploymentChoropleth'
