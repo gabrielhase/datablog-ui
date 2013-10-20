@@ -141,23 +141,51 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
-    it 'should render data points on a map when selecting the mapping manually', ->
-      directiveScope.data = sample1DData
-      directiveScope.mapMappingProperty = 'id'
-      directiveScope.dataMappingProperty = 'id'
-      directiveScope.$digest()
-      paths = directiveElem.find('path')
-      expect($(paths[0]).attr('class')).to.eql('q3-9')
-      expect($(paths[1]).attr('class')).to.eql('q8-9')
+    describe ' and changing the properties manually', ->
 
 
-    it 'should render data points on a mpa when selecting the value property manually', ->
-      directiveScope.data = sample1DData
-      directiveScope.dataValueProperty = 'value'
-      directiveScope.$digest()
-      paths = directiveElem.find('path')
-      expect($(paths[0]).attr('class')).to.eql('q3-9')
-      expect($(paths[1]).attr('class')).to.eql('q8-9')
+      it 'should render the same data points when selecting the mapping properties', ->
+        directiveScope.data = sample1DData
+        directiveScope.mappingPropertyOnMap = 'id'
+        directiveScope.mappingPropertyOnData = 'id'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+      it 'should render the same data points when selecting the value property', ->
+        directiveScope.data = sample1DData
+        directiveScope.valueProperty = 'value'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+      it 'should render different data points when selecting different mapping properties', ->
+        # default selection
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        # changed mapping
+        directiveScope.mappingPropertyOnMap = 'reverseMapping'
+        directiveScope.mappingPropertyOnData = 'reverseId'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q8-9')
+        expect($(paths[1]).attr('class')).to.eql('q3-9')
+
+
+      it 'should render different data points when selecting a different value property', ->
+        # default selection
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        # changed value
+        directiveScope.valueProperty = 'alternativeValue'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q7-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
   describe 'changing the projection of a map', ->
