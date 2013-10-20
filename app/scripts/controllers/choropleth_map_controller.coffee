@@ -19,7 +19,7 @@ class ChoroplethMapController
 
 
   populateMap: (snippetModel, scope) ->
-    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection', 'mapMappingProperty', 'dataMappingProperty', 'dataValueProperty']
+    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty']
       newVal = @snippetModel.data(trackedProperty)
       if newVal
         if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel)

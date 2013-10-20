@@ -8,9 +8,9 @@ do ->
                     last-positioned="lastPositioned"
                     projection="projection"
                     data="data"
-                    map-mapping-property="mapMappingProperty"
-                    ddata-mapping-property="dataMappingProperty"
-                    ddata-value-property="dataValueProperty">
+                    mapping-property-on-map="mappingPropertyOnMap"
+                    mapping-property-on-data="mappingPropertyOnData"
+                    value-property="valueProperty">
         </choropleth>
       </div>
     """
@@ -20,9 +20,9 @@ do ->
                   last-positioned="lastPositioned"
                   projection="projection"
                   data="data"
-                  map-mapping-property="mapMappingProperty"
-                  ddata-mapping-property="dataMappingProperty"
-                  ddata-value-property="dataValueProperty">
+                  mapping-property-on-map="mappingPropertyOnMap"
+                  mapping-property-on-data="mappingPropertyOnData"
+                  value-property="valueProperty">
       </choropleth>
     """
 
