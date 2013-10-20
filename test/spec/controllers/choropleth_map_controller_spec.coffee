@@ -77,6 +77,14 @@ describe 'Choropleth map controller', ->
 
   describe 'change the directives scopes attributes', ->
 
+    it 'should not perform a change if the changedProperties list is empty', ->
+      neverChangedMap =
+        name: 'neverThere'
+      @snippetModel.storedData.map = neverChangedMap
+      doc.changeSnippetData.fire(@snippetModel, [])
+      expect(@scope.map).not.to.eql(neverChangedMap)
+
+
     it 'should change the map attr on a map change', ->
       newMap =
         name: 'newMap'

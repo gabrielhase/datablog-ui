@@ -39,6 +39,8 @@ class ChoroplethMap
     { propertiesForMapping, propertiesWithMissingEntries }
 
 
+  # render a loading bar only if the map changes or if we render a predefined map
+  # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (snippetModel) ->
     prefilledMapNames = choroplethMapConfig.prefilledMaps.map (map) -> map.name
     if snippetModel.data('map')
