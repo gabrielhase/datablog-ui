@@ -12,7 +12,7 @@ angular.module('ldEditor').service 'prefillChoroplethService', (dataService) ->
           dataService.get(prefilledMap.data).then (data) ->
             snippetModel.data
               map: map
-              mapIdentifier: 'usCounties'
+              mapName: 'usCounties'
               data: data
               dataIdentifier: 'usUnemployment'
               projection: prefilledMap.projection

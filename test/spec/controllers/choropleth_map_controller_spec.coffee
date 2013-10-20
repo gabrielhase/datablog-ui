@@ -6,7 +6,7 @@ describe 'Choropleth map controller', ->
       storedData:
         map: 'aMap'
         projection: 'aProjection'
-        dataIdentifier: 'aGreatName'
+        mapName: 'aGreatName'
         data: 'someData'
         mappingPropertyOnMap: 'someProp'
         mappingPropertyOnData: 'someProp'
@@ -14,14 +14,7 @@ describe 'Choropleth map controller', ->
       data: (type) ->
         @storedData[type]
 
-    @ngProgress =
-      start: ->
-        true
-      complete: ->
-        true
-      status: ->
-        true
-
+    @ngProgress = mockNgProgress()
     @choroplethMap = new ChoroplethMap()
     @scope =
       snippetModel: @snippetModel
@@ -45,10 +38,10 @@ describe 'Choropleth map controller', ->
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection'])
 
 
-    it 'should react to a predefined map change (map, projection, dataIdentifier)', ->
+    it 'should react to a predefined map change (map, projection, mapName)', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['projection', 'map', 'dataIdentifier'])
-      expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection', 'map', 'dataIdentifier'])
+      doc.changeSnippetData.fire(@snippetModel, ['projection', 'map', 'mapName'])
+      expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection', 'map', 'mapName'])
 
 
     it 'should react to a data change', ->

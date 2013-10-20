@@ -6,7 +6,7 @@ htmlTemplates.choroplethSidebarForm = """
       <legend>Map Properties</legend>
 
       <label>Select a Map from our collection</label>
-      <select ng-model="selectedMap" ng-options="option as option.name for option in predefinedMaps">
+      <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">
         <option value="">-- choose Map --</option>
       </select>
 
@@ -14,7 +14,7 @@ htmlTemplates.choroplethSidebarForm = """
       <input json-upload callback="setMap(data, error)" type="file" name="map"></input>
 
       <label>Choose a projection for the map</label>
-      <select ng-model="selectedProjection" ng-options="option.value as option.name for option in projections">
+      <select ng-model="projection" ng-options="option.value as option.name for option in projections">
         <option value="">-- choose Projection --</option>
       </select>
 
