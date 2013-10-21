@@ -1,7 +1,20 @@
 describe 'Choropleth form controller', ->
 
+  # TODO: at this point we should use the real livingdocs-engine and not mock out actual functionality
   beforeEach ->
     @choroplethMap = new ChoroplethMap()
+    # @snippetModel = doc.document.createModel('choropleth')
+    # @snippetModel.id = 'testChoropleth'
+    # @snippetModel.uiTemplateInstance = @choroplethMap
+    # # @snippetModel.data(
+    #   map: sampleMap
+    #   projection: 'aProjection'
+    #   mapName: 'aGreatName'
+    #   data: sample1DData
+    #   mappingPropertyOnMap: 'someProp'
+    #   mappingPropertyOnData: 'someProp'
+    #   valueProperty: 'someVal'
+    # )
     @snippetModel =
       id: 'testChoropleth'
       uiTemplateInstance: @choroplethMap
@@ -13,9 +26,12 @@ describe 'Choropleth form controller', ->
         mappingPropertyOnMap: 'someProp'
         mappingPropertyOnData: 'someProp'
         valueProperty: 'someVal'
-
       data: (type) ->
-        @storedData[type]
+        if typeof(type) == 'object'
+          for key, value of type
+            @storedData[key] = value
+        else
+          @storedData[type]
 
     @ngProgress = mockNgProgress()
     @scope = retrieveService('$rootScope').$new()
@@ -25,45 +41,47 @@ describe 'Choropleth form controller', ->
 
   describe 'initializations', ->
 
-    describe "skips some when map is not set", ->
+    describe "when map is not set", ->
 
       beforeEach ->
-        @snippetModel.storedData.map = undefined
+        #@snippetModel.storedData.map = undefined
+        @snippetModel.data(
+          map: undefined
+        )
         @choroplethController = instantiateController('ChoroplethFormController',
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      it 'should not initialize mappingPropertyOnMap', ->
+      it 'initializes mappingPropertyOnMap', ->
         expect(@scope.mappingPropertyOnMap).to.be.undefined
 
 
       ['projection', 'mapName', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
-        it "should initialize #{key}", ->
-          expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+        it "does not initialize #{key}", ->
+          #expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+          expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
-    describe "skips some when data is not set", ->
+    describe "when data is not set", ->
 
       beforeEach ->
-        @snippetModel.storedData.data = undefined
-        @snippetModel.storedData.map = 'someMap'
+        #@snippetModel.storedData.data = undefined
+        #@snippetModel.storedData.map = 'someMap'
+        @snippetModel.data(
+          data: undefined
+        )
         @choroplethController = instantiateController('ChoroplethFormController',
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
       ['mappingPropertyOnData', 'valueProperty'].forEach (key) ->
-        it "should not initialize #{key}", ->
-          expect(@scope[key]).to.be.undefined
-
-
-      ['mappingPropertyOnData', 'valueProperty'].forEach (key) ->
-        it "should not initialize #{key}", ->
+        it "does not initialize #{key}", ->
           expect(@scope[key]).to.be.undefined
 
 
       ['projection', 'mapName', 'mappingPropertyOnMap'].forEach (key) ->
-          it "should initialize #{key}", ->
-            expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+          it "initializes #{key}", ->
+            expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
     describe 'initializes all when map and data are set', ->
@@ -75,7 +93,7 @@ describe 'Choropleth form controller', ->
 
       ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
           it "should initialize #{key}", ->
-            expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+            expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
     describe 'initialize property selection lists', ->
@@ -126,20 +144,41 @@ describe 'Choropleth form controller', ->
           ])
 
 
-  # TODO: there seems to be some timing issue when changing user input...
-  # describe 'user input', ->
+  describe 'user input', ->
 
-  #   beforeEach ->
-  #     @choroplethController = instantiateController('ChoroplethFormController',
-  #       $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
-
-
-  #   describe 'changes projection', ->
-
-  #     it 'should change the projection on input', ->
-  #       @scope.projection = 'fancyNewProjection'
-  #       @scope.$digest()
-  #       expect(@scope.snippet.model.data('projection')).to.eql('fancyNewProjection')
+    beforeEach ->
+      @choroplethController = instantiateController('ChoroplethFormController',
+        $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
+    describe 'on projection', ->
+
+      it 'changes the projection on snippet', ->
+        @scope.projection = 'fancyNewProjection'
+        @scope.$digest()
+        expect(@scope.snippet.model.data('projection')).to.eql('fancyNewProjection')
+
+
+    describe 'on mapping property on map', ->
+
+      it 'changes the mappingPropertyOnMap on snippet', ->
+        @scope.mappingPropertyOnMap = 'fancyNewId'
+        @scope.$digest()
+        expect(@scope.snippet.model.data('mappingPropertyOnMap')).to.eql('fancyNewId')
+
+
+    describe 'on mapping property on data', ->
+
+      it 'changes the mappingPropertyOnData on snippet', ->
+        @scope.mappingPropertyOnData = 'fancyNewDataId'
+        @scope.$digest()
+        expect(@scope.snippet.model.data('mappingPropertyOnData')).to.eql('fancyNewDataId')
+
+
+    describe 'on value property on data', ->
+
+      it 'changes the valueProperty on snippet', ->
+        @scope.valueProperty = 'fancyNewvalueProperty'
+        @scope.$digest()
+        expect(@scope.snippet.model.data('valueProperty')).to.eql('fancyNewvalueProperty')
 
