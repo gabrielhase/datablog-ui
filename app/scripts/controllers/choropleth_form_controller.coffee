@@ -15,8 +15,7 @@ class ChoroplethFormController
       @initMapPropertySelection()
 
     if @$scope.snippet.model.data('data')
-      @setupProperty('mappingPropertyOnData')
-      @setupProperty('valueProperty')
+      @initDataPropertySelection()
 
 
   # generic property setup:
@@ -31,24 +30,10 @@ class ChoroplethFormController
     )
 
 
-  initMapPropertySelection: ->
-    if @$scope.snippet.model.data('map')
-      @setupProperty('mappingPropertyOnMap')
-    { propertiesForMapping, propertiesWithMissingEntries } = @choroplethInstance.getPropertiesForMapping(@$scope.snippet.model)
-    if propertiesForMapping && propertiesForMapping.length > 0
-      @$scope.availableMapProperties = []
-      # NOTE: getPropertiesForMapping ensures that the properties are present in
-      # all features so it's safe just to take the first
-      for key, value of propertiesForMapping[0]
-        @$scope.availableMapProperties.push
-          label: "#{key} (e.g. #{value})"
-          value: key
-
-
   setupPredefinedMaps: ->
     @$scope.predefinedMaps = choroplethMapConfig.availableMaps
     @$scope.mapName = @$scope.snippet.model.data('mapName')
-    @$scope.$watch('mapName', (newVal, oldVal) =>
+    @$scope.$watch 'mapName', (newVal, oldVal) =>
       if newVal && newVal != oldVal
         @ngProgress.start()
         @dataService.get(newVal.map).then (data) =>
@@ -60,26 +45,41 @@ class ChoroplethFormController
 
           @$scope.projection = newVal.projection
           @initMapPropertySelection()
-    )
+
+
+  initMapPropertySelection: ->
+    @setupProperty('mappingPropertyOnMap')
+    { propertiesForMapping, propertiesWithMissingEntries } = @choroplethInstance.getPropertiesForMapping(@$scope.snippet.model)
+    if propertiesForMapping && propertiesForMapping.length > 0
+      @$scope.availableMapProperties = []
+      # NOTE: getPropertiesForMapping ensures that the properties are present in
+      # all features so it's safe just to take the first
+      for key, value of propertiesForMapping[0]
+        @$scope.availableMapProperties.push
+          label: "#{key} (e.g. #{value})"
+          value: key
+
+
+  initDataPropertySelection: ->
+    data = @$scope.snippet.model.data('data')
+    @setupProperty('mappingPropertyOnData')
+    @setupProperty('valueProperty')
+    @$scope.availableDataProperties = []
+    if data && data.length > 0
+      # NOTE: the last entry is more likely not to be a header row
+      for key, value of data[data.length - 1]
+        @$scope.availableDataProperties.push
+          label: "#{key} (e.g. #{value})"
+          key: key
 
 
   setData: (data, error) ->
     if error.message
       alert(error.message)
     else
-      unless @$scope.snippet.model.data('data')
-        @setupProperty('mappingPropertyOnData')
-        @setupProperty('valueProperty')
       @$scope.snippet.model.data
         data: data
-      @$scope.availableDataProperties = []
-      if data && data.length > 0
-        # NOTE: the last entry is more likely not to be a header row
-        for key, value of data[data.length - 1]
-          @$scope.availableDataProperties.push
-            label: "#{key} (e.g. #{value})"
-            key: key
-            value: value
+      @initDataPropertySelection(data)
 
 
   setMap: (data, error) ->
