@@ -6,10 +6,10 @@ describe 'Choropleth form controller', ->
       id: 'testChoropleth'
       uiTemplateInstance: @choroplethMap
       storedData:
-        map: 'aMap'
+        map: sampleMap
         projection: 'aProjection'
         mapName: 'aGreatName'
-        data: 'someData'
+        data: sample1DData
         mappingPropertyOnMap: 'someProp'
         mappingPropertyOnData: 'someProp'
         valueProperty: 'someVal'
@@ -86,19 +86,44 @@ describe 'Choropleth form controller', ->
           @choroplethController = instantiateController('ChoroplethFormController',
             $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
-        it 'should initialize available projections'
+        it 'should initialize available projections', ->
+          expect(@scope.projections).to.eql(choroplethMapConfig.availableProjections)
 
 
-        it 'should initialize available mapping properties on map'
+        it 'should initialize available mapping properties on map', ->
+          expect(@scope.availableMapProperties).to.eql([
+            label: 'id (e.g. 1)'
+            value: 'id'
+          ,
+            label: 'name (e.g. Alabama)'
+            value: 'name'
+          ,
+            label: 'reverseMapping (e.g. String2)'
+            value: 'reverseMapping'
+          ])
 
 
       describe 'for data selections', ->
 
-        it 'should initialize available mapping properties on data'
+        beforeEach ->
+          @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-        it 'should initialize available value properties on data'
-
+        it 'should initialize available data properties', ->
+          expect(@scope.availableDataProperties).to.eql([
+            label: 'id (e.g. 2)'
+            key: 'id'
+          ,
+            label: 'reverseId (e.g. String2)'
+            key: 'reverseId'
+          ,
+            label: 'value (e.g. 7)'
+            key: 'value'
+          ,
+            label: 'alternativeValue (e.g. 5)'
+            key: 'alternativeValue'
+          ])
 
 
   # TODO: there seems to be some timing issue when changing user input...
@@ -112,7 +137,6 @@ describe 'Choropleth form controller', ->
   #   describe 'changes projection', ->
 
   #     it 'should change the projection on input', ->
-  #       console.log "HERE"
   #       @scope.projection = 'fancyNewProjection'
   #       @scope.$digest()
   #       expect(@scope.snippet.model.data('projection')).to.eql('fancyNewProjection')
