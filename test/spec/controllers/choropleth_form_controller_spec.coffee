@@ -37,10 +37,9 @@ describe 'Choropleth form controller', ->
         expect(@scope.mappingPropertyOnMap).to.be.undefined
 
 
-      describe '', ->  # NOTE: due to the scoping of params a repeater always has to be alone in a descibe block (scope)
-        for key in ['projection', 'mapName', 'mappingPropertyOnData', 'valueProperty']
-          it "should initialize #{key}", ->
-            expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+      ['projection', 'mapName', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
+        it "should initialize #{key}", ->
+          expect(@scope[key]).to.eql(@snippetModel.storedData[key])
 
 
     describe "skips some when data is not set", ->
@@ -52,14 +51,17 @@ describe 'Choropleth form controller', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      describe '', ->
-        for key in ['mappingPropertyOnData', 'valueProperty']
-          it "should not initialize #{key}", ->
-            expect(@scope[key]).to.be.undefined
+      ['mappingPropertyOnData', 'valueProperty'].forEach (key) ->
+        it "should not initialize #{key}", ->
+          expect(@scope[key]).to.be.undefined
 
 
-      describe '', ->
-        for key in ['projection', 'mapName', 'mappingPropertyOnMap']
+      ['mappingPropertyOnData', 'valueProperty'].forEach (key) ->
+        it "should not initialize #{key}", ->
+          expect(@scope[key]).to.be.undefined
+
+
+      ['projection', 'mapName', 'mappingPropertyOnMap'].forEach (key) ->
           it "should initialize #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.storedData[key])
 
@@ -71,10 +73,32 @@ describe 'Choropleth form controller', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      describe '', ->
-        for key in ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty']
+      ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
           it "should initialize #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+
+
+    describe 'initialize property selection lists', ->
+
+      describe 'for map selections', ->
+
+        beforeEach ->
+          @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+
+        it 'should initialize available projections'
+
+
+        it 'should initialize available mapping properties on map'
+
+
+      describe 'for data selections', ->
+
+        it 'should initialize available mapping properties on data'
+
+
+        it 'should initialize available value properties on data'
+
 
 
   # TODO: there seems to be some timing issue when changing user input...
