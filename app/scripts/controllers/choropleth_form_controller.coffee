@@ -16,17 +16,19 @@ class ChoroplethFormController
 
     if @$scope.snippet.model.data('data')
       @initDataPropertySelection()
+      @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
 
 
   # generic property setup:
   # - init value to value of the same name on snippet model
   # - watch for changes and set to snippet model data when changed
-  setupProperty: (property) ->
+  setupProperty: (property, customChangeBehavior) ->
     @$scope[property] = @$scope.snippet.model.data(property)
     @$scope.$watch(property, (newVal, oldVal) =>
       dataToSet = {}
       dataToSet[property] = newVal
       @$scope.snippet.model.data(dataToSet)
+      customChangeBehavior(newVal) if customChangeBehavior
     )
 
 
@@ -60,10 +62,24 @@ class ChoroplethFormController
           value: key
 
 
+  initMaxQuantizeSteps: (colorScheme) ->
+    matchingColorScheme = colorBrewerConfig.colorSchemes.filter (cScheme) ->
+      cScheme.cssClass == colorScheme
+    if matchingColorScheme.length > 0
+      steps = matchingColorScheme[0].steps
+    else
+      steps = 9 # TODO: parameterize the magic number in a config
+
+    @$scope.maxQuantizeSteps = steps
+
+
   initDataPropertySelection: ->
     data = @$scope.snippet.model.data('data')
     @setupProperty('mappingPropertyOnData')
     @setupProperty('valueProperty')
+    @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
+    @setupProperty('quantizeSteps')
+    @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
     @$scope.availableDataProperties = []
     if data && data.length > 0
       # NOTE: the last entry is more likely not to be a header row

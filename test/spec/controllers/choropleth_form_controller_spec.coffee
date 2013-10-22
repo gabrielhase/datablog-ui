@@ -26,6 +26,8 @@ describe 'Choropleth form controller', ->
         mappingPropertyOnMap: 'someProp'
         mappingPropertyOnData: 'someProp'
         valueProperty: 'someVal'
+        quantizeSteps: 9
+        colorScheme: 'Y1Gn'
       data: (type) ->
         if typeof(type) == 'object'
           for key, value of type
@@ -41,7 +43,7 @@ describe 'Choropleth form controller', ->
 
   describe 'initializations', ->
 
-    describe "when map is not set", ->
+    describe 'when map is not set', ->
 
       beforeEach ->
         #@snippetModel.storedData.map = undefined
@@ -52,13 +54,12 @@ describe 'Choropleth form controller', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      it 'initializes mappingPropertyOnMap', ->
+      it 'does not initialize mappingPropertyOnMap', ->
         expect(@scope.mappingPropertyOnMap).to.be.undefined
 
 
-      ['projection', 'mapName', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
-        it "does not initialize #{key}", ->
-          #expect(@scope[key]).to.eql(@snippetModel.storedData[key])
+      ['projection', 'mapName'].forEach (key) ->
+        it "initializes #{key}", ->
           expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
@@ -74,7 +75,7 @@ describe 'Choropleth form controller', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      ['mappingPropertyOnData', 'valueProperty'].forEach (key) ->
+      ['mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
         it "does not initialize #{key}", ->
           expect(@scope[key]).to.be.undefined
 
@@ -91,7 +92,7 @@ describe 'Choropleth form controller', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty'].forEach (key) ->
+      ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
           it "should initialize #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.data(key))
 
@@ -128,7 +129,7 @@ describe 'Choropleth form controller', ->
             $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-        it 'should initialize available data properties', ->
+        it 'initializes available data properties', ->
           expect(@scope.availableDataProperties).to.eql([
             label: 'id (e.g. 2)'
             key: 'id'
@@ -142,6 +143,14 @@ describe 'Choropleth form controller', ->
             label: 'alternativeValue (e.g. 5)'
             key: 'alternativeValue'
           ])
+
+
+        it 'initializes available color schemes', ->
+          expect(@scope.availableColorSchemes).to.eql(colorBrewerConfig.colorSchemes)
+
+
+        it 'initializes max quantize step according to color scheme', ->
+          expect(@scope.maxQuantizeSteps).to.eql(9)
 
 
   describe 'user input', ->
@@ -181,4 +190,26 @@ describe 'Choropleth form controller', ->
         @scope.valueProperty = 'fancyNewvalueProperty'
         @scope.$digest()
         expect(@scope.snippet.model.data('valueProperty')).to.eql('fancyNewvalueProperty')
+
+
+    describe 'on color scheme on data', ->
+
+      it 'changes the color scheme on snippet', ->
+        @scope.colorScheme = 'Paired'
+        @scope.$digest()
+        expect(@scope.snippet.model.data('colorScheme')).to.eql('Paired')
+
+
+      it 'changes the max quantize steps according to color scheme', ->
+        @scope.colorScheme = 'Paired'
+        @scope.$digest()
+        expect(@scope.maxQuantizeSteps).to.eql(12)
+
+
+    describe 'on quantize steps on data', ->
+
+      it 'changes the quantize steps on snippet', ->
+        @scope.quantizeSteps = 5
+        @scope.$digest()
+        expect(@scope.snippet.model.data('quantizeSteps')).to.eql(5)
 
