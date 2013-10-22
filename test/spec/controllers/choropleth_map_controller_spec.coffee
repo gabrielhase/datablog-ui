@@ -11,6 +11,8 @@ describe 'Choropleth map controller', ->
         mappingPropertyOnMap: 'someProp'
         mappingPropertyOnData: 'someProp'
         valueProperty: 'someVal'
+        quantizeSteps: 9
+        colorScheme: 'boringColors'
       data: (type) ->
         @storedData[type]
 
@@ -124,5 +126,20 @@ describe 'Choropleth map controller', ->
       @snippetModel.storedData.valueProperty = newValueProperty
       doc.changeSnippetData.fire(@snippetModel, ['valueProperty'])
       expect(@scope.valueProperty).to.eql(newValueProperty)
+
+
+    it 'changes the quantize steps attribute on a quantizeSteps change', ->
+      newQuantizeSteps = 12
+      @snippetModel.storedData.quantizeSteps = newQuantizeSteps
+      doc.changeSnippetData.fire(@snippetModel, ['quantizeSteps'])
+      expect(@scope.quantizeSteps).to.eql(newQuantizeSteps)
+
+
+    it 'changes the color scheme attribute on a colorScheme change', ->
+      newColorScheme = 'fancyColors'
+      @snippetModel.storedData.colorScheme = newColorScheme
+      doc.changeSnippetData.fire(@snippetModel, ['colorScheme'])
+      expect(@scope.colorScheme).to.eql(newColorScheme)
+
 
 
