@@ -2,7 +2,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   defaults =
     projection: 'mercator'
-    colorSteps: 9
+    quantizeSteps: 9
+    colorScheme: 'Paired'
     mappingPropertyOnMap: 'id'
     mappingPropertyOnData: 'id'
     valueProperty: 'value'
@@ -57,12 +58,12 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
 
   # for now fixed to quantize
-  deduceValueFunction = (data, valueProperty) ->
+  deduceValueFunction = (data, valueProperty, quantizeSteps) ->
     valFn = d3.scale.quantize()
       .domain([0, d3.max(data, (d) ->
         +d[valueProperty] || +d[defaults.valueProperty])])
-      .range(d3.range(defaults.colorSteps).map (i) ->
-        "q#{i}-9"
+      .range(d3.range(quantizeSteps).map (i) ->
+        "q#{i}-#{quantizeSteps}"
       )
 
     return valFn
@@ -75,6 +76,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     valueProperty = scope.valueProperty
     mappingPropertyOnMap = scope.mappingPropertyOnMap
     mappingPropertyOnData = scope.mappingPropertyOnData
+    quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
 
     renderMap(scope, map, path)
 
@@ -82,7 +84,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     resizeMap(scope.svg, bounds)
 
     if data
-      valFn = deduceValueFunction(data, valueProperty)
+      valFn = deduceValueFunction(data, valueProperty, quantizeSteps)
       renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
 
 
@@ -103,6 +105,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
       mappingPropertyOnMap: '=mappingPropertyOnMap' # the property on the map that is used to map upon data
       mappingPropertyOnData: '=mappingPropertyOnData' # the property on the data that is used to map upon the map
       valueProperty: '=valueProperty' # the (numerical) data value to visualize
+      quantizeSteps: '=quantizeSteps' # how many quantize steps the visualization will have
+      colorScheme: '=colorScheme' # the color brewer color scheme to use
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
@@ -112,6 +116,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         .append("svg")
           .attr("width", '100%')
           .attr("height", '0px')
+          .attr("class", scope.colorScheme || defaults.colorScheme)
       scope.mapGroup = scope.svg.append("g")
         .attr('class', 'map')
 
@@ -173,5 +178,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         if newVal != oldVal
           renderVisualization(scope)
           stopProgressBar()
+      )
+
+      scope.$watch('colorScheme', (newVal, oldVal) ->
+        return unless scope.map && scope.data
+        if newVal
+          scope.svg.attr('class', newVal)
       )
   }

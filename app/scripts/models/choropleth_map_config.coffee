@@ -10,7 +10,9 @@ do ->
                     data="data"
                     mapping-property-on-map="mappingPropertyOnMap"
                     mapping-property-on-data="mappingPropertyOnData"
-                    value-property="valueProperty">
+                    value-property="valueProperty"
+                    quantize-steps="quantizeSteps"
+                    color-scheme="colorScheme">
         </choropleth>
       </div>
     """
@@ -22,7 +24,9 @@ do ->
                   data="data"
                   mapping-property-on-map="mappingPropertyOnMap"
                   mapping-property-on-data="mappingPropertyOnData"
-                  value-property="valueProperty">
+                  value-property="valueProperty"
+                  quantize-steps="quantizeSteps"
+                  color-scheme="colorScheme">
       </choropleth>
     """
 
@@ -34,7 +38,9 @@ do ->
       'projection',
       'mappingPropertyOnMap',
       'mappingPropertyOnData',
-      'valueProperty'
+      'valueProperty',
+      'quantizeSteps',
+      'colorScheme'
     ]
 
     prefilledMaps: [
