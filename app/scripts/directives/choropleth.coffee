@@ -156,6 +156,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
           stopProgressBar()
       )
 
+      # TODO: only re-render data here
       scope.$watch('mappingPropertyOnMap', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnData && scope?.valueProperty
@@ -164,6 +165,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
           stopProgressBar()
       )
 
+      # TODO: only re-render data here
       scope.$watch('mappingPropertyOnData', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnMap && scope?.valueProperty
@@ -172,6 +174,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
           stopProgressBar()
       )
 
+      # TODO: only re-render data here
       scope.$watch('valueProperty', (newVal, oldVal) ->
         # only re-render map when all necessary values are set
         #return unless scope?.map && scope?.mappingPropertyOnData && scope?.mappingPropertyOnMap
@@ -185,4 +188,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         if newVal
           scope.svg.attr('class', newVal)
       )
+
+      # TODO: only re-render data here
+      scope.$watch('quantizeSteps', (newVal, oldVal) ->
+        return unless scope.map && scope.data
+        if newVal
+          renderVisualization(scope)
+          stopProgressBar()
+      )
+
   }
