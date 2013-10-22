@@ -141,8 +141,7 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
-    describe ' and changing the properties manually', ->
-
+    describe ' and changing the data properties', ->
 
       it 'should render the same data points when selecting the mapping properties', ->
         directiveScope.data = sample1DData
@@ -186,6 +185,34 @@ describe 'Choropleth directive', ->
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q7-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    describe ' and changing the visual properties', ->
+
+      it 'assigns different classes when increasing the number of quantize steps', ->
+        directiveScope.data = sample1DData
+        directiveScope.quantizeSteps = 12
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q5-12')
+        expect($(paths[1]).attr('class')).to.eql('q11-12')
+
+
+      it 'assigns different classes when decreasing the number of quantize steps', ->
+        directiveScope.data = sample1DData
+        directiveScope.quantizeSteps = 5
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q2-5')
+        expect($(paths[1]).attr('class')).to.eql('q4-5')
+
+
+      it 'assigns different classes when changing the color scheme', ->
+        directiveScope.data = sample1DData
+        directiveScope.colorScheme = 'Y1Gn'
+        directiveScope.$digest()
+        svg = directiveElem.find('svg')
+        expect($(svg[0]).attr('class')).to.eql('Y1Gn')
 
 
   describe 'changing the projection of a map', ->

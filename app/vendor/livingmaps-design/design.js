@@ -52,7 +52,7 @@
     {
       "title": "Choropleth",
       "id": "choropleth",
-      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
+      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://raw.github.com/mbostock/d3/master/lib/colorbrewer/colorbrewer.css\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
     },
     {
       "title": "Map",
