@@ -74,6 +74,9 @@ class ChoroplethFormController
     @$scope.maxQuantizeSteps = steps
     @$scope.availableQuantizeSteps = [3..steps]
 
+    # adjust selected quantize steps if necessary
+    @$scope.quantizeSteps = steps if @$scope.quantizeSteps > steps
+
 
   initDataPropertySelection: ->
     data = @$scope.snippet.model.data('data')

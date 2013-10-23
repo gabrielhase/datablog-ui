@@ -27,7 +27,7 @@ describe 'Choropleth form controller', ->
         mappingPropertyOnData: 'someProp'
         valueProperty: 'someVal'
         quantizeSteps: 9
-        colorScheme: 'Y1Gn'
+        colorScheme: 'YlGn'
       data: (type) ->
         if typeof(type) == 'object'
           for key, value of type
@@ -204,6 +204,16 @@ describe 'Choropleth form controller', ->
         @scope.colorScheme = 'Paired'
         @scope.$digest()
         expect(@scope.maxQuantizeSteps).to.eql(12)
+
+
+      it 'resets the quantize steps to max value of color scheme if necessary', ->
+        # make it high
+        @scope.colorScheme = 'Paired'
+        @scope.quantizeSteps = 12
+        @scope.$digest()
+        @scope.colorScheme = 'YlGn'
+        @scope.$digest()
+        expect(@scope.quantizeSteps).to.eql(9)
 
 
     describe 'on quantize steps on data', ->
