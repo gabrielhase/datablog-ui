@@ -43,7 +43,7 @@ describe 'Choropleth directive', ->
     choropleth = new ChoroplethMap
     module('ldEditor')
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
-    directiveScope.projection = d3.geo.albersUsa()
+    directiveScope.projection = 'albersUsa'
 
 
   describe 'rendering a map', ->
@@ -141,11 +141,85 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
+    describe ' and changing the data properties', ->
+
+      it 'should render the same data points when selecting the mapping properties', ->
+        directiveScope.data = sample1DData
+        directiveScope.mappingPropertyOnMap = 'id'
+        directiveScope.mappingPropertyOnData = 'id'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+      it 'should render the same data points when selecting the value property', ->
+        directiveScope.data = sample1DData
+        directiveScope.valueProperty = 'value'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+      it 'should render different data points when selecting different mapping properties', ->
+        # default selection
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        # changed mapping
+        directiveScope.mappingPropertyOnMap = 'reverseMapping'
+        directiveScope.mappingPropertyOnData = 'reverseId'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q8-9')
+        expect($(paths[1]).attr('class')).to.eql('q3-9')
+
+
+      it 'should render different data points when selecting a different value property', ->
+        # default selection
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        # changed value
+        directiveScope.valueProperty = 'alternativeValue'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q7-9')
+        expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    describe ' and changing the visual properties', ->
+
+      it 'assigns different classes when increasing the number of quantize steps', ->
+        directiveScope.data = sample1DData
+        directiveScope.quantizeSteps = 12
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q5-12')
+        expect($(paths[1]).attr('class')).to.eql('q11-12')
+
+
+      it 'assigns different classes when decreasing the number of quantize steps', ->
+        directiveScope.data = sample1DData
+        directiveScope.quantizeSteps = 5
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q2-5')
+        expect($(paths[1]).attr('class')).to.eql('q4-5')
+
+
+      it 'assigns different classes when changing the color scheme', ->
+        directiveScope.data = sample1DData
+        directiveScope.colorScheme = 'Y1Gn'
+        directiveScope.$digest()
+        svg = directiveElem.find('svg')
+        expect($(svg[0]).attr('class')).to.eql('Y1Gn')
+
+
   describe 'changing the projection of a map', ->
 
     beforeEach ->
       directiveScope.map = zurichSampleMap
-      directiveScope.projection = d3.geo.mercator()
+      directiveScope.projection = 'mercator'
 
 
     it 'should render the map with mercator projection', ->
@@ -156,7 +230,7 @@ describe 'Choropleth directive', ->
 
     it 'should re-render the map with orthographical projection', ->
       directiveScope.$digest()
-      directiveScope.projection = d3.geo.orthographic()
+      directiveScope.projection = 'orthographic'
       directiveScope.$digest()
       pathValues = directiveElem.find('path').attr('d')
       equalPath(pathValues, zurichOrthographical, 0.0001)

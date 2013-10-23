@@ -137,10 +137,6 @@ describe 'angularTemplateService', ->
       """)
 
 
-    # TODO: rewrite this as a map controller spec
-    it 'reacts to changes on the maps dataIdentifier'
-
-
   describe 'inserting a choropleth', ->
     beforeEach ->
       @snippetModel =
@@ -160,23 +156,3 @@ describe 'angularTemplateService', ->
       cssClass = @$directiveRoot.find('div').attr('class')
       expect(controller).to.eql('ChoroplethMapController')
       expect(cssClass).to.eql('ng-scope')
-
-
-    # TODO: move this test to choropleth controller specs
-    it 'reacts to changes on the choropleths map', ->
-      choroplethMap = new ChoroplethMap()
-      service.insertTemplateInstance(@snippetModel, @$directiveRoot, choroplethMap)
-      scope =
-        snippetModel: @snippetModel
-        templateInstance: choroplethMap
-      ngProgress =
-        start: ->
-          true
-        complete: ->
-          true
-        status: ->
-          true
-      choroplethController = instantiateController('ChoroplethMapController', $scope: scope, ngProgress: ngProgress)
-      populateData = sinon.spy(choroplethController, 'populateData')
-      doc.changeSnippetData.fire(@snippetModel, ['map'])
-      expect(populateData).to.have.been.called

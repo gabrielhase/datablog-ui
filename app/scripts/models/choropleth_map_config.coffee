@@ -4,15 +4,44 @@ do ->
 
     template: """
       <div ng-controller="ChoroplethMapController">
-        <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
+        <choropleth map="map"
+                    last-positioned="lastPositioned"
+                    projection="projection"
+                    data="data"
+                    mapping-property-on-map="mappingPropertyOnMap"
+                    mapping-property-on-data="mappingPropertyOnData"
+                    value-property="valueProperty"
+                    quantize-steps="quantizeSteps"
+                    color-scheme="colorScheme">
         </choropleth>
       </div>
     """
 
     directive: """
-      <choropleth data="data" map="map" last-positioned="lastPositioned" projection="projection">
+      <choropleth map="map"
+                  last-positioned="lastPositioned"
+                  projection="projection"
+                  data="data"
+                  mapping-property-on-map="mappingPropertyOnMap"
+                  mapping-property-on-data="mappingPropertyOnData"
+                  value-property="valueProperty"
+                  quantize-steps="quantizeSteps"
+                  color-scheme="colorScheme">
       </choropleth>
     """
+
+    # properties which will trigger a directive change upon changing their value
+    trackedProperties: [
+      'map',
+      'data',
+      'lastPositioned',
+      'projection',
+      'mappingPropertyOnMap',
+      'mappingPropertyOnData',
+      'valueProperty',
+      'quantizeSteps',
+      'colorScheme'
+    ]
 
     prefilledMaps: [
       {

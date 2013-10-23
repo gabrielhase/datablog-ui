@@ -20,11 +20,16 @@ module.exports = function(config) {
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
 
+      // angular-slider
+      'app/vendor/angular-slider/angular_slider.js',
+
       // livingdocs designs
       'app/vendor/livingmaps-design/design.js',
 
       // livingdocs-engine
       'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
+      // 'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
+      // 'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',

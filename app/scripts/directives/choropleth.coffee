@@ -1,11 +1,40 @@
 angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   defaults =
-    projection: d3.geo.mercator()
-    colorSteps: 9
-    mappingValue:
-      inMap: 'properties.id'
-      inData: 'id'
+    projection: 'mercator'
+    quantizeSteps: 9
+    colorScheme: 'Paired'
+    mappingPropertyOnMap: 'id'
+    mappingPropertyOnData: 'id'
+    valueProperty: 'value'
+
+  # remove all paths from the svg
+  # this is needed since d3 identifies by array index which is overlapping
+  # across maps
+  removeExistingMap = (mapGroup) ->
+    mapPaths = mapGroup.selectAll('path')
+      .data([])
+    mapPaths.exit().remove()
+
+
+  renderMap = (scope, map, path) ->
+    mapPaths = scope.mapGroup.selectAll('path')
+      .data(map.features)
+    mapPaths.enter().append('path')
+      .attr('d', path)
+
+
+  renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
+    valueById = d3.map()
+    data.forEach (d) ->
+      dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+      val = +d[valueProperty] || +d[defaults.valueProperty]
+      valueById.set(dataPropertyId, val)
+    scope.mapGroup.selectAll('path')
+      .attr('class', (d) ->
+        mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        valFn(valueById.get(mapPropertyId))
+      )
 
 
   # sets the viewBox attribute on the svg element to cover the whole map
@@ -19,37 +48,44 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     svg.attr('height', ratio * svgHeight)
 
 
-  removeExistingMap = (mapGroup) ->
-    mapPaths = mapGroup.selectAll('path')
-      .data([])
-    mapPaths.exit().remove()
+  deducePathProjection = (projection) ->
+    if projection
+      path = d3.geo.path().projection(eval("d3.geo.#{projection}()"))
+    else
+      path = d3.geo.path().projection(eval("d3.geo.#{defaults.projection}()"))
+
+    return path
 
 
-  renderDataMap = (scope, map, data) ->
-    path = d3.geo.path().projection(scope.projection || defaults.projection)
+  # for now fixed to quantize
+  deduceValueFunction = (data, valueProperty, quantizeSteps) ->
+    valFn = d3.scale.quantize()
+      .domain([0, d3.max(data, (d) ->
+        +d[valueProperty] || +d[defaults.valueProperty])])
+      .range(d3.range(quantizeSteps).map (i) ->
+        "q#{i}-#{quantizeSteps}"
+      )
 
-    mapPaths = scope.mapGroup.selectAll('path')
-        .data(map.features)
-    mapPaths.enter().append('path')
-      .attr('d', path)
+    return valFn
+
+
+  renderVisualization = (scope) ->
+    map = scope.map
+    data = scope.data
+    path = deducePathProjection(scope.projection)
+    valueProperty = scope.valueProperty
+    mappingPropertyOnMap = scope.mappingPropertyOnMap
+    mappingPropertyOnData = scope.mappingPropertyOnData
+    quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
+
+    renderMap(scope, map, path)
 
     bounds =  path.bounds(map)
     resizeMap(scope.svg, bounds)
 
     if data
-      quantize = d3.scale.quantize()
-        .domain([0, d3.max(data, (d) -> d.value)])
-        .range(d3.range(defaults.colorSteps).map (i) ->
-          "q#{i}-9"
-        )
-      valueById = d3.map()
-      data.forEach (d) ->
-        # TODO: for now id's are always numeric -> make this an interface property
-        # TODO: make value an interface property
-        valueById.set(+eval("d.#{defaults.mappingValue.inData}"), +d.value)
-      scope.mapGroup.selectAll('path')
-        .attr('class', (d) -> quantize(valueById.get(+eval("d.#{defaults.mappingValue.inMap}"))))
-        # TODO: use default value when quantize does not return a value
+      valFn = deduceValueFunction(data, valueProperty, quantizeSteps)
+      renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -62,10 +98,15 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
   return {
     restrict: 'EA'
     scope: {
-      data: '=data'
-      map: '=map'
-      lastPositioned: '=lastPositioned'
-      projection: '=projection'
+      map: '=map' # the map to draw
+      lastPositioned: '=lastPositioned' # timestamp when the maps container (width) changes
+      projection: '=projection' # the projection applied to the map
+      data: '=data' # data that should be visualized on the map
+      mappingPropertyOnMap: '=mappingPropertyOnMap' # the property on the map that is used to map upon data
+      mappingPropertyOnData: '=mappingPropertyOnData' # the property on the data that is used to map upon the map
+      valueProperty: '=valueProperty' # the (numerical) data value to visualize
+      quantizeSteps: '=quantizeSteps' # how many quantize steps the visualization will have
+      colorScheme: '=colorScheme' # the color brewer color scheme to use
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
@@ -75,6 +116,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         .append("svg")
           .attr("width", '100%')
           .attr("height", '0px')
+          .attr("class", scope.colorScheme || defaults.colorScheme)
       scope.mapGroup = scope.svg.append("g")
         .attr('class', 'map')
 
@@ -88,21 +130,21 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         $placeholder.remove() if $placeholder
         if newVal != oldVal # to prevent init redraw
           removeExistingMap(scope.mapGroup)
-          renderDataMap(scope, newVal, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
       scope.$watch('data', (newVal, oldVal) ->
         return unless newVal && scope.map
         if newVal != oldVal # to prevent init redraw
-          renderDataMap(scope, scope.map, newVal)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
       scope.$watch('lastPositioned', (newVal, oldVal) ->
         return unless scope?.map
         if newVal != oldVal # to prevent init redraw
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
 
@@ -110,7 +152,49 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
         return unless scope?.map
         if newVal != oldVal
           removeExistingMap(scope.mapGroup)
-          renderDataMap(scope, scope.map, scope.data)
+          renderVisualization(scope)
           stopProgressBar()
       )
+
+      # TODO: only re-render data here
+      scope.$watch('mappingPropertyOnMap', (newVal, oldVal) ->
+        # only re-render map when all necessary values are set
+        #return unless scope?.map && scope?.mappingPropertyOnData && scope?.valueProperty
+        if newVal != oldVal
+          renderVisualization(scope)
+          stopProgressBar()
+      )
+
+      # TODO: only re-render data here
+      scope.$watch('mappingPropertyOnData', (newVal, oldVal) ->
+        # only re-render map when all necessary values are set
+        #return unless scope?.map && scope?.mappingPropertyOnMap && scope?.valueProperty
+        if newVal != oldVal
+          renderVisualization(scope)
+          stopProgressBar()
+      )
+
+      # TODO: only re-render data here
+      scope.$watch('valueProperty', (newVal, oldVal) ->
+        # only re-render map when all necessary values are set
+        #return unless scope?.map && scope?.mappingPropertyOnData && scope?.mappingPropertyOnMap
+        if newVal != oldVal
+          renderVisualization(scope)
+          stopProgressBar()
+      )
+
+      scope.$watch('colorScheme', (newVal, oldVal) ->
+        return unless scope.map && scope.data
+        if newVal
+          scope.svg.attr('class', newVal)
+      )
+
+      # TODO: only re-render data here
+      scope.$watch('quantizeSteps', (newVal, oldVal) ->
+        return unless scope.map && scope.data
+        if newVal
+          renderVisualization(scope)
+          stopProgressBar()
+      )
+
   }

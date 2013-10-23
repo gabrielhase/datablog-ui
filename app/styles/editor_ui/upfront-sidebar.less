@@ -109,11 +109,25 @@
 // }
 
 // CONTENT
+.upfront-sidebar-content-wrapper {
+  position: absolute;
+  top: 41px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: auto;
+
+  .upfront-form {
+    margin: 0;
+  }
+}
+
+// CONTENT
 .upfront-sidebar-content {
   position: relative;
   z-index: 10;
   padding: 6px 15px 7px;
-  background: #E9E9E9;
+  background: @grayLighter;
   border-bottom: 1px solid #CCC;
 }
 

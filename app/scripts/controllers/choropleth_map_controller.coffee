@@ -14,14 +14,16 @@ class ChoroplethMapController
   setupSnippetChangeListener: ->
     doc.snippetDataChanged (snippet, changedProperties) =>
       if snippet.id == @snippetModel.id
-        @populateData()
+        @changeChoroplethAttrsData(changedProperties)
 
 
-  populateData: (snippetModel, scope) ->
-    for trackedProperty in ['map', 'data', 'lastPositioned', 'projection']
-      newVal = @choroplethMapInstance.processValue(trackedProperty, @snippetModel.data(trackedProperty))
-      if newVal
-        if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel)
-          @ngProgress.start()
-          @ngProgress.set(10)
-        @$scope[trackedProperty] = newVal
+  changeChoroplethAttrsData: (changedProperties) ->
+    for trackedProperty in choroplethMapConfig.trackedProperties
+      if changedProperties.indexOf(trackedProperty) != -1
+        newVal = @snippetModel.data(trackedProperty)
+        if newVal
+          if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel)
+            @ngProgress.start()
+            @ngProgress.set(10)
+          @$scope[trackedProperty] = newVal
+
