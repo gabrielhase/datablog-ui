@@ -16,7 +16,8 @@ class ChoroplethFormController
 
     if @$scope.snippet.model.data('data')
       @initDataPropertySelection()
-      @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
+
+    @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
 
 
   # generic property setup:
@@ -71,6 +72,7 @@ class ChoroplethFormController
       steps = 9 # TODO: parameterize the magic number in a config
 
     @$scope.maxQuantizeSteps = steps
+    @$scope.availableQuantizeSteps = [3..steps]
 
 
   initDataPropertySelection: ->
