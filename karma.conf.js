@@ -20,6 +20,9 @@ module.exports = function(config) {
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
 
+      // angular-slider
+      'app/vendor/angular-slider/angular_slider.js',
+
       // livingdocs designs
       'app/vendor/livingmaps-design/design.js',
 
