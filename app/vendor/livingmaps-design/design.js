@@ -2,9 +2,6 @@
   "config": {
     "namespace": "livingmaps",
     "version": 1,
-    "css": [
-      "/designs/livingmaps/css/style.css"
-    ],
     "groups": {
       "layout": {
         "title": "Layout",
@@ -52,7 +49,7 @@
     {
       "title": "Choropleth",
       "id": "choropleth",
-      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://raw.github.com/mbostock/d3/master/lib/colorbrewer/colorbrewer.css\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
+      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://s3.amazonaws.com/datablog-assets/color_brewer.css\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
     },
     {
       "title": "Map",
@@ -62,7 +59,7 @@
     {
       "title": "UnemploymentChoropleth",
       "id": "unemploymentChoropleth",
-      "html": "<div data-template=\"\"><h3 doc-editable=\"title\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div></div>"
+      "html": "<div data-template=\"\"><h3 doc-editable=\"title\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://s3.amazonaws.com/datablog-assets/color_brewer.css\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div></div>"
     },
     {
       "title": "Button",
@@ -115,5 +112,10 @@
       "html": "<h1 doc-editable=\"title\">Titel</h1>"
     }
   ],
-  "kickstarters": []
+  "kickstarters": [
+    {
+      "name": "Livingmaps",
+      "markup": "<hero>\n      <title>Snippet outside container</title>\n      <tagline>Yep, it works</tagline>\n    </hero>\n\n    <column>\n        <main-and-sidebar>\n          <main>\n            <map is=\"leaflet-map\">\n              An example map\n            </map>\n          </main>\n          <sidebar>\n            <text>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iusto, a, quam non nobis suscipit nostrum nam modi ducimus voluptate distinctio! Quam, libero, nobis suscipit autem molestias labore officia natus in.</text>\n            <text>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam, unde, veniam, reprehenderit ipsum blanditiis minima obcaecati modi assumenda eius sapiente nihil cupiditate voluptatum ut ipsa quo harum atque doloribus iste!</text>\n          </sidebar>\n        </main-and-sidebar>\n\n        <text>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima, rerum, maiores nobis vero iure dolorem quisquam excepturi ipsam a quam quae praesentium iste facilis distinctio molestias. Debitis, ex delectus sequi.</text>\n        <text>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugit, laudantium nesciunt quo rerum aut voluptatibus aliquam. Quaerat, consequatur iure dicta ut. Esse eius accusamus iure non laboriosam consequuntur reprehenderit maiores.</text>\n        <text>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eum, vitae, voluptatem, sit earum velit suscipit eligendi vel voluptate cupiditate fugiat repellendus animi saepe tempore? Dolorum, corporis officia cum consequatur culpa.</text>\n        <text></text>\n        <text></text>\n    </column>"
+    }
+  ]
 };})();}).call(this);

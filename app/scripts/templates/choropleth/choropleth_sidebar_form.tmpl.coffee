@@ -41,6 +41,16 @@ htmlTemplates.choroplethSidebarForm = """
           <option value="">-- choose Visualization value --</option>
         </select>
 
+        <label>Select the color scheme for your visualization <small>(© colorbrewer.org, Cynthia Brewer)</small></label>
+        <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">
+          <option value="">-- choose Color Scheme --</option>
+        </select>
+
+        <label>Select in how many steps the color will be divided</label>
+        <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">
+        </select>
+        <!-- TODO: Slider probably doesn't work since it needs click events on the document which are not propagated from within the sidebar -->
+        <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->
       </div>
 
     </fieldset

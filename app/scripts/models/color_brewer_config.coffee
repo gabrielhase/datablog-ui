@@ -3,12 +3,12 @@ do ->
   @colorBrewerConfig =
 
     colorSchemes: [
-      name: 'Y1Gn'
-      cssClass: 'Y1Gn'
+      name: 'YlGn'
+      cssClass: 'YlGn'
       steps: 9
     ,
-      name: 'Y1GnBu'
-      cssClass: 'Y1GnBu'
+      name: 'YlGnBu'
+      cssClass: 'YlGnBu'
       steps: 9
     ,
       name: 'GnBu'
