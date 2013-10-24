@@ -64,6 +64,10 @@ do ->
       name: 'Switzerland'
       map: 'switzerlandCantons'
       projection: 'mercator'
+      data: 'swissPopulationData'
+      mappingPropertyOnMap: 'NAME_1'
+      mappingPropertyOnData: 'Canton'
+      valueProperty: 'Residents'
     ,
       name: 'US States'
       map: 'usStates'

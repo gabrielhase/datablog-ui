@@ -245,6 +245,11 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       data.resolve(remoteData.data)
 
 
+  getData: (url, data) ->
+    $http.get(url).then (remoteData) ->
+      data.resolve(remoteData.data)
+
+
   get: (key) ->
 
     data = $q.defer()
@@ -255,6 +260,7 @@ angular.module('ldLocalApi').factory 'dataService', ($q, $http) ->
       when 'bikes' then data.resolve(mockData.bikes)
       when 'pools' then data.resolve(mockData.pools)
       when 'cargo' then data.resolve(mockData.cargo)
+      when 'swissPopulationData' then @getData('data/population-swiss-cantons.csv', data)
       when 'austriaBundeslaender' then @getMap('data/austria-bundeslaender.geojson', data)
       when 'germanyBundeslaender' then @getMap('data/germany-bundeslaender.geojson', data)
       when 'switzerlandCantons' then @getMap('data/switzerland-cantons.geojson', data)
