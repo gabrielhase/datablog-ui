@@ -41,10 +41,13 @@ class ChoroplethMap
 
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
-  shouldRenderLoadingBar: (snippetModel) ->
+  shouldRenderLoadingBar: (snippetModel, property) ->
     prefilledMapNames = choroplethMapConfig.prefilledMaps.map (map) -> map.name
     if snippetModel.data('map')
-      true
+      switch property
+        when 'colorScheme' then return false
+        else
+          return true
     else if prefilledMapNames.indexOf(snippetModel.identifier) != -1
       true
     else
