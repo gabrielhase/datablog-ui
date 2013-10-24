@@ -22,7 +22,7 @@ class ChoroplethMapController
       if changedProperties.indexOf(trackedProperty) != -1
         newVal = @snippetModel.data(trackedProperty)
         if newVal
-          if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel)
+          if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel, trackedProperty)
             @ngProgress.start()
             @ngProgress.set(10)
           @$scope[trackedProperty] = newVal
