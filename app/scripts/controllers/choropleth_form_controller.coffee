@@ -48,6 +48,18 @@ class ChoroplethFormController
 
           @$scope.projection = newVal.projection
           @initMapPropertySelection()
+          if newVal.data
+            @dataService.get(newVal.data).then (data) =>
+              dataValues = d3.csv.parse(data)
+              @$scope.snippet.model.data
+                data: dataValues
+                mappingPropertyOnMap: newVal.mappingPropertyOnMap
+                mappingPropertyOnData: newVal.mappingPropertyOnData
+                valueProperty: newVal.valueProperty
+              @$scope.mappingPropertyOnMap = newVal.mappingPropertyOnMap
+              @$scope.mappingPropertyOnData = newVal.mappingPropertyOnData
+              @$scope.valueProperty = newVal.valueProperty
+              @initDataPropertySelection(dataValues)
 
 
   initMapPropertySelection: ->
