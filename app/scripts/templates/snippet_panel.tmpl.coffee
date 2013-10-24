@@ -12,8 +12,8 @@ htmlTemplates.snippetPanel = """
   <div class="upfront-snippet-wrapper">
     <ul class="upfront-snippet-list" ng-repeat="group in groups">
       <li class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>{{ group.title }}</li>
-      <li ng-repeat="snippet in group.templates" class="upfront-snippet-item" ng-class="{selected: $index==snippetInsertService.selectedSnippet}">
-        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, $index, snippet)">{{ snippet.title }}</a>
+      <li ng-repeat="snippet in group.templates" class="upfront-snippet-item" ng-class="{selected: group.id + '.' + $index==snippetInsertService.selectedSnippet}">
+        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, group.id, $index, snippet)">{{ snippet.title }}</a>
       </li>
     </ul>
   </div>
