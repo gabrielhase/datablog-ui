@@ -32,6 +32,11 @@ sample1DData = [
   value: 3
   alternativeValue: 4
 ,
+  id: 33 # This has no mapping and should be excluded from calculation
+  reverseId: 'String33'
+  value: 20
+  alternativeValue: 40
+,
   id: 2
   reverseId: 'String2'
   value: 7
