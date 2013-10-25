@@ -143,10 +143,12 @@ describe 'Choropleth directive', ->
 
     describe ' and changing the data properties', ->
 
-      it 'should render the same data points when selecting the mapping properties', ->
+      beforeEach ->
         directiveScope.data = sample1DData
         directiveScope.mappingPropertyOnMap = 'id'
         directiveScope.mappingPropertyOnData = 'id'
+
+      it 'should render the same data points when selecting the mapping properties', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q3-9')
@@ -154,7 +156,6 @@ describe 'Choropleth directive', ->
 
 
       it 'should render the same data points when selecting the value property', ->
-        directiveScope.data = sample1DData
         directiveScope.valueProperty = 'value'
         directiveScope.$digest()
         paths = directiveElem.find('path')
@@ -163,8 +164,6 @@ describe 'Choropleth directive', ->
 
 
       it 'should render different data points when selecting different mapping properties', ->
-        # default selection
-        directiveScope.data = sample1DData
         directiveScope.$digest()
         # changed mapping
         directiveScope.mappingPropertyOnMap = 'reverseMapping'
@@ -176,8 +175,6 @@ describe 'Choropleth directive', ->
 
 
       it 'should render different data points when selecting a different value property', ->
-        # default selection
-        directiveScope.data = sample1DData
         directiveScope.$digest()
         # changed value
         directiveScope.valueProperty = 'alternativeValue'
@@ -189,8 +186,12 @@ describe 'Choropleth directive', ->
 
     describe ' and changing the visual properties', ->
 
-      it 'assigns different classes when increasing the number of quantize steps', ->
+      beforeEach ->
         directiveScope.data = sample1DData
+        directiveScope.mappingPropertyOnMap = 'id'
+        directiveScope.mappingPropertyOnData = 'id'
+
+      it 'assigns different classes when increasing the number of quantize steps', ->
         directiveScope.quantizeSteps = 12
         directiveScope.$digest()
         paths = directiveElem.find('path')
@@ -199,7 +200,6 @@ describe 'Choropleth directive', ->
 
 
       it 'assigns different classes when decreasing the number of quantize steps', ->
-        directiveScope.data = sample1DData
         directiveScope.quantizeSteps = 5
         directiveScope.$digest()
         paths = directiveElem.find('path')
@@ -208,7 +208,6 @@ describe 'Choropleth directive', ->
 
 
       it 'assigns different classes when changing the color scheme', ->
-        directiveScope.data = sample1DData
         directiveScope.colorScheme = 'Y1Gn'
         directiveScope.$digest()
         svg = directiveElem.find('svg')
