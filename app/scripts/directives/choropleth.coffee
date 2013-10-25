@@ -57,16 +57,36 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     return path
 
 
+  deduceMaxValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    d3.max data, (d) ->
+      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
+        +d[valueProperty] || +d[defaults.valueProperty]
+      else
+        0 # TODO handle min Value
+
+
   # for now fixed to quantize
-  deduceValueFunction = (data, valueProperty, quantizeSteps) ->
+  deduceValueFunction = (data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    maxValue = deduceMaxValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
     valFn = d3.scale.quantize()
-      .domain([0, d3.max(data, (d) ->
-        +d[valueProperty] || +d[defaults.valueProperty])])
+      .domain([0, maxValue]) # TODO calculate reasonable min value
       .range(d3.range(quantizeSteps).map (i) ->
         "q#{i}-#{quantizeSteps}"
       )
 
     return valFn
+
+
+  # gets all mapped property values that are actually on the map
+  # Either gets all from the set mappingProperty or gets all from the default
+  # no mixing of default and set property!
+  deduceAllAvailableMappingOnMap = (map, mappingPropertyOnMap) ->
+    map.features.map (mapEntry) ->
+      if mappingPropertyOnMap
+        mapEntry.properties[mappingPropertyOnMap]
+      else
+        mapEntry.properties[defaults.mappingPropertyOnMap]
 
 
   renderVisualization = (scope) ->
@@ -84,7 +104,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     resizeMap(scope.svg, bounds)
 
     if data
-      valFn = deduceValueFunction(data, valueProperty, quantizeSteps)
+      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
+      valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData)
       renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
 
 
