@@ -10,9 +10,17 @@ angular.module('ldEditor').service 'mapMediatorService', ->
       directiveScope: directiveScope
 
 
+  reset: (id) ->
+    delete registry[id]
+
+
   getSnippetModel: (id) ->
     registry[id].snippetModel
 
 
   getUIModel: (id) ->
     registry[id].uiModel
+
+
+  getScope: (id) ->
+    registry[id].directiveScope
