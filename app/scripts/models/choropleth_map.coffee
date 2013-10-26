@@ -1,7 +1,8 @@
 class ChoroplethMap
 
   constructor: ({
-
+    @id
+    @mapMediatorService # TODO: is it possible to setup the angular $injector for models?
   }) ->
     # nothing here yet
 
@@ -14,11 +15,11 @@ class ChoroplethMap
   # properties into such that can be used for mapping data to it and such
   # that can not be used for mapping data to it.
   # NOTE: at the moment we don't check for distinctiveness of the values
-  getPropertiesForMapping: (snippetModel) ->
+  getPropertiesForMapping: ->
     propertiesForMapping = []
     propertiesWithMissingEntries = []
     lastPropertySet = undefined
-    snippetModel.data('map')?.features?.map (feature) =>
+    @_getSnippetModel().data('map')?.features?.map (feature) =>
 
       # make sure old missing properties are skipped
       currentPropertySet = {}
@@ -41,14 +42,14 @@ class ChoroplethMap
 
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
-  shouldRenderLoadingBar: (snippetModel, property) ->
+  shouldRenderLoadingBar: (property) ->
     prefilledMapNames = choroplethMapConfig.prefilledMaps.map (map) -> map.name
-    if snippetModel.data('map')
+    if @_getSnippetModel().data('map')
       switch property
         when 'colorScheme' then return false
         else
           return true
-    else if prefilledMapNames.indexOf(snippetModel.identifier) != -1
+    else if prefilledMapNames.indexOf(@_getSnippetModel().identifier) != -1
       true
     else
       false
@@ -71,4 +72,8 @@ class ChoroplethMap
           missingValues.push(existedBefore)
 
     missingValues
+
+
+  _getSnippetModel: ->
+    @mapMediatorService.getSnippetModel(@id)
 

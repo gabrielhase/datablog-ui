@@ -1,6 +1,8 @@
 describe 'Choropleth map controller', ->
 
   beforeEach ->
+    module('ldEditor')
+    @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel =
       id: 'testChoropleth'
       storedData:
@@ -17,10 +19,12 @@ describe 'Choropleth map controller', ->
         @storedData[type]
 
     @ngProgress = mockNgProgress()
-    @choroplethMap = new ChoroplethMap()
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
     @scope =
-      snippetModel: @snippetModel
-      templateInstance: @choroplethMap
+      mapId: @snippetModel.id
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
 
     @choroplethController = instantiateController('ChoroplethMapController',
       $scope: @scope, ngProgress: @ngProgress)

@@ -1,4 +1,4 @@
-angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile) ->
+angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, mapMediatorService) ->
 
   # Service
 
@@ -14,9 +14,17 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     for node in snippetView.$html.find('*[data-is]')
       switch $(node).data('is')
         when 'leaflet-map'
-          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new Map))
+          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this,
+            snippetModel, $(node), new Map
+              id: snippetModel.id
+              mapMediatorService: mapMediatorService
+          ))
         when 'd3-choropleth'
-          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this, snippetModel, $(node), new ChoroplethMap))
+          @loadTemplate($(node), $.proxy(@insertTemplateInstance, this,
+            snippetModel, $(node), new ChoroplethMap
+              id: snippetModel.id
+              mapMediatorService: mapMediatorService
+            ))
         else
           alert("unknown template value #{$(node).data('is')}")
 
@@ -38,9 +46,8 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
   insertTemplateInstance: (snippetModel, $directiveRoot, instance) ->
     instanceScope = $rootScope.$new()
     $compile(instance.getTemplate())(instanceScope, (instanceHtml, childScope) =>
-      snippetModel.uiTemplateInstance = instance # connect the snippet model and the business logic model from the UI
-      childScope.snippetModel = snippetModel
-      childScope.templateInstance = instance
+      mapMediatorService.set(snippetModel.id, snippetModel, instance, childScope)
+      childScope.mapId = snippetModel.id
       $directiveRoot.html(instanceHtml)
       @templateInstances[snippetModel.id] =
         instance: instance

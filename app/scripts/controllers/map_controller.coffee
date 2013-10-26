@@ -1,7 +1,8 @@
 angular.module('ldEditor').controller 'MapController',
 class MapController
 
-  constructor: (@$scope) ->
+  constructor: (@$scope, @mapMediatorService) ->
+    @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
     @snippetModel = @$scope.snippetModel
     @$scope.center =   # my home
       lat: 47.388778

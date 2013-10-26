@@ -2,7 +2,12 @@ describe 'Choropleth form controller', ->
 
   # TODO: at this point we should use the real livingdocs-engine and not mock out actual functionality
   beforeEach ->
-    @choroplethMap = new ChoroplethMap()
+    module('ldEditor')
+    @mapMediatorService = retrieveService('mapMediatorService')
+    @choroplethMap = new ChoroplethMap
+      id: 'testChoropleth'
+      mapMediatorService: @mapMediatorService
+
     # @snippetModel = doc.document.createModel('choropleth')
     # @snippetModel.id = 'testChoropleth'
     # @snippetModel.uiTemplateInstance = @choroplethMap
@@ -38,8 +43,8 @@ describe 'Choropleth form controller', ->
     @ngProgress = mockNgProgress()
     @scope = retrieveService('$rootScope').$new()
     @scope.snippet =
-        model: @snippetModel
-
+      model: @snippetModel
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
 
   describe 'initializations', ->
 

@@ -40,8 +40,11 @@ describe 'Choropleth directive', ->
 
 
   beforeEach ->
-    choropleth = new ChoroplethMap
     module('ldEditor')
+    @mapMediatorService = retrieveService('mapMediatorService')
+    choropleth = new ChoroplethMap
+      id: 123
+      mapMediatorService: @mapMediatorService
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = 'albersUsa'
 
