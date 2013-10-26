@@ -57,20 +57,26 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     return path
 
 
+  deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    minValue = d3.min data, (d) ->
+      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
+        +d[valueProperty] || +d[defaults.valueProperty]
+
+
   deduceMaxValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     d3.max data, (d) ->
       propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
       if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
         +d[valueProperty] || +d[defaults.valueProperty]
-      else
-        0 # TODO handle min Value
 
 
   # for now fixed to quantize
   deduceValueFunction = (data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     maxValue = deduceMaxValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
+    minValue = deduceMinValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
     valFn = d3.scale.quantize()
-      .domain([0, maxValue]) # TODO calculate reasonable min value
+      .domain([minValue, maxValue])
       .range(d3.range(quantizeSteps).map (i) ->
         "q#{i}-#{quantizeSteps}"
       )
