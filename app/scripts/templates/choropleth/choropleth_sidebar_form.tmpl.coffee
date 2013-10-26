@@ -57,5 +57,18 @@ htmlTemplates.choroplethSidebarForm = """
 
   </form>
 </div>
+<div>
+  <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>
+  <ul class="upfront-action-list" style="text-align: center">
+    <li ng-show="isDeletable(snippet)">
+      <button class="upfront-btn upfront-control upfront-btn-danger"
+            type="button"
+            ng-click="deleteSnippet(snippet)">
+        <span class="entypo-trash"></span>
+        <span>löschen</span>
+      </button>
+    </li>
+  </ul>
+</div>
 </div>
 """
