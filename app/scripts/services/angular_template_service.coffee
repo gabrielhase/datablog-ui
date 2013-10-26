@@ -2,8 +2,6 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
 
   # Service
 
-  templateInstances: {}
-
   isAngularTemplate: (snippetModel) ->
     $template = snippetModel.template.$template
     typeof $template.attr('data-template') != "undefined"
@@ -49,14 +47,11 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
       mapMediatorService.set(snippetModel.id, snippetModel, instance, childScope)
       childScope.mapId = snippetModel.id
       $directiveRoot.html(instanceHtml)
-      @templateInstances[snippetModel.id] =
-        instance: instance
-        scope: instanceScope
     )
     $rootScope.$$phase || instanceScope.$digest() # digest immediately to get maps loading
 
 
   removeAngularTemplate: (snippetModel) ->
-    scope = @templateInstances[snippetModel.id].scope
+    scope = mapMediatorService.getScope(snippetModel.id)
     scope.$destroy()
-    @templateInstances[snippetModel.id] = undefined
+    mapMediatorService.reset(snippetModel.id)
