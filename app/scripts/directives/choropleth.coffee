@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
+angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMediatorService) ->
 
   defaults =
     projection: 'mercator'
@@ -26,6 +26,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
   renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
     valueById = d3.map()
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    mapInstance.regionsWithMissingDataPoints = [] # reset
+    usedDataPoints = []
     data.forEach (d) ->
       dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
       val = +d[valueProperty] || +d[defaults.valueProperty]
@@ -33,8 +36,16 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     scope.mapGroup.selectAll('path')
       .attr('class', (d) ->
         mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
-        valFn(valueById.get(mapPropertyId))
+        val = valueById.get(mapPropertyId)
+        if val
+          usedDataPoints.push("#{mapPropertyId}") # NOTE: since valueById.keys() will return the keys as string in any case, we will push this as strings as well
+        else
+          mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
+        valFn(val)
       )
+
+    mapInstance.dataPointsWithMissingRegion = valueById.keys().filter (entry) ->
+      usedDataPoints.indexOf(entry) == -1
 
 
   # sets the viewBox attribute on the svg element to cover the whole map
@@ -125,6 +136,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
   return {
     restrict: 'EA'
     scope: {
+      mapId: '=mapId' # the id of the map instance
       map: '=map' # the map to draw
       lastPositioned: '=lastPositioned' # timestamp when the maps container (width) changes
       projection: '=projection' # the projection applied to the map

@@ -42,11 +42,13 @@ describe 'Choropleth directive', ->
   beforeEach ->
     module('ldEditor')
     @mapMediatorService = retrieveService('mapMediatorService')
-    choropleth = new ChoroplethMap
+    @choropleth = new ChoroplethMap
       id: 123
       mapMediatorService: @mapMediatorService
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = 'albersUsa'
+    directiveScope.mapId = @choropleth.id
+    @mapMediatorService.set(123, {}, @choropleth, directiveScope)
 
 
   describe 'rendering a map', ->
@@ -136,12 +138,31 @@ describe 'Choropleth directive', ->
       directiveScope.map = sampleMap
 
 
-    it 'should render data points on a map', ->
+    it 'renders data points on a map', ->
       directiveScope.data = sample1DData
       directiveScope.$digest()
       paths = directiveElem.find('path')
       expect($(paths[0]).attr('class')).to.eql('q0-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    describe 'missing data points for region', ->
+
+      beforeEach ->
+        directiveScope.map = biggerSampleMap
+
+      it 'saves missing data points for region on model', ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        expect(@choropleth.regionsWithMissingDataPoints).to.eql([3, 4])
+
+
+    describe 'missing region for data points', ->
+
+      it 'saves a missing region for data point on model', ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        expect(@choropleth.dataPointsWithMissingRegion).to.eql(['33'])
 
 
     describe ' and changing the data properties', ->
