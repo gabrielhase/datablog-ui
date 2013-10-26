@@ -137,7 +137,7 @@ describe 'Choropleth directive', ->
       directiveScope.data = sample1DData
       directiveScope.$digest()
       paths = directiveElem.find('path')
-      expect($(paths[0]).attr('class')).to.eql('q3-9')
+      expect($(paths[0]).attr('class')).to.eql('q0-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
@@ -151,7 +151,7 @@ describe 'Choropleth directive', ->
       it 'should render the same data points when selecting the mapping properties', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
@@ -159,7 +159,7 @@ describe 'Choropleth directive', ->
         directiveScope.valueProperty = 'value'
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
@@ -171,7 +171,7 @@ describe 'Choropleth directive', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q8-9')
-        expect($(paths[1]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q0-9')
 
 
       it 'should render different data points when selecting a different value property', ->
@@ -180,7 +180,7 @@ describe 'Choropleth directive', ->
         directiveScope.valueProperty = 'alternativeValue'
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q7-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
@@ -195,7 +195,7 @@ describe 'Choropleth directive', ->
         directiveScope.quantizeSteps = 12
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q5-12')
+        expect($(paths[0]).attr('class')).to.eql('q0-12')
         expect($(paths[1]).attr('class')).to.eql('q11-12')
 
 
@@ -203,7 +203,7 @@ describe 'Choropleth directive', ->
         directiveScope.quantizeSteps = 5
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q2-5')
+        expect($(paths[0]).attr('class')).to.eql('q0-5')
         expect($(paths[1]).attr('class')).to.eql('q4-5')
 
 
