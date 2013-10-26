@@ -27,6 +27,11 @@ htmlTemplates.choroplethSidebarForm = """
         <option value="">-- choose Property --</option>
       </select>
 
+      <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">
+        <a class="upfront-btn upfront-btn-mini upfront-btn-danger">{{choroplethInstance.dataPointsWithMissingRegion.length}}</a>
+        <small>Regions with no corresponding data values</small>
+      </div>
+
       <div ng-show="mappingPropertyOnMap">
         <label>Upload a data file (csv only, comma-separated)</label>
         <input csv-upload callback="setData(data, error)" type="file" name="data"></input>
@@ -40,6 +45,11 @@ htmlTemplates.choroplethSidebarForm = """
         <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataProperties">
           <option value="">-- choose Visualization value --</option>
         </select>
+
+        <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">
+          <a class="upfront-btn upfront-btn-mini upfront-btn-danger">{{choroplethInstance.dataPointsWithMissingRegion.length}}</a>
+          <small>Data Points with no corresponding region</small>
+        </div>
 
         <label>Select the color scheme for your visualization <small>(© colorbrewer.org, Cynthia Brewer)</small></label>
         <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">

@@ -3,6 +3,7 @@ class ChoroplethFormController
 
   constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService) ->
     @choroplethInstance = @mapMediatorService.getUIModel(@$scope.snippet.model.id)
+    @$scope.choroplethInstance = @choroplethInstance
 
     @$scope.setMap = (data, error) => @setMap(data, error)
     @$scope.setData = (data, error) => @setData(data, error)

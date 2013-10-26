@@ -4,7 +4,8 @@ class ChoroplethMap
     @id
     @mapMediatorService # TODO: is it possible to setup the angular $injector for models?
   }) ->
-    # nothing here yet
+    @dataPointsWithMissingRegion = []
+    @regionsWithMissingDataPoints = []
 
 
   getTemplate: ->
