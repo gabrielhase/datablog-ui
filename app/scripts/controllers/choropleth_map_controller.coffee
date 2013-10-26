@@ -1,9 +1,9 @@
 angular.module('ldEditor').controller 'ChoroplethMapController',
 class ChoroplethMapController
 
-  constructor: (@$scope, @ngProgress) ->
-    @choroplethMapInstance = @$scope.templateInstance
-    @snippetModel = @$scope.snippetModel
+  constructor: (@$scope, @ngProgress, @mapMediatorService) ->
+    @choroplethMapInstance = @mapMediatorService.getUIModel(@$scope.mapId)
+    @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
 
     @snippetModel.data
       lastPositioned: (new Date()).getTime()
@@ -22,7 +22,7 @@ class ChoroplethMapController
       if changedProperties.indexOf(trackedProperty) != -1
         newVal = @snippetModel.data(trackedProperty)
         if newVal
-          if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(@snippetModel, trackedProperty)
+          if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(trackedProperty)
             @ngProgress.start()
             @ngProgress.set(10)
           @$scope[trackedProperty] = newVal
