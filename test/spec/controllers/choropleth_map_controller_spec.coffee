@@ -1,22 +1,19 @@
 describe 'Choropleth map controller', ->
 
   beforeEach ->
-    module('ldEditor')
     @mapMediatorService = retrieveService('mapMediatorService')
-    @snippetModel =
-      id: 'testChoropleth'
-      storedData:
-        map: 'aMap'
-        projection: 'aProjection'
-        mapName: 'aGreatName'
-        data: 'someData'
-        mappingPropertyOnMap: 'someProp'
-        mappingPropertyOnData: 'someProp'
-        valueProperty: 'someVal'
-        quantizeSteps: 9
-        colorScheme: 'boringColors'
-      data: (type) ->
-        @storedData[type]
+    @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
+    @snippetModel.data
+      map: 'aMap'
+      projection: 'mercator'
+      mapName: 'aGreatName'
+      data: 'someData'
+      mappingPropertyOnMap: 'someProp'
+      mappingPropertyOnData: 'someProp'
+      valueProperty: 'someVal'
+      quantizeSteps: 9
+      colorScheme: 'boringColors'
 
     @ngProgress = mockNgProgress()
     @choroplethMap = new ChoroplethMap
@@ -29,48 +26,58 @@ describe 'Choropleth map controller', ->
     @choroplethController = instantiateController('ChoroplethMapController',
       $scope: @scope, ngProgress: @ngProgress)
 
+
   # this represents all calls that actually are performed by the choropleth_form_controller
   describe 'call changeChoroplethAttrsData data with changes array', ->
 
     it 'should react to a map change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['map'])
+      @snippetModel.data
+        map: 'another map'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['map'])
 
 
     it 'should react to a projection change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['projection'])
+      @snippetModel.data
+        projection: 'a different projection'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection'])
 
 
     it 'should react to a predefined map change (map, projection, mapName)', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['projection', 'map', 'mapName'])
+      @snippetModel.data
+        projection: 'a different projection'
+        map: 'another map'
+        mapName: 'another map name'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection', 'map', 'mapName'])
 
 
     it 'should react to a data change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['data'])
+      @snippetModel.data
+        data: 'different data'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['data'])
 
 
     it 'should react to a mappingPropertyOnMap change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['mappingPropertyOnMap'])
+      @snippetModel.data
+        mappingPropertyOnMap: 'a different mappingPropertyOnMap'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['mappingPropertyOnMap'])
 
 
     it 'should react to a mappingPropertyOnData change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['mappingPropertyOnData'])
+      @snippetModel.data
+        mappingPropertyOnData: 'a different mappingPropertyOnData'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['mappingPropertyOnData'])
 
 
     it 'should react to a valueProperty change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
-      doc.changeSnippetData.fire(@snippetModel, ['valueProperty'])
+      @snippetModel.data
+        valueProperty: 'a different value property'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['valueProperty'])
 
 
@@ -79,70 +86,70 @@ describe 'Choropleth map controller', ->
     it 'should not perform a change if the changedProperties list is empty', ->
       neverChangedMap =
         name: 'neverThere'
-      @snippetModel.storedData.map = neverChangedMap
-      doc.changeSnippetData.fire(@snippetModel, [])
+      @snippetModel.data
+        jodeliho: 'something irrelevant'
       expect(@scope.map).not.to.eql(neverChangedMap)
 
 
     it 'should change the map attr on a map change', ->
       newMap =
         name: 'newMap'
-      @snippetModel.storedData.map = newMap
-      doc.changeSnippetData.fire(@snippetModel, ['map'])
+      @snippetModel.data
+        map: newMap
       expect(@scope.map).to.eql(newMap)
 
 
     it 'should change the data attr on a data change', ->
       newData =
         name: 'newData'
-      @snippetModel.storedData.data = newData
-      doc.changeSnippetData.fire(@snippetModel, ['data'])
+      @snippetModel.data
+        data: newData
       expect(@scope.data).to.eql(newData)
 
 
     it 'should change the projection attr on a projection change', ->
       newProjection =
         name: 'orthographical'
-      @snippetModel.storedData.projection = newProjection
-      doc.changeSnippetData.fire(@snippetModel, ['projection'])
+      @snippetModel.data
+        projection: newProjection
       expect(@scope.projection).to.eql(newProjection)
 
 
     it 'should change the mappingPropertyOnMap attr on a mappingPropertyOnMap change', ->
       newMappingPropertyOnMap =
         name: 'anotherProperty'
-      @snippetModel.storedData.mappingPropertyOnMap = newMappingPropertyOnMap
-      doc.changeSnippetData.fire(@snippetModel, ['mappingPropertyOnMap'])
+      @snippetModel.data
+        mappingPropertyOnMap: newMappingPropertyOnMap
       expect(@scope.mappingPropertyOnMap).to.eql(newMappingPropertyOnMap)
 
 
     it 'should change the mappingPropertyOnData attr on a mappingPropertyOnData change', ->
       newMappingPropertyOnData =
         name: 'anotherProperty'
-      @snippetModel.storedData.mappingPropertyOnData = newMappingPropertyOnData
-      doc.changeSnippetData.fire(@snippetModel, ['mappingPropertyOnData'])
+      @snippetModel.data
+        mappingPropertyOnData: newMappingPropertyOnData
       expect(@scope.mappingPropertyOnData).to.eql(newMappingPropertyOnData)
 
 
     it 'should change the valueProperty attr on a valueProperty change', ->
       newValueProperty =
         name: 'anotherProperty'
-      @snippetModel.storedData.valueProperty = newValueProperty
-      doc.changeSnippetData.fire(@snippetModel, ['valueProperty'])
+      @snippetModel.data
+        valueProperty: newValueProperty
       expect(@scope.valueProperty).to.eql(newValueProperty)
 
 
     it 'changes the quantize steps attribute on a quantizeSteps change', ->
       newQuantizeSteps = 12
-      @snippetModel.storedData.quantizeSteps = newQuantizeSteps
-      doc.changeSnippetData.fire(@snippetModel, ['quantizeSteps'])
+      @snippetModel.data
+        quantizeSteps: newQuantizeSteps
       expect(@scope.quantizeSteps).to.eql(newQuantizeSteps)
 
 
     it 'changes the color scheme attribute on a colorScheme change', ->
       newColorScheme = 'fancyColors'
-      @snippetModel.storedData.colorScheme = newColorScheme
-      doc.changeSnippetData.fire(@snippetModel, ['colorScheme'])
+      @snippetModel.data
+        colorScheme: newColorScheme
       expect(@scope.colorScheme).to.eql(newColorScheme)
 
 
