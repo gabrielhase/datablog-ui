@@ -2463,7 +2463,6 @@
           _this = this;
         _ref = _arg != null ? _arg : {}, design = _ref.design, json = _ref.json, rootNode = _ref.rootNode;
         if (this.initialized) {
-          log.debug('document is already initialized');
           return documentReady();
         }
         this.initialized = true;
