@@ -1,12 +1,13 @@
 angular.module('ldEditor').controller 'ChoroplethFormController',
 class ChoroplethFormController
 
-  constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService) ->
+  constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService, @dialogService) ->
     @choroplethInstance = @mapMediatorService.getUIModel(@$scope.snippet.model.id)
     @$scope.choroplethInstance = @choroplethInstance
 
     @$scope.setMap = (data, error) => @setMap(data, error)
     @$scope.setData = (data, error) => @setData(data, error)
+    @$scope.openDataModal = (highlighedRows) => @openDataModal(highlighedRows)
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
@@ -19,6 +20,12 @@ class ChoroplethFormController
       @initDataPropertySelection()
 
     @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
+
+
+  openDataModal: (highlighedRows) ->
+    modalInstance = @dialogService.openDataModal(highlighedRows)
+    modalInstance.result.then (data) ->
+      console.log "closed modal"
 
 
   # generic property setup:

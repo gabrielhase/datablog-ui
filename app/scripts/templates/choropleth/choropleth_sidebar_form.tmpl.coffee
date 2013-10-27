@@ -43,11 +43,14 @@ htmlTemplates.choroplethSidebarForm = """
 
         <label>Select a property that matches your selected map property</label>
         <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataProperties">
-          <option value="">-- choose Visualization value --</option>
+          <option value="">-- choose Property --</option>
         </select>
 
         <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">
-          <a class="upfront-btn upfront-btn-mini upfront-btn-danger">{{choroplethInstance.dataPointsWithMissingRegion.length}}</a>
+          <a class="upfront-btn upfront-btn-mini upfront-btn-danger"
+              ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">
+            {{choroplethInstance.dataPointsWithMissingRegion.length}}
+          </a>
           <small>Data Points with no corresponding region</small>
         </div>
 
