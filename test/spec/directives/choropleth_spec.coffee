@@ -40,7 +40,6 @@ describe 'Choropleth directive', ->
 
 
   beforeEach ->
-    module('ldEditor')
     @mapMediatorService = retrieveService('mapMediatorService')
     @choropleth = new ChoroplethMap
       id: 123

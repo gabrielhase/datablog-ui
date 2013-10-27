@@ -1,44 +1,23 @@
 describe 'Choropleth form controller', ->
 
-  # TODO: at this point we should use the real livingdocs-engine and not mock out actual functionality
   beforeEach ->
-    module('ldEditor')
     @mapMediatorService = retrieveService('mapMediatorService')
-    @choroplethMap = new ChoroplethMap
-      id: 'testChoropleth'
-      mapMediatorService: @mapMediatorService
+    @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
+    @snippetModel.data
+      map: sampleMap
+      projection: 'mercator'
+      mapName: 'aGreatName'
+      data: sample1DData
+      mappingPropertyOnMap: 'someProp'
+      mappingPropertyOnData: 'someProp'
+      valueProperty: 'someVal'
+      quantizeSteps: 9
+      colorScheme: 'YlGn'
 
-    # @snippetModel = doc.document.createModel('choropleth')
-    # @snippetModel.id = 'testChoropleth'
-    # @snippetModel.uiTemplateInstance = @choroplethMap
-    # # @snippetModel.data(
-    #   map: sampleMap
-    #   projection: 'aProjection'
-    #   mapName: 'aGreatName'
-    #   data: sample1DData
-    #   mappingPropertyOnMap: 'someProp'
-    #   mappingPropertyOnData: 'someProp'
-    #   valueProperty: 'someVal'
-    # )
-    @snippetModel =
-      id: 'testChoropleth'
-      uiTemplateInstance: @choroplethMap
-      storedData:
-        map: sampleMap
-        projection: 'aProjection'
-        mapName: 'aGreatName'
-        data: sample1DData
-        mappingPropertyOnMap: 'someProp'
-        mappingPropertyOnData: 'someProp'
-        valueProperty: 'someVal'
-        quantizeSteps: 9
-        colorScheme: 'YlGn'
-      data: (type) ->
-        if typeof(type) == 'object'
-          for key, value of type
-            @storedData[key] = value
-        else
-          @storedData[type]
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
 
     @ngProgress = mockNgProgress()
     @scope = retrieveService('$rootScope').$new()

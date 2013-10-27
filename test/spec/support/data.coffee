@@ -48,7 +48,7 @@ messyData = [
   "an id": 3
   "value": "1'111'111.34"
 ,
-  "another weird col": "who parses json like this?"
-  "An id": 2
+  "Some weird col": "who parses json like this?"
+  "an id": 2
   "value": "2'222'222.00000002"
 ]
