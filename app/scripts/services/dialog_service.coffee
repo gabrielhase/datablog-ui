@@ -16,6 +16,7 @@ angular.module('ldEditor').factory 'dialogService', ($dialog, $modal, uiStateSer
     dataModalOptions =
       template: htmlTemplates.dataModal
       controller: 'DataModalController'
+      windowClass: 'upfront-modal-full-width'
 
 
     # Service

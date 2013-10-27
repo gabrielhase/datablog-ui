@@ -91,3 +91,67 @@
     float: right;
   }
 }
+
+/* Full width modal */
+
+.upfront-modal-full-width {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: @zindexModal;
+  overflow: auto;
+  background-color: @white;
+  border: 1px solid #999;
+  border: 1px solid rgba(0,0,0,.3);
+  *border: 1px solid #999; /* IE6-7 */
+  .border-radius(6px);
+  .box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  .background-clip(padding-box);
+  &.fade {
+    .transition(e('opacity .3s linear, top .3s ease-out'));
+    top: -25%;
+  }
+  &.fade.in { top: 50%; }
+
+
+  .upfront-modal-body {
+    height: 90%;
+
+  }
+}
+
+.upfron-modal-full-width-header {
+  height: 50px;
+  padding: 9px 15px;
+  border-bottom: 1px solid #eee;
+
+  h3 {
+    margin: 0;
+    line-height: 30px;
+    font-size: 2em;
+  }
+
+  .right-content {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+}
+
+.upfront-modal-full-width-body {
+  position: absolute;
+  top: 68px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  overflow: hidden;
+
+  .upfront-focus-tool {
+    position: absolute;
+    top: -160px;
+    width: 100%;
+    height: 90%;
+  }
+}
