@@ -5,7 +5,7 @@ describe 'Choropleth map controller', ->
     @snippetModel = doc.create('livingmaps.choropleth')
     doc.document.snippetTree.root.append(@snippetModel)
     @snippetModel.data
-      map: 'aMap'
+      map: sampleMap
       projection: 'mercator'
       mapName: 'aGreatName'
       data: 'someData'
@@ -33,7 +33,7 @@ describe 'Choropleth map controller', ->
     it 'should react to a map change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
       @snippetModel.data
-        map: 'another map'
+        map: biggerSampleMap
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['map'])
 
 
@@ -48,7 +48,7 @@ describe 'Choropleth map controller', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
       @snippetModel.data
         projection: 'a different projection'
-        map: 'another map'
+        map: biggerSampleMap
         mapName: 'another map name'
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['projection', 'map', 'mapName'])
 
@@ -92,16 +92,15 @@ describe 'Choropleth map controller', ->
 
 
     it 'should change the map attr on a map change', ->
-      newMap =
-        name: 'newMap'
       @snippetModel.data
-        map: newMap
-      expect(@scope.map).to.eql(newMap)
+        map: biggerSampleMap
+      expect(@scope.map).to.eql(biggerSampleMap)
 
 
     it 'should change the data attr on a data change', ->
-      newData =
+      newData = [
         name: 'newData'
+      ]
       @snippetModel.data
         data: newData
       expect(@scope.data).to.eql(newData)

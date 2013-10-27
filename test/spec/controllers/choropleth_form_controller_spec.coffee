@@ -31,12 +31,10 @@ describe 'Choropleth form controller', ->
 
       beforeEach ->
         #@snippetModel.storedData.map = undefined
-        @snippetModel.data(
+        @snippetModel.data
           map: undefined
-        )
         @choroplethController = instantiateController('ChoroplethFormController',
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
-
 
       it 'does not initialize mappingPropertyOnMap', ->
         expect(@scope.mappingPropertyOnMap).to.be.undefined
@@ -147,9 +145,9 @@ describe 'Choropleth form controller', ->
     describe 'on projection', ->
 
       it 'changes the projection on snippet', ->
-        @scope.projection = 'fancyNewProjection'
+        @scope.projection = 'albersUsa'
         @scope.$digest()
-        expect(@scope.snippet.model.data('projection')).to.eql('fancyNewProjection')
+        expect(@scope.snippet.model.data('projection')).to.eql('albersUsa')
 
 
     describe 'on mapping property on map', ->
