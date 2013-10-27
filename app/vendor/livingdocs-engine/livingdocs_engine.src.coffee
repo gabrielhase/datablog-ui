@@ -2355,7 +2355,6 @@ document = do ->
   # *Public API*
   init: ({ design, json, rootNode }={}) ->
     if @initialized
-      log.debug 'document is already initialized'
       return documentReady()
     #assert not @initialized, 'document is already initialized'
     @initialized = true
