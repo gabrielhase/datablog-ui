@@ -29,8 +29,12 @@ angular.module('ldEditor').factory 'dialogService', ($dialog, $modal, uiStateSer
 
 
     # angular ui bootstrap 0.6.0 modal
-    openDataModal: (highlightedRows) ->
+    openDataModal: (highlightedRows, mapId, mappedColumn) ->
       dataModalOptions.resolve =
         highlightedRows: ->
           highlightedRows
+        mapId: ->
+          mapId
+        mappedColumn: ->
+          mappedColumn
       $modal.open(dataModalOptions)

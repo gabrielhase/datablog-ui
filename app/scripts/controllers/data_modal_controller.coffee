@@ -1,8 +1,13 @@
 angular.module('ldEditor').controller 'DataModalController',
 class DataModalController
 
-  constructor: (@$scope, @$modalInstance, @highlightedRows) ->
+  constructor: (@$scope, @$modalInstance, @mapMediatorService, @highlightedRows, @mapId, @mappedColumn) ->
     @$scope.close = (event) => @close(event)
+
+    @snippetModel = @mapMediatorService.getSnippetModel(@mapId)
+    @$scope.visualizedData = @snippetModel.data('data')
+    @$scope.gridOptions =
+      data: 'visualizedData'
 
 
   close: (event) ->

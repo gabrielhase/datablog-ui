@@ -23,7 +23,7 @@ class ChoroplethFormController
 
 
   openDataModal: (highlighedRows) ->
-    modalInstance = @dialogService.openDataModal(highlighedRows)
+    modalInstance = @dialogService.openDataModal(highlighedRows, @$scope.snippet.model.id, @$scope.mappingPropertyOnData)
     modalInstance.result.then (data) ->
       console.log "closed modal"
 
