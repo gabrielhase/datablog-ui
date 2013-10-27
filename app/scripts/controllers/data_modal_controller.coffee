@@ -5,11 +5,40 @@ class DataModalController
     @$scope.close = (event) => @close(event)
     @$scope.isHighlighted = (property) =>
       @highlightedRows.indexOf(property) != -1
+    @$scope.updateEntity = (row) => @updateEntity(row)
 
     @choroplethMapInstance = @mapMediatorService.getUIModel(@mapId)
-    @$scope.visualizedData = @choroplethMapInstance.getDataSanitizedForNgGrid()
+    @snippetModel = @mapMediatorService.getSnippetModel(@mapId)
+    { sanitizedData, keyMapping } = @choroplethMapInstance.getDataSanitizedForNgGrid()
+    @keyMapping = keyMapping
+    @$scope.visualizedData = sanitizedData
+
+    # set index for later referal when setting values (updateEntity)
+    for entry, index in @$scope.visualizedData
+      entry['ldDataIndex'] = index
+
+    @changedRows = []
+    @setupGrid()
+
+
+  setupGrid: ->
+    cellEditableTemplate = "<input ng-class=\"'colt' + col.index\" ng-input=\"COL_FIELD\" ng-model=\"COL_FIELD\" ng-blur=\"updateEntity(row.entity)\"/>"
+    colDefs = []
+    for key, value of @$scope.visualizedData[0]
+      if key != 'ldDataIndex'
+        colDefs.push(
+          field: key
+          displayName: livingmapsWords.camelCase(key).replace('%', 'Percent')
+          enableCellSelection: true
+          editableCellTemplate: cellEditableTemplate
+        )
+
     @$scope.gridOptions =
       data: 'visualizedData'
+
+      multiSelect: false
+      enableRowSelection: false,
+      enableCellEditOnFocus: true,
       rowTemplate: """
         <div style="height: 100%"
              ng-class="{red: isHighlighted(row.getProperty(\'#{@mappedColumn}\'))}">
@@ -21,9 +50,25 @@ class DataModalController
             </div>
           </div>
         </div>"""
+      columnDefs: colDefs
 
 
   close: (event) ->
+    if @changedRows.length > 0
+      data = @snippetModel.data('data')
+      for rowIdx in @changedRows
+        newRow = {}
+        for key, value of data[rowIdx]
+          mappedKey = @keyMapping[key]
+          newRow[key] = @$scope.visualizedData[rowIdx][mappedKey]
+        data[rowIdx] = newRow
+
+      @snippetModel.data
+        data: data
+
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost
 
+
+  updateEntity: (row) ->
+    @changedRows.push(row.ldDataIndex)
