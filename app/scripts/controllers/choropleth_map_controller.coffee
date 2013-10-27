@@ -20,6 +20,8 @@ class ChoroplethMapController
   changeChoroplethAttrsData: (changedProperties) ->
     for trackedProperty in choroplethMapConfig.trackedProperties
       if changedProperties.indexOf(trackedProperty) != -1
+        if trackedProperty == 'data'
+          @choroplethMapInstance.sanitizeVisualizationData()
         newVal = @snippetModel.data(trackedProperty)
         if newVal
           if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(trackedProperty)
