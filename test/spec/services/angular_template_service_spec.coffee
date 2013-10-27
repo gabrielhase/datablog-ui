@@ -3,9 +3,7 @@ describe 'angularTemplateService', ->
   service = null
 
   beforeEach ->
-    module('ldEditor')
     service = retrieveService('angularTemplateService')
-
 
   describe 'recognizing a template indicator', ->
 

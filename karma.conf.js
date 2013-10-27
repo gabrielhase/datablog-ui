@@ -29,8 +29,8 @@ module.exports = function(config) {
 
       // livingdocs-engine
       'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
-      // 'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
-      // 'app/vendor/livingdocs-engine/livingdocs_engine.js',
+      'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
+      'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',

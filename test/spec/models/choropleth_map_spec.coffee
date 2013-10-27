@@ -1,7 +1,6 @@
 describe 'ChoroplethMap', ->
 
   beforeEach ->
-    module('ldEditor')
     @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel =
       id: 123
@@ -45,11 +44,20 @@ describe 'ChoroplethMap', ->
   describe 'Sanitizing visualization data', ->
 
     it 'camelCases all column names', ->
-      sanitziedData = @choroplethMap.getDataSanitizedForNgGrid()
-      expect(sanitziedData[0]).to.eql(
+      { sanitizedData, keyMapping } = @choroplethMap.getDataSanitizedForNgGrid()
+      expect(sanitizedData[0]).to.eql(
         "SomeWeirdCol": "weirdest Value"
         "AnId": 3
         "Value": "1'111'111.34"
+      )
+
+
+    it 'produces a valid key mapping', ->
+      { sanitizedData, keyMapping } = @choroplethMap.getDataSanitizedForNgGrid()
+      expect(keyMapping).to.eql(
+        "Some weird col": "SomeWeirdCol"
+        "an id": "AnId"
+        "value": "Value"
       )
 
 
