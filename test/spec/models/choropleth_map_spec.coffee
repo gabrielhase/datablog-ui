@@ -5,9 +5,16 @@ describe 'ChoroplethMap', ->
     @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel =
       id: 123
-      data: (key) ->
-        if key == 'map'
-          biggerSampleMap
+      storedData:
+        map: biggerSampleMap
+        data: messyData
+      data: (d) ->
+        if typeof d == 'string'
+          @storedData[d]
+        else
+          for key, value of d
+            @storedData[key] = value
+
     @choroplethMap = new ChoroplethMap
       id: @snippetModel.id
       mapMediatorService: @mapMediatorService
@@ -33,3 +40,19 @@ describe 'ChoroplethMap', ->
     it 'should get the properties with missing entries for mapping', ->
       { propertiesForMapping, propertiesWithMissingEntries } = @choroplethMap.getPropertiesForMapping()
       expect(propertiesWithMissingEntries).to.eql(@expectedMissingForMapping)
+
+
+  describe 'Sanitizing visualization data', ->
+
+    it 'camelCases all column names', ->
+      @choroplethMap.sanitizeVisualizationData()
+      data = @snippetModel.data('data')
+      console.log data
+      expect(data[0]).to.eql(
+        "SomeWeirdCol": "weirdest Value"
+        "AnId": 3
+        "Value": "1'111'111.34"
+      )
+
+
+

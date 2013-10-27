@@ -12,6 +12,18 @@ class ChoroplethMap
     choroplethMapConfig.template
 
 
+  sanitizeVisualizationData: ->
+    sanitizedData = @_getSnippetModel().data('data').map (dataEntry) ->
+      sanitizedEntry = {}
+      for key, value of dataEntry
+        sanitizedKey = livingmapsWords.camelCase(key).replace('%', 'Percent')
+        sanitizedValue = value
+        sanitizedEntry[sanitizedKey] = sanitizedValue
+      sanitizedEntry
+    @_getSnippetModel().data
+      data: sanitizedData
+
+
   # goes through all geojson properties on the map and separates the
   # properties into such that can be used for mapping data to it and such
   # that can not be used for mapping data to it.
@@ -77,4 +89,3 @@ class ChoroplethMap
 
   _getSnippetModel: ->
     @mapMediatorService.getSnippetModel(@id)
-
