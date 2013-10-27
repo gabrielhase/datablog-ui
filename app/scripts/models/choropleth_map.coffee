@@ -12,7 +12,9 @@ class ChoroplethMap
     choroplethMapConfig.template
 
 
-  sanitizeVisualizationData: ->
+  # ngGrid uses the keys of the json as javascript objects (through angulars $parse)
+  # thus we need to make them valid first
+  getDataSanitizedForNgGrid: ->
     sanitizedData = @_getSnippetModel().data('data').map (dataEntry) ->
       sanitizedEntry = {}
       for key, value of dataEntry
@@ -20,8 +22,7 @@ class ChoroplethMap
         sanitizedValue = value
         sanitizedEntry[sanitizedKey] = sanitizedValue
       sanitizedEntry
-    @_getSnippetModel().data
-      data: sanitizedData
+    return sanitizedData
 
 
   # goes through all geojson properties on the map and separates the

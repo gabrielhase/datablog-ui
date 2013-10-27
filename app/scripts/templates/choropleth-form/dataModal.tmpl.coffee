@@ -1,6 +1,6 @@
 htmlTemplates.dataModal = """
 <div class="modal-header">
-  <h3>I'm a modal!</h3>
+  <h3>Your Dataset</h3>
 </div>
 <div class="modal-body">
   <div class="gridStyle" ng-grid="gridOptions">

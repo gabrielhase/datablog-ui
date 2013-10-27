@@ -45,10 +45,8 @@ describe 'ChoroplethMap', ->
   describe 'Sanitizing visualization data', ->
 
     it 'camelCases all column names', ->
-      @choroplethMap.sanitizeVisualizationData()
-      data = @snippetModel.data('data')
-      console.log data
-      expect(data[0]).to.eql(
+      sanitziedData = @choroplethMap.getDataSanitizedForNgGrid()
+      expect(sanitziedData[0]).to.eql(
         "SomeWeirdCol": "weirdest Value"
         "AnId": 3
         "Value": "1'111'111.34"
