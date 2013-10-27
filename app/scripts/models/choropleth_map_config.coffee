@@ -55,6 +55,14 @@ do ->
     ]
 
     availableMaps: [
+      name: 'Swiss Population Data Map'
+      map: 'switzerlandCantons'
+      projection: 'mercator'
+      data: 'swissPopulationData'
+      mappingPropertyOnMap: 'NAME_1'
+      mappingPropertyOnData: 'Canton'
+      valueProperty: 'Residents'
+    ,
       name: 'Austria'
       map: 'austriaBundeslaender'
       projection: 'mercator'
@@ -66,10 +74,6 @@ do ->
       name: 'Switzerland'
       map: 'switzerlandCantons'
       projection: 'mercator'
-      data: 'swissPopulationData'
-      mappingPropertyOnMap: 'NAME_1'
-      mappingPropertyOnData: 'Canton'
-      valueProperty: 'Residents'
     ,
       name: 'US States'
       map: 'usStates'

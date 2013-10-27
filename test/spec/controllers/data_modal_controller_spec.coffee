@@ -13,12 +13,9 @@ describe 'Data Modal Controller', ->
       id: @snippetModel.id
       mapMediatorService: @mapMediatorService
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
-    modalInstance =
+    @modalInstance =
       dismiss: ->
         true
-    @dataModalController = instantiateController('DataModalController',
-      $scope: @scope, $modalInstance: modalInstance, mapMediatorService: @mapMediatorService,
-      highlightedRows: [], mapId: @snippetModel.id, mappedColumn: 'id')
     @event =
       stopPropagation: ->
         true
@@ -29,33 +26,41 @@ describe 'Data Modal Controller', ->
     beforeEach ->
       @sampleDataRow = sample1DData[0]
       @oldSampleDataValue = @sampleDataRow.value
-      @sampleMessyRow = messyData[0]
-      @oldMessyDataValue = @sampleMessyRow['value']
+
+      @sampleMessyRow = switzerlandData[1]
+      @oldMessyDataValue = @sampleMessyRow['Residents']
 
 
     afterEach ->
       # reset test data values
       @sampleDataRow.value = @oldSampleDataValue
-      @sampleMessyRow['value'] = @oldMessyDataValue
+      @sampleMessyRow['Residents'] = @oldMessyDataValue
 
 
     it 'changes a data property on the snippet upon closing', ->
+      @dataModalController = instantiateController('DataModalController',
+        $scope: @scope, $modalInstance: @modalInstance, mapMediatorService: @mapMediatorService,
+        highlightedRows: [], mapId: @snippetModel.id, mappedColumn: 'id')
       # make a change
-      @sampleDataRow.value += 3
-      @dataModalController.updateEntity(@sampleDataRow)
+      @scope.visualizedData[0].Value = 6
+      @dataModalController.updateEntity(@scope.visualizedData[0])
       @dataModalController.close(@event)
       newData = @snippetModel.data('data')
-      expect(newData[0].value).to.eql(@oldSampleDataValue+3)
+      expect(newData[0].value).to.eql(6)
 
 
-    it 'changes a data property on the snippet upon closing with messy data', ->
+    it 'changes a data property on the snippet upon closing with switzerlandData', ->
       @snippetModel.data
-        data: messyData
+        data: switzerlandData
+      @dataModalController = instantiateController('DataModalController',
+        $scope: @scope, $modalInstance: @modalInstance, mapMediatorService: @mapMediatorService,
+        highlightedRows: [], mapId: @snippetModel.id, mappedColumn: 'Canton')
 
-      @sampleMessyRow['value'] = '1'
-      @dataModalController.updateEntity(@sampleMessyRow)
+      @scope.visualizedData[1]['Residents'] = 45
+      @dataModalController.updateEntity(@scope.visualizedData[1])
       @dataModalController.close(@event)
       newData = @snippetModel.data('data')
-      expect(newData[0]['value']).to.eql('1')
+      expect(newData[1]['Residents']).to.eql(45)
+
 
 

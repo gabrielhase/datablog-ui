@@ -25,6 +25,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
 
   renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
+    return if typeof data != 'object'
     valueById = d3.map()
     mapInstance = mapMediatorService.getUIModel(scope.mapId)
     mapInstance.regionsWithMissingDataPoints = [] # reset

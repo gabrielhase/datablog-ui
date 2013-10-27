@@ -15,14 +15,16 @@ class ChoroplethMap
   # ngGrid uses the keys of the json as javascript objects (through angulars $parse)
   # thus we need to make them valid first
   getDataSanitizedForNgGrid: ->
+    keyMapping = {}
     sanitizedData = @_getSnippetModel().data('data').map (dataEntry) ->
       sanitizedEntry = {}
       for key, value of dataEntry
         sanitizedKey = livingmapsWords.camelCase(key).replace('%', 'Percent')
         sanitizedValue = value
         sanitizedEntry[sanitizedKey] = sanitizedValue
+        keyMapping[key] = sanitizedKey
       sanitizedEntry
-    return sanitizedData
+    return { sanitizedData, keyMapping }
 
 
   # goes through all geojson properties on the map and separates the
