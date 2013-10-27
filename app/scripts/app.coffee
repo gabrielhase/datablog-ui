@@ -1,6 +1,6 @@
 angular
   .module('ldEditor', ['envApi', 'ui.bootstrap.dialog', 'ui.bootstrap.pagination',
-    'ui.bootstrap.modal', 'leaflet-directive', 'ngProgress', 'uiSlider'])
+    'ui.bootstrap.modal', 'leaflet-directive', 'ngProgress', 'uiSlider', 'ngGrid'])
   .config ($httpProvider, $locationProvider) ->
     $locationProvider.html5Mode(true)
 
