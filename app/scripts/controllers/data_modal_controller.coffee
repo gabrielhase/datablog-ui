@@ -55,7 +55,8 @@ class DataModalController
 
   close: (event) ->
     if @changedRows.length > 0
-      data = @snippetModel.data('data')
+      data = []
+      $.extend(true, data, @snippetModel.data('data'))
       for rowIdx in @changedRows
         newRow = {}
         for key, value of data[rowIdx]
