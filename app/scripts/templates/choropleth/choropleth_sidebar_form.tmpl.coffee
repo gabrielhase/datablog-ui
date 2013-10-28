@@ -35,6 +35,13 @@ htmlTemplates.choroplethSidebarForm = """
       <div ng-show="mappingPropertyOnMap">
         <label>Upload a data file (csv only, comma-separated)</label>
         <input csv-upload callback="setData(data, error)" type="file" name="data"></input>
+        <div ng-show="snippet.model.data('data')">
+          Your Data File:
+          <a class="upfront-btn upfront-btn-mini upfront-btn-success"
+              ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">
+            {{snippet.model.data('data').length}} rows
+          </a>
+        </div>
 
         <label>Select which (numerical) property you want to visualize</label>
         <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">
