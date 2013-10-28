@@ -3,9 +3,7 @@ describe 'angularTemplateService', ->
   service = null
 
   beforeEach ->
-    module('ldEditor')
     service = retrieveService('angularTemplateService')
-
 
   describe 'recognizing a template indicator', ->
 
@@ -139,6 +137,7 @@ describe 'angularTemplateService', ->
 
   describe 'inserting a choropleth', ->
     beforeEach ->
+      @mapMediatorService = retrieveService('mapMediatorService')
       @snippetModel =
         id: 'testChoropleth'
         storedData:
@@ -151,7 +150,10 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a d3-choropleth snippet', ->
-      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap)
+      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap
+        id: @snippetModel.id
+        mapMediatorService: @mapMediatorService
+      )
       controller = @$directiveRoot.find('div').attr('ng-controller')
       cssClass = @$directiveRoot.find('div').attr('class')
       expect(controller).to.eql('ChoroplethMapController')

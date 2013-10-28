@@ -1,11 +1,13 @@
 angular.module('ldEditor').controller 'ChoroplethFormController',
 class ChoroplethFormController
 
-  constructor: (@$scope, @$http, @ngProgress, @dataService) ->
-    @choroplethInstance = @$scope.snippet.model.uiTemplateInstance
+  constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService, @dialogService) ->
+    @choroplethInstance = @mapMediatorService.getUIModel(@$scope.snippet.model.id)
+    @$scope.choroplethInstance = @choroplethInstance
 
     @$scope.setMap = (data, error) => @setMap(data, error)
     @$scope.setData = (data, error) => @setData(data, error)
+    @$scope.openDataModal = (highlighedRows) => @openDataModal(highlighedRows)
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
@@ -18,6 +20,12 @@ class ChoroplethFormController
       @initDataPropertySelection()
 
     @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
+
+
+  openDataModal: (highlighedRows) ->
+    modalInstance = @dialogService.openDataModal(highlighedRows, @$scope.snippet.model.id, @$scope.mappingPropertyOnData)
+    modalInstance.result.then (data) ->
+      console.log "closed modal"
 
 
   # generic property setup:
@@ -48,6 +56,18 @@ class ChoroplethFormController
 
           @$scope.projection = newVal.projection
           @initMapPropertySelection()
+          if newVal.data
+            @dataService.get(newVal.data).then (data) =>
+              dataValues = d3.csv.parse(data)
+              @$scope.snippet.model.data
+                data: dataValues
+                mappingPropertyOnMap: newVal.mappingPropertyOnMap
+                mappingPropertyOnData: newVal.mappingPropertyOnData
+                valueProperty: newVal.valueProperty
+              @$scope.mappingPropertyOnMap = newVal.mappingPropertyOnMap
+              @$scope.mappingPropertyOnData = newVal.mappingPropertyOnData
+              @$scope.valueProperty = newVal.valueProperty
+              @initDataPropertySelection(dataValues)
 
 
   initMapPropertySelection: ->

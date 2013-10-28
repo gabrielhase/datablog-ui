@@ -2462,7 +2462,9 @@
         var design, json, rootNode, _ref,
           _this = this;
         _ref = _arg != null ? _arg : {}, design = _ref.design, json = _ref.json, rootNode = _ref.rootNode;
-        assert(!this.initialized, 'document is already initialized');
+        if (this.initialized) {
+          return documentReady();
+        }
         this.initialized = true;
         this.loadDesign(design);
         this.snippetTree = json && this.design ? new SnippetTree({

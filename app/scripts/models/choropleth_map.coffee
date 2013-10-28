@@ -1,24 +1,41 @@
 class ChoroplethMap
 
   constructor: ({
-
+    @id
+    @mapMediatorService # TODO: is it possible to setup the angular $injector for models?
   }) ->
-    # nothing here yet
+    @dataPointsWithMissingRegion = []
+    @regionsWithMissingDataPoints = []
 
 
   getTemplate: ->
     choroplethMapConfig.template
 
 
+  # ngGrid uses the keys of the json as javascript objects (through angulars $parse)
+  # thus we need to make them valid first
+  getDataSanitizedForNgGrid: ->
+    keyMapping = {}
+    sanitizedData = @_getSnippetModel().data('data').map (dataEntry) ->
+      sanitizedEntry = {}
+      for key, value of dataEntry
+        sanitizedKey = livingmapsWords.camelCase(key).replace('%', 'Percent')
+        sanitizedValue = value
+        sanitizedEntry[sanitizedKey] = sanitizedValue
+        keyMapping[key] = sanitizedKey
+      sanitizedEntry
+    return { sanitizedData, keyMapping }
+
+
   # goes through all geojson properties on the map and separates the
   # properties into such that can be used for mapping data to it and such
   # that can not be used for mapping data to it.
   # NOTE: at the moment we don't check for distinctiveness of the values
-  getPropertiesForMapping: (snippetModel) ->
+  getPropertiesForMapping: ->
     propertiesForMapping = []
     propertiesWithMissingEntries = []
     lastPropertySet = undefined
-    snippetModel.data('map')?.features?.map (feature) =>
+    @_getSnippetModel().data('map')?.features?.map (feature) =>
 
       # make sure old missing properties are skipped
       currentPropertySet = {}
@@ -41,11 +58,14 @@ class ChoroplethMap
 
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
-  shouldRenderLoadingBar: (snippetModel) ->
+  shouldRenderLoadingBar: (property) ->
     prefilledMapNames = choroplethMapConfig.prefilledMaps.map (map) -> map.name
-    if snippetModel.data('map')
-      true
-    else if prefilledMapNames.indexOf(snippetModel.identifier) != -1
+    if @_getSnippetModel().data('map')
+      switch property
+        when 'colorScheme' then return false
+        else
+          return true
+    else if prefilledMapNames.indexOf(@_getSnippetModel().identifier) != -1
       true
     else
       false
@@ -69,3 +89,6 @@ class ChoroplethMap
 
     missingValues
 
+
+  _getSnippetModel: ->
+    @mapMediatorService.getSnippetModel(@id)

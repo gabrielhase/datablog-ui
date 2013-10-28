@@ -40,10 +40,14 @@ describe 'Choropleth directive', ->
 
 
   beforeEach ->
-    choropleth = new ChoroplethMap
-    module('ldEditor')
+    @mapMediatorService = retrieveService('mapMediatorService')
+    @choropleth = new ChoroplethMap
+      id: 123
+      mapMediatorService: @mapMediatorService
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = 'albersUsa'
+    directiveScope.mapId = @choropleth.id
+    @mapMediatorService.set(123, {}, @choropleth, directiveScope)
 
 
   describe 'rendering a map', ->
@@ -133,38 +137,56 @@ describe 'Choropleth directive', ->
       directiveScope.map = sampleMap
 
 
-    it 'should render data points on a map', ->
+    it 'renders data points on a map', ->
       directiveScope.data = sample1DData
       directiveScope.$digest()
       paths = directiveElem.find('path')
-      expect($(paths[0]).attr('class')).to.eql('q3-9')
+      expect($(paths[0]).attr('class')).to.eql('q0-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    describe 'missing data points for region', ->
+
+      beforeEach ->
+        directiveScope.map = biggerSampleMap
+
+      it 'saves missing data points for region on model', ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        expect(@choropleth.regionsWithMissingDataPoints).to.eql([3, 4])
+
+
+    describe 'missing region for data points', ->
+
+      it 'saves a missing region for data point on model', ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+        expect(@choropleth.dataPointsWithMissingRegion).to.eql(['33'])
 
 
     describe ' and changing the data properties', ->
 
-      it 'should render the same data points when selecting the mapping properties', ->
+      beforeEach ->
         directiveScope.data = sample1DData
         directiveScope.mappingPropertyOnMap = 'id'
         directiveScope.mappingPropertyOnData = 'id'
+
+      it 'should render the same data points when selecting the mapping properties', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
       it 'should render the same data points when selecting the value property', ->
-        directiveScope.data = sample1DData
         directiveScope.valueProperty = 'value'
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q3-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
       it 'should render different data points when selecting different mapping properties', ->
-        # default selection
-        directiveScope.data = sample1DData
         directiveScope.$digest()
         # changed mapping
         directiveScope.mappingPropertyOnMap = 'reverseMapping'
@@ -172,43 +194,43 @@ describe 'Choropleth directive', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q8-9')
-        expect($(paths[1]).attr('class')).to.eql('q3-9')
+        expect($(paths[1]).attr('class')).to.eql('q0-9')
 
 
       it 'should render different data points when selecting a different value property', ->
-        # default selection
-        directiveScope.data = sample1DData
         directiveScope.$digest()
         # changed value
         directiveScope.valueProperty = 'alternativeValue'
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q7-9')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
     describe ' and changing the visual properties', ->
 
-      it 'assigns different classes when increasing the number of quantize steps', ->
+      beforeEach ->
         directiveScope.data = sample1DData
+        directiveScope.mappingPropertyOnMap = 'id'
+        directiveScope.mappingPropertyOnData = 'id'
+
+      it 'assigns different classes when increasing the number of quantize steps', ->
         directiveScope.quantizeSteps = 12
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q5-12')
+        expect($(paths[0]).attr('class')).to.eql('q0-12')
         expect($(paths[1]).attr('class')).to.eql('q11-12')
 
 
       it 'assigns different classes when decreasing the number of quantize steps', ->
-        directiveScope.data = sample1DData
         directiveScope.quantizeSteps = 5
         directiveScope.$digest()
         paths = directiveElem.find('path')
-        expect($(paths[0]).attr('class')).to.eql('q2-5')
+        expect($(paths[0]).attr('class')).to.eql('q0-5')
         expect($(paths[1]).attr('class')).to.eql('q4-5')
 
 
       it 'assigns different classes when changing the color scheme', ->
-        directiveScope.data = sample1DData
         directiveScope.colorScheme = 'Y1Gn'
         directiveScope.$digest()
         svg = directiveElem.find('svg')

@@ -1,25 +1,64 @@
 describe 'ChoroplethMap', ->
 
   beforeEach ->
-    @choroplethMap = new ChoroplethMap()
+    @mapMediatorService = retrieveService('mapMediatorService')
+    @snippetModel =
+      id: 123
+      storedData:
+        map: biggerSampleMap
+        data: messyData
+      data: (d) ->
+        if typeof d == 'string'
+          @storedData[d]
+        else
+          for key, value of d
+            @storedData[key] = value
+
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
+
+
+  it 'gets its associated snippet model', ->
+    expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
   describe 'Geojson properties for mapping', ->
 
     beforeEach ->
-      @snippetModel =
-        data: (key) ->
-          if key == 'map'
-            biggerSampleMap
       @expectedForMapping = biggerSampleMap.features.map (feature) -> {id: feature.properties['id']}
       @expectedMissingForMapping = ['name']
 
 
     it 'should get the properties allowed for mapping', ->
-      { propertiesForMapping, propertiesWithMissingEntries } = @choroplethMap.getPropertiesForMapping(@snippetModel)
+      { propertiesForMapping, propertiesWithMissingEntries } = @choroplethMap.getPropertiesForMapping()
       expect(propertiesForMapping).to.eql(@expectedForMapping)
 
 
     it 'should get the properties with missing entries for mapping', ->
-      { propertiesForMapping, propertiesWithMissingEntries } = @choroplethMap.getPropertiesForMapping(@snippetModel)
+      { propertiesForMapping, propertiesWithMissingEntries } = @choroplethMap.getPropertiesForMapping()
       expect(propertiesWithMissingEntries).to.eql(@expectedMissingForMapping)
+
+
+  describe 'Sanitizing visualization data', ->
+
+    it 'camelCases all column names', ->
+      { sanitizedData, keyMapping } = @choroplethMap.getDataSanitizedForNgGrid()
+      expect(sanitizedData[0]).to.eql(
+        "SomeWeirdCol": "weirdest Value"
+        "AnId": 3
+        "Value": "1'111'111.34"
+      )
+
+
+    it 'produces a valid key mapping', ->
+      { sanitizedData, keyMapping } = @choroplethMap.getDataSanitizedForNgGrid()
+      expect(keyMapping).to.eql(
+        "Some weird col": "SomeWeirdCol"
+        "an id": "AnId"
+        "value": "Value"
+      )
+
+
+

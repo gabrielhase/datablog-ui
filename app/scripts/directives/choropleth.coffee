@@ -1,4 +1,4 @@
-angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
+angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMediatorService) ->
 
   defaults =
     projection: 'mercator'
@@ -25,7 +25,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
 
 
   renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
+    return if typeof data != 'object'
     valueById = d3.map()
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    mapInstance.regionsWithMissingDataPoints = [] # reset
+    usedDataPoints = []
     data.forEach (d) ->
       dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
       val = +d[valueProperty] || +d[defaults.valueProperty]
@@ -33,8 +37,16 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     scope.mapGroup.selectAll('path')
       .attr('class', (d) ->
         mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
-        valFn(valueById.get(mapPropertyId))
+        val = valueById.get(mapPropertyId)
+        if val
+          usedDataPoints.push("#{mapPropertyId}") # NOTE: since valueById.keys() will return the keys as string in any case, we will push this as strings as well
+        else
+          mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
+        valFn(val)
       )
+
+    mapInstance.dataPointsWithMissingRegion = valueById.keys().filter (entry) ->
+      usedDataPoints.indexOf(entry) == -1
 
 
   # sets the viewBox attribute on the svg element to cover the whole map
@@ -57,16 +69,42 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     return path
 
 
+  deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    minValue = d3.min data, (d) ->
+      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
+        +d[valueProperty] || +d[defaults.valueProperty]
+
+
+  deduceMaxValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    d3.max data, (d) ->
+      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
+        +d[valueProperty] || +d[defaults.valueProperty]
+
+
   # for now fixed to quantize
-  deduceValueFunction = (data, valueProperty, quantizeSteps) ->
+  deduceValueFunction = (data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData) ->
+    maxValue = deduceMaxValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
+    minValue = deduceMinValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
     valFn = d3.scale.quantize()
-      .domain([0, d3.max(data, (d) ->
-        +d[valueProperty] || +d[defaults.valueProperty])])
+      .domain([minValue, maxValue])
       .range(d3.range(quantizeSteps).map (i) ->
         "q#{i}-#{quantizeSteps}"
       )
 
     return valFn
+
+
+  # gets all mapped property values that are actually on the map
+  # Either gets all from the set mappingProperty or gets all from the default
+  # no mixing of default and set property!
+  deduceAllAvailableMappingOnMap = (map, mappingPropertyOnMap) ->
+    map.features.map (mapEntry) ->
+      if mappingPropertyOnMap
+        mapEntry.properties[mappingPropertyOnMap]
+      else
+        mapEntry.properties[defaults.mappingPropertyOnMap]
 
 
   renderVisualization = (scope) ->
@@ -84,7 +122,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
     resizeMap(scope.svg, bounds)
 
     if data
-      valFn = deduceValueFunction(data, valueProperty, quantizeSteps)
+      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
+      valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData)
       renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
 
 
@@ -98,6 +137,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress) ->
   return {
     restrict: 'EA'
     scope: {
+      mapId: '=mapId' # the id of the map instance
       map: '=map' # the map to draw
       lastPositioned: '=lastPositioned' # timestamp when the maps container (width) changes
       projection: '=projection' # the projection applied to the map

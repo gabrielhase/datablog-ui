@@ -9,7 +9,6 @@ module.exports = function(config) {
     // frameworks to use
     frameworks: ['mocha', 'sinon-chai'],
 
-
     // list of files / patterns to load in the browser
     files: [
       'test/runner.html',
@@ -19,6 +18,7 @@ module.exports = function(config) {
       "https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.min.js",
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
+      'app/vendor/ng-grid/ng-grid-2.0.7.debug.js',
 
       // angular-slider
       'app/vendor/angular-slider/angular_slider.js',
@@ -28,8 +28,8 @@ module.exports = function(config) {
 
       // livingdocs-engine
       'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
-      // 'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
-      // 'app/vendor/livingdocs-engine/livingdocs_engine.js',
+      'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
+      'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',

@@ -1,45 +1,29 @@
 describe 'Choropleth form controller', ->
 
-  # TODO: at this point we should use the real livingdocs-engine and not mock out actual functionality
   beforeEach ->
-    @choroplethMap = new ChoroplethMap()
-    # @snippetModel = doc.document.createModel('choropleth')
-    # @snippetModel.id = 'testChoropleth'
-    # @snippetModel.uiTemplateInstance = @choroplethMap
-    # # @snippetModel.data(
-    #   map: sampleMap
-    #   projection: 'aProjection'
-    #   mapName: 'aGreatName'
-    #   data: sample1DData
-    #   mappingPropertyOnMap: 'someProp'
-    #   mappingPropertyOnData: 'someProp'
-    #   valueProperty: 'someVal'
-    # )
-    @snippetModel =
-      id: 'testChoropleth'
-      uiTemplateInstance: @choroplethMap
-      storedData:
-        map: sampleMap
-        projection: 'aProjection'
-        mapName: 'aGreatName'
-        data: sample1DData
-        mappingPropertyOnMap: 'someProp'
-        mappingPropertyOnData: 'someProp'
-        valueProperty: 'someVal'
-        quantizeSteps: 9
-        colorScheme: 'YlGn'
-      data: (type) ->
-        if typeof(type) == 'object'
-          for key, value of type
-            @storedData[key] = value
-        else
-          @storedData[type]
+    @mapMediatorService = retrieveService('mapMediatorService')
+    @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
+    @snippetModel.data
+      map: sampleMap
+      projection: 'mercator'
+      mapName: 'aGreatName'
+      data: sample1DData
+      mappingPropertyOnMap: 'someProp'
+      mappingPropertyOnData: 'someProp'
+      valueProperty: 'someVal'
+      quantizeSteps: 9
+      colorScheme: 'YlGn'
+
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
 
     @ngProgress = mockNgProgress()
     @scope = retrieveService('$rootScope').$new()
     @scope.snippet =
-        model: @snippetModel
-
+      model: @snippetModel
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
 
   describe 'initializations', ->
 
@@ -47,12 +31,10 @@ describe 'Choropleth form controller', ->
 
       beforeEach ->
         #@snippetModel.storedData.map = undefined
-        @snippetModel.data(
+        @snippetModel.data
           map: undefined
-        )
         @choroplethController = instantiateController('ChoroplethFormController',
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
-
 
       it 'does not initialize mappingPropertyOnMap', ->
         expect(@scope.mappingPropertyOnMap).to.be.undefined
@@ -163,9 +145,9 @@ describe 'Choropleth form controller', ->
     describe 'on projection', ->
 
       it 'changes the projection on snippet', ->
-        @scope.projection = 'fancyNewProjection'
+        @scope.projection = 'albersUsa'
         @scope.$digest()
-        expect(@scope.snippet.model.data('projection')).to.eql('fancyNewProjection')
+        expect(@scope.snippet.model.data('projection')).to.eql('albersUsa')
 
 
     describe 'on mapping property on map', ->

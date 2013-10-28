@@ -1443,10 +1443,7 @@ SnippetModel.fromJson = (json, design) ->
   for styleName, value of json.styles
     model.style(styleName, value)
 
-
   model.data(json.data) if json.data
-  #for dataName, value of json.data
-  #  model.data(dataName, value)
 
   for containerName, snippetArray of json.containers
     assert model.containers.hasOwnProperty(containerName),
@@ -2357,7 +2354,9 @@ document = do ->
 
   # *Public API*
   init: ({ design, json, rootNode }={}) ->
-    assert not @initialized, 'document is already initialized'
+    if @initialized
+      return documentReady()
+    #assert not @initialized, 'document is already initialized'
     @initialized = true
 
     @loadDesign(design)
@@ -3998,7 +3997,7 @@ pageReady = ->
   @snippetAdded = chainable(document.snippetTree.snippetAdded, 'add')
 
   # Raised when the data of a snippet has changed
-  # callback: (event, snippetModel, changedProperties) ->
+  # callback: (snippetModel, changedProperties) ->
   @snippetDataChanged = chainable(document.snippetTree.snippetDataChanged, 'add')
 
   # Raised when a snippet is being dragged

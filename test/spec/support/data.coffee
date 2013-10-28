@@ -32,8 +32,49 @@ sample1DData = [
   value: 3
   alternativeValue: 4
 ,
+  id: 33 # This has no mapping and should be excluded from calculation
+  reverseId: 'String33'
+  value: 20
+  alternativeValue: 40
+,
   id: 2
   reverseId: 'String2'
   value: 7
   alternativeValue: 5
+]
+
+messyData = [
+  "Some weird col": "weirdest Value"
+  "an id": 3
+  "value": "1'111'111.34"
+,
+  "Some weird col": "who parses json like this?"
+  "an id": 2
+  "value": "2'222'222.00000002"
+]
+
+switzerlandData = [
+  "Canton": ""
+  "Change in %": "2010-2011"
+  "Foreign nationals in %": "2011"
+  "Population density per km_": "2011"
+  "Residents": "2011"
+  "Through migration": "2010-2011"
+  "Through natural increase": "2010-2011"
+,
+  "Canton": "Zurich"
+  "Change in %": "1.4"
+  "Foreign nationals in %": "24.6"
+  "Population density per km_": "838.3"
+  "Residents": "1392396"
+  "Through migration": "0.9"
+  "Through natural increase": "0.4"
+,
+  "Canton": "Bern"
+  "Change in %": "0.5"
+  "Foreign nationals in %": "13.7"
+  "Population density per km_": "168.6"
+  "Residents": "985046"
+  "Through migration": "0.4"
+  "Through natural increase": "0.0"
 ]
