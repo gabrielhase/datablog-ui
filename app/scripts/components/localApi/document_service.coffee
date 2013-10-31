@@ -33,7 +33,7 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
              "main": [
                "identifier": "livingmaps.title"
                "content":
-                 "title": "The livingdocs manifesto"
+                 "title": "The livingdocs.io manifesto"
               ,
                "identifier": "livingmaps.text"
                "content":
@@ -53,7 +53,7 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
               ,
                "identifier": "livingmaps.text"
                "content":
-                 "text": "This is quite a mouthful. Livingdocs starts today at http://www.getlivingdocs.com . It’s to early to say where this journey will lead. But if you care about our vision then follow us @upfrontIO and we will send you short messages that hopefully one day will enable us to host your long messages."
+                 "text": "This is quite a mouthful. Livingdocs starts today at http://www.livingdocs.io . It’s to early to say where this journey will lead. But if you care about our vision then follow us @upfrontIO and we will send you short messages that hopefully one day will enable us to host your long messages."
              ],
              "sidebar": [
               "identifier": "livingmaps.image"
