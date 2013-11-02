@@ -137,10 +137,6 @@ describe 'Choropleth form controller', ->
 
   describe 'mapping property on data', ->
 
-    beforeEach ->
-      # todo set suitable data set
-
-
     it 'notifies the user when no mappings are possible', ->
       @snippetModel.data
         data: switzerlandData
@@ -151,7 +147,7 @@ describe 'Choropleth form controller', ->
       expect(@scope.availableDataMappingProperties).to.eql([])
 
 
-    it 'selects the suitable mapping when only one is possible', ->
+    it 'recognizes the suitable mapping property when only one is possible', ->
       @snippetModel.data
         data: messyData
         map: biggerSampleMap
@@ -162,6 +158,27 @@ describe 'Choropleth form controller', ->
         label: 'an id (e.g. 2)'
         key: 'an id'
       ])
+
+
+    it 'selects the suitable mapping when only one is possible on the scope', ->
+      @snippetModel.data
+        data: messyData
+        map: biggerSampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      expect(@scope.mappingPropertyOnData).to.eql('an id')
+
+
+    it 'selects the suitable mapping when only one is possible on the snippet model', ->
+      @snippetModel.data
+        data: messyData
+        map: biggerSampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      @scope.$digest()
+      expect(@snippetModel.data('mappingPropertyOnData')).to.eql('an id')
 
 
     it 'populates a select list with all possible mappings', ->
