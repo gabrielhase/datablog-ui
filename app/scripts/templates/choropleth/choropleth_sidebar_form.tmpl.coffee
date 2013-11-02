@@ -48,10 +48,21 @@ htmlTemplates.choroplethSidebarForm = """
           <option value="">-- choose Visualization value --</option>
         </select>
 
-        <label>Select a property that matches your selected map property</label>
-        <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataProperties">
-          <option value="">-- choose Property --</option>
-        </select>
+        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">
+          No column of your data file can be mapped to the selected mapping property on your map.
+          Select a different mapping property on the map or change your data.
+        </div>
+
+        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">
+          <span class="entypo-check"></span> Successfully mapped on data column '{{availableDataMappingProperties[0].key}}'
+        </div>
+
+        <div ng-show="availableDataMappingProperties.length > 1">
+          <label>Select a property that matches your selected map property</label>
+          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">
+            <option value="">-- choose Property --</option>
+          </select>
+        </div>
 
         <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">
           <a class="upfront-btn upfront-btn-mini upfront-btn-danger"
