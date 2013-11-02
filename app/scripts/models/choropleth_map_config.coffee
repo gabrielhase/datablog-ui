@@ -45,6 +45,8 @@ do ->
       'colorScheme'
     ]
 
+    dataMappingThreshold: 0.5
+
     prefilledMaps: [
       {
         name: 'livingmaps.unemploymentChoropleth'
