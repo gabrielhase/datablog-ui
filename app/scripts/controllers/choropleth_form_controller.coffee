@@ -107,6 +107,8 @@ class ChoroplethFormController
       @$scope.availableDataMappingProperties.push
         label: "#{key} (e.g. #{data[data.length-1][key]})"
         key: key
+    if @$scope.availableDataMappingProperties.length == 1
+      @$scope.mappingPropertyOnData = @$scope.availableDataMappingProperties[0].key
 
 
   initDataValueProperties: ->
