@@ -41,13 +41,17 @@ describe 'Choropleth directive', ->
 
   beforeEach ->
     @mapMediatorService = retrieveService('mapMediatorService')
+    @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
+    @snippetModel.data
+      data: sample1DData
     @choropleth = new ChoroplethMap
-      id: 123
+      id: @snippetModel.id
       mapMediatorService: @mapMediatorService
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = 'albersUsa'
     directiveScope.mapId = @choropleth.id
-    @mapMediatorService.set(123, {}, @choropleth, directiveScope)
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choropleth, directiveScope)
 
 
   describe 'rendering a map', ->
@@ -143,6 +147,27 @@ describe 'Choropleth directive', ->
       paths = directiveElem.find('path')
       expect($(paths[0]).attr('class')).to.eql('q0-9')
       expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+    describe 'for categorical data', ->
+
+      beforeEach ->
+        @snippetModel.data
+          data: sampleCategoricalData
+          map: biggerSampleMap
+          valueProperty: 'party'
+        directiveScope.map = biggerSampleMap
+        directiveScope.data = sampleCategoricalData
+        directiveScope.valueProperty = 'party'
+
+
+      it 'renders categorical data', ->
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q0-2')
+        expect($(paths[1]).attr('class')).to.eql('q1-2')
+        expect($(paths[2]).attr('class')).to.eql('q0-2')
+        expect($(paths[3]).attr('class')).to.eql('q0-2')
 
 
     describe 'missing data points for region', ->

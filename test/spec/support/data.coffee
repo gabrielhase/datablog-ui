@@ -51,6 +51,21 @@ sample1DData = [
   alternativeValue: 5
 ]
 
+# in use with US Maps
+sampleCategoricalData = [
+  id: 1
+  party: 'Democrats'
+,
+  id: 2
+  party: 'Republicans'
+,
+  id: 3
+  party: 'Democrats'
+,
+  id: 4
+  party: 'Democrats'
+]
+
 messyData = [
   "Some weird col": "weirdest Value"
   "an id": 3
@@ -93,4 +108,30 @@ switzerlandData = [
   "Residents": "985046"
   "Through migration": "0.4"
   "Through natural increase": "0.0"
+]
+
+valueTypeSamples = [
+  numerical: 23
+  categorical: 'Democrat'
+  numericalNoisy: ''
+  categoricalNoisy: 'Democrat'
+  categoricalUnique: 'Cat1'
+,
+  numerical: 34
+  categorical: 'Democrat'
+  numericalNoisy: '12'
+  categoricalNoisy: 'Republican'
+  categoricalUnique: 'Cat2'
+,
+  numerical: 22
+  categorical: 'Republican'
+  numericalNoisy: '14'
+  categoricalNoisy: 'Democrat'
+  categoricalUnique: 'Cat3'
+,
+  numerical: 11
+  categorical: 'Democrat'
+  numericalNoisy: '16'
+  categoricalNoisy: 5
+  categoricalUnique: 'Cat4'
 ]

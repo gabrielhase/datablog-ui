@@ -64,7 +64,7 @@ class ChoroplethMap
     mappingPropertyOnMap = @_getSnippetModel().data('mappingPropertyOnMap')
     colMatchCount = {}
 
-    data.forEach (row) ->
+    for row in data
       rowAppliedToMap = false
       map?.features?.forEach (feature) ->
         return if rowAppliedToMap # only track application to the map once
@@ -83,6 +83,36 @@ class ChoroplethMap
     return dataColumnsForMapping
 
 
+  # deduces if the selected value property stands for numerical or ordinal data
+  # if >50% of values are numerical decides for numerical otherwise ordinal
+  getValueType: ->
+    data = @_getSnippetModel().data('data')
+    valueProperty = @_getSnippetModel().data('valueProperty')
+    return undefined unless data && valueProperty
+
+    numericalRows = 0
+    categoricalRows = 0
+    for row in data
+      valTypeToDetermine = row[valueProperty]
+      if @_determineValueType(valTypeToDetermine) == 'numerical'
+        numericalRows += 1
+      else
+        categoricalRows += 1
+
+    if numericalRows > categoricalRows
+      'numerical'
+    else
+      'categorical'
+
+
+  getCategoryValues: ->
+    data = @_getSnippetModel().data('data')
+    valueProperty = @_getSnippetModel().data('valueProperty')
+    return undefined unless data && valueProperty
+
+    _.uniq(data.map (row) -> row[valueProperty])
+
+
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (property) ->
@@ -99,6 +129,15 @@ class ChoroplethMap
 
 
     ## PRIVATE FUNCITONS ##
+
+
+  _determineValueType: (val) ->
+    tryNumeric = +val
+
+    if _.isNaN(tryNumeric)
+      'categorical'
+    else
+      'numerical'
 
 
   # finds the difference in keys between literal current and literal last

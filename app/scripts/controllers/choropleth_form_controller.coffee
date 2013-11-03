@@ -8,6 +8,7 @@ class ChoroplethFormController
     @$scope.setMap = (data, error) => @setMap(data, error)
     @$scope.setData = (data, error) => @setData(data, error)
     @$scope.openDataModal = (highlighedRows) => @openDataModal(highlighedRows)
+    @$scope.hasTooManyCategories = => @$scope.categoryCount > @$scope.maxQuantizeSteps
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
@@ -98,6 +99,15 @@ class ChoroplethFormController
     @$scope.quantizeSteps = steps if @$scope.quantizeSteps > steps
 
 
+  initValueType: ->
+    if @choroplethInstance.getValueType() == 'numerical'
+      @$scope.isCategorical = false
+    else
+      categories = @choroplethInstance.getCategoryValues()
+      @$scope.categoryCount = categories.length
+      @$scope.isCategorical = true
+
+
   initDataMappingProperties: ->
     data = @$scope.snippet.model.data('data')
     return unless data
@@ -124,12 +134,13 @@ class ChoroplethFormController
 
   initDataPropertySelection: ->
     @setupProperty('mappingPropertyOnData')
-    @setupProperty('valueProperty')
+    @setupProperty('valueProperty', $.proxy(@initValueType, this))
     @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
     @setupProperty('quantizeSteps')
     @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
     @initDataValueProperties()
     @initDataMappingProperties()
+    @initValueType() # TODO: do we need this
 
 
   setData: (data, error) ->

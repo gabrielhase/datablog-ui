@@ -10,30 +10,49 @@ htmlTemplates.choroplethSidebarForm = """
         <option value="">-- choose Map --</option>
       </select>
 
-      <label>Upload your own map (geojson files only)</label>
+      <label>or upload (geojson files only)</label>
       <input json-upload callback="setMap(data, error)" type="file" name="map"></input>
 
-      <label>Choose a projection for the map</label>
+      <label>Geographical projection</label>
       <select ng-model="projection" ng-options="option.value as option.name for option in projections">
         <option value="">-- choose Projection --</option>
       </select>
 
     </fieldset>
     <fieldset>
-      <legend>Data Visualization</legend>
+      <legend>Data Mapping</legend>
 
-      <label>Select a property that is matched by your data</label>
+      <label>Select a property that can be matched by your data</label>
       <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">
         <option value="">-- choose Property --</option>
       </select>
 
-      <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">
-        <a class="upfront-btn upfront-btn-mini upfront-btn-danger">{{choroplethInstance.dataPointsWithMissingRegion.length}}</a>
-        <small>Regions with no corresponding data values</small>
+      <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">
+        No column of your data file can be mapped to the selected mapping property on your map.
+        Select a different mapping property on the map or change your data.
       </div>
 
+      <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">
+        <span class="entypo-check"></span> Successfully mapped on data column '{{availableDataMappingProperties[0].key}}'
+        <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">
+          <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}
+          <small> Regions not visualized on the map</small>
+        </div>
+      </div>
+
+      <div ng-show="availableDataMappingProperties.length > 1">
+        <label>Select a property that matches your selected map property</label>
+        <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">
+          <option value="">-- choose Property --</option>
+        </select>
+      </div>
+
+    </fieldset>
+    <fieldset>
+      <legend>Data Visualization</legend>
+
       <div ng-show="mappingPropertyOnMap">
-        <label>Upload a data file (csv only, comma-separated)</label>
+        <label>Data File (.csv, comma-separated)</label>
         <input csv-upload callback="setData(data, error)" type="file" name="data"></input>
         <div ng-show="snippet.model.data('data')">
           Your Data File:
@@ -43,26 +62,10 @@ htmlTemplates.choroplethSidebarForm = """
           </a>
         </div>
 
-        <label>Select which (numerical) property you want to visualize</label>
+        <label>Property to visualize</label>
         <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">
           <option value="">-- choose Visualization value --</option>
         </select>
-
-        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">
-          No column of your data file can be mapped to the selected mapping property on your map.
-          Select a different mapping property on the map or change your data.
-        </div>
-
-        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">
-          <span class="entypo-check"></span> Successfully mapped on data column '{{availableDataMappingProperties[0].key}}'
-        </div>
-
-        <div ng-show="availableDataMappingProperties.length > 1">
-          <label>Select a property that matches your selected map property</label>
-          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">
-            <option value="">-- choose Property --</option>
-          </select>
-        </div>
 
         <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">
           <a class="upfront-btn upfront-btn-mini upfront-btn-danger"
@@ -72,16 +75,24 @@ htmlTemplates.choroplethSidebarForm = """
           <small>Data Points with no corresponding region</small>
         </div>
 
-        <label>Select the color scheme for your visualization <small>(© colorbrewer.org, Cynthia Brewer)</small></label>
+        <label>Color scheme <small>(© colorbrewer.org, Cynthia Brewer)</small></label>
         <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">
           <option value="">-- choose Color Scheme --</option>
         </select>
 
-        <label>Select in how many steps the color will be divided</label>
-        <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">
-        </select>
-        <!-- TODO: Slider probably doesn't work since it needs click events on the document which are not propagated from within the sidebar -->
-        <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->
+        <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">
+          The chosen categorical value has too many categories for this color scheme.
+          Choose a different color scheme or change the visualized value.
+        </div>
+
+        <div ng-show="!isCategorical">
+          <label>Nr. of different colors</label>
+          <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">
+          </select>
+          <!-- TODO: Slider probably doesn't work since it needs click events on the document which are not propagated from within the sidebar -->
+          <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->
+        </div>
+
       </div>
 
     </fieldset
