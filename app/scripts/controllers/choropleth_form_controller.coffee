@@ -98,6 +98,13 @@ class ChoroplethFormController
     @$scope.quantizeSteps = steps if @$scope.quantizeSteps > steps
 
 
+  initValueType: ->
+    if @choroplethInstance.getValueType() == 'numerical'
+      @$scope.isCategorical = false
+    else
+      @$scope.isCategorical = true
+
+
   initDataMappingProperties: ->
     data = @$scope.snippet.model.data('data')
     return unless data
@@ -124,12 +131,13 @@ class ChoroplethFormController
 
   initDataPropertySelection: ->
     @setupProperty('mappingPropertyOnData')
-    @setupProperty('valueProperty')
+    @setupProperty('valueProperty', $.proxy(@initValueType, this))
     @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
     @setupProperty('quantizeSteps')
     @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
     @initDataValueProperties()
     @initDataMappingProperties()
+    @initValueType() # TODO: do we need this
 
 
   setData: (data, error) ->

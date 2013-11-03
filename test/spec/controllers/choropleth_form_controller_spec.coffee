@@ -11,7 +11,7 @@ describe 'Choropleth form controller', ->
       data: sample1DData
       mappingPropertyOnMap: 'someProp'
       mappingPropertyOnData: 'someProp'
-      valueProperty: 'someVal'
+      valueProperty: 'value'
       quantizeSteps: 9
       colorScheme: 'YlGn'
 
@@ -74,6 +74,10 @@ describe 'Choropleth form controller', ->
       ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
           it "initializes #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.data(key))
+
+
+      it 'initializes isCategorical to false with numeric valueProperty', ->
+        expect(@scope.isCategorical).to.be.false
 
 
     describe 'form selection lists', ->
@@ -253,10 +257,26 @@ describe 'Choropleth form controller', ->
 
     describe 'on value property on data', ->
 
+      beforeEach ->
+        @snippetModel.data
+          data: valueTypeSamples
+
       it 'changes the valueProperty on snippet', ->
         @scope.valueProperty = 'fancyNewvalueProperty'
         @scope.$digest()
         expect(@scope.snippet.model.data('valueProperty')).to.eql('fancyNewvalueProperty')
+
+
+      it 'sets isCategorical to true when changing to a categorical property', ->
+        @scope.valueProperty = 'categorical'
+        @scope.$digest()
+        expect(@scope.isCategorical).to.be.true
+
+
+      it 'sets isCategorical to false when changing to a numerical property', ->
+        @scope.valueProperty = 'numerical'
+        @scope.$digest()
+        expect(@scope.isCategorical).to.be.false
 
 
     describe 'on color scheme on data', ->
