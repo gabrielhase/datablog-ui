@@ -15,6 +15,7 @@ module.exports = function(config) {
 
       // the big guns
       'app/vendor/jquery-1.9.1.js',
+      'app/vendor/underscore/underscore-1.5.2.js',
       "https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.min.js",
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
