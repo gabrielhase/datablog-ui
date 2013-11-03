@@ -8,7 +8,7 @@ describe 'Choropleth map controller', ->
       map: sampleMap
       projection: 'mercator'
       mapName: 'aGreatName'
-      data: 'someData'
+      data: sample1DData
       mappingPropertyOnMap: 'someProp'
       mappingPropertyOnData: 'someProp'
       valueProperty: 'someVal'
@@ -56,7 +56,7 @@ describe 'Choropleth map controller', ->
     it 'should react to a data change', ->
       changeChoroplethAttrsData = sinon.spy(@choroplethController, 'changeChoroplethAttrsData')
       @snippetModel.data
-        data: 'different data'
+        data: sampleCategoricalData
       expect(changeChoroplethAttrsData).to.have.been.calledWith(['data'])
 
 
