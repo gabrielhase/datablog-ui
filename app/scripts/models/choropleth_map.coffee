@@ -123,7 +123,8 @@ class ChoroplethMap
 
   _determineValueType: (val) ->
     tryNumeric = +val
-    if isNaN(tryNumeric) || tryNumeric == undefined
+
+    if _.isNaN(tryNumeric)
       'categorical'
     else
       'numerical'

@@ -127,6 +127,10 @@ describe 'ChoroplethMap', ->
       expect(@choroplethMap._determineValueType('Democrats')).to.eql('categorical')
 
 
+    it 'determines undefined correctly', ->
+      expect(@choroplethMap._determineValueType(undefined)).to.eql('categorical')
+
+
     it 'gets the correct value type for numerical data', ->
       @snippetModel.data
         valueProperty: 'numerical'
