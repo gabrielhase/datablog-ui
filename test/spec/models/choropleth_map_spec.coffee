@@ -109,4 +109,43 @@ describe 'ChoroplethMap', ->
       )
 
 
+  describe 'Value Type', ->
 
+    beforeEach ->
+      @snippetModel.data
+        data: valueTypeSamples
+
+    it 'determines a number correctly', ->
+      expect(@choroplethMap._determineValueType(5)).to.eql('numerical')
+
+
+    it 'determines a number as a string correctly', ->
+      expect(@choroplethMap._determineValueType('5')).to.eql('numerical')
+
+
+    it 'determines a category correctly', ->
+      expect(@choroplethMap._determineValueType('Democrats')).to.eql('categorical')
+
+
+    it 'gets the correct value type for numerical data', ->
+      @snippetModel.data
+        valueProperty: 'numerical'
+      expect(@choroplethMap.getValueType()).to.eql('numerical')
+
+
+    it 'gets the correct value type for categorical data', ->
+      @snippetModel.data
+        valueProperty: 'categorical'
+      expect(@choroplethMap.getValueType()).to.eql('categorical')
+
+
+    it 'gets the correct value type for numerical data with noise', ->
+      @snippetModel.data
+        valueProperty: 'numericalNoisy'
+      expect(@choroplethMap.getValueType()).to.eql('numerical')
+
+
+    it 'gets the correct value type for categorical data with noise', ->
+      @snippetModel.data
+        valueProperty: 'categoricalNoisy'
+      expect(@choroplethMap.getValueType()).to.eql('categorical')

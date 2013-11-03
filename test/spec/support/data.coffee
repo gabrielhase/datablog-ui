@@ -94,3 +94,25 @@ switzerlandData = [
   "Through migration": "0.4"
   "Through natural increase": "0.0"
 ]
+
+valueTypeSamples = [
+  numerical: 23
+  categorical: 'Democrat'
+  numericalNoisy: ''
+  categoricalNoisy: 'Democrat'
+,
+  numerical: 34
+  categorical: 'Democrat'
+  numericalNoisy: '12'
+  categoricalNoisy: 'Republican'
+,
+  numerical: 22
+  categorical: 'Republican'
+  numericalNoisy: '14'
+  categoricalNoisy: 'Democrat'
+,
+  numerical: 11
+  categorical: 'Democrat'
+  numericalNoisy: '16'
+  categoricalNoisy: 5
+]

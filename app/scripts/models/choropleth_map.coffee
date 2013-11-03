@@ -83,6 +83,26 @@ class ChoroplethMap
     return dataColumnsForMapping
 
 
+  getValueType: ->
+    data = @_getSnippetModel().data('data')
+    valueProperty = @_getSnippetModel().data('valueProperty')
+    return undefined unless data && valueProperty
+
+    numericalRows = 0
+    categoricalRows = 0
+    data.forEach (row) =>
+      valTypeToDetermine = row[valueProperty]
+      if @_determineValueType(valTypeToDetermine) == 'numerical'
+        numericalRows += 1
+      else
+        categoricalRows += 1
+
+    if numericalRows > categoricalRows
+      'numerical'
+    else
+      'categorical'
+
+
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (property) ->
@@ -99,6 +119,14 @@ class ChoroplethMap
 
 
     ## PRIVATE FUNCITONS ##
+
+
+  _determineValueType: (val) ->
+    tryNumeric = +val
+    if isNaN(tryNumeric) || tryNumeric == undefined
+      'categorical'
+    else
+      'numerical'
 
 
   # finds the difference in keys between literal current and literal last
