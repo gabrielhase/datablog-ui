@@ -71,7 +71,7 @@ class ChoroplethFormController
 
 
   initMapPropertySelection: ->
-    @setupProperty('mappingPropertyOnMap')
+    @setupProperty('mappingPropertyOnMap', $.proxy(@initDataMappingProperties, this))
     { propertiesForMapping, propertiesWithMissingEntries } = @choroplethInstance.getPropertiesForMapping(@$scope.snippet.model)
     if propertiesForMapping && propertiesForMapping.length > 0
       @$scope.availableMapProperties = []
@@ -98,13 +98,21 @@ class ChoroplethFormController
     @$scope.quantizeSteps = steps if @$scope.quantizeSteps > steps
 
 
-  initDataPropertySelection: ->
+  initDataMappingProperties: ->
     data = @$scope.snippet.model.data('data')
-    @setupProperty('mappingPropertyOnData')
-    @setupProperty('valueProperty')
-    @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
-    @setupProperty('quantizeSteps')
-    @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
+    return unless data
+    @$scope.availableDataMappingProperties = []
+    properties = @choroplethInstance.getDataPropertiesForMapping()
+    for key in properties
+      @$scope.availableDataMappingProperties.push
+        label: "#{key} (e.g. #{data[data.length-1][key]})"
+        key: key
+    if @$scope.availableDataMappingProperties.length == 1
+      @$scope.mappingPropertyOnData = @$scope.availableDataMappingProperties[0].key
+
+
+  initDataValueProperties: ->
+    data = @$scope.snippet.model.data('data')
     @$scope.availableDataProperties = []
     if data && data.length > 0
       # NOTE: the last entry is more likely not to be a header row
@@ -114,8 +122,18 @@ class ChoroplethFormController
           key: key
 
 
+  initDataPropertySelection: ->
+    @setupProperty('mappingPropertyOnData')
+    @setupProperty('valueProperty')
+    @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
+    @setupProperty('quantizeSteps')
+    @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
+    @initDataValueProperties()
+    @initDataMappingProperties()
+
+
   setData: (data, error) ->
-    if error.message
+    if error?.message
       alert(error.message)
     else
       @$scope.snippet.model.data

@@ -56,6 +56,33 @@ class ChoroplethMap
     { propertiesForMapping, propertiesWithMissingEntries }
 
 
+  # goes through all csv columns on the data set and gets only those
+  # columns that can be mapped to the current mapping property on the map
+  getDataPropertiesForMapping: ->
+    data = @_getSnippetModel().data('data')
+    map = @_getSnippetModel().data('map')
+    mappingPropertyOnMap = @_getSnippetModel().data('mappingPropertyOnMap')
+    colMatchCount = {}
+
+    data.forEach (row) ->
+      rowAppliedToMap = false
+      map?.features?.forEach (feature) ->
+        return if rowAppliedToMap # only track application to the map once
+        mappingValueOnMap = feature?.properties[mappingPropertyOnMap]
+        for key, value of row
+          if value == mappingValueOnMap
+            colMatchCount[key] ||= 0
+            colMatchCount[key] += 1
+            rowAppliedToMap = true
+
+    dataColumnsForMapping = []
+    for key, value of colMatchCount
+      if (value / map?.features.length) >= choroplethMapConfig.dataMappingThreshold
+        dataColumnsForMapping.push(key)
+
+    return dataColumnsForMapping
+
+
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (property) ->

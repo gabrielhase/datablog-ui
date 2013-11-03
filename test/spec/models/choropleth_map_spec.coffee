@@ -41,6 +41,54 @@ describe 'ChoroplethMap', ->
       expect(propertiesWithMissingEntries).to.eql(@expectedMissingForMapping)
 
 
+  describe 'CSV columns for mapping', ->
+
+    beforeEach ->
+      @snippetModel.data
+        mappingPropertyOnMap: 'id'
+
+
+    it 'gets one data property that can be mapped on messy data and bigger sample map', ->
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql(['an id'])
+
+
+    it 'gets two data properties that can be mapped on sample1DData and sammpleMap', ->
+      @snippetModel.data
+        data: sample1DData
+        map: sampleMap
+
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql(['id', 'alternativeId'])
+
+
+    it 'gets no data properties that can be mapped on switzerlandData and sampleMap', ->
+      @snippetModel.data
+        data: switzerlandData
+        map: sampleMap
+
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql([])
+
+
+    it 'gets no data properties that can be mappend on switzerlandData and switzerlandMap on mapping NAME_0', ->
+      @snippetModel.data
+        data: switzerlandData
+        map: switzerlandSampleMap
+        mappingPropertyOnMap: 'NAME_0'
+
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql([])
+
+
+    # special since there is only one geometry feature (zurich)
+    it 'gets one data property that can be mapped on switzerlandData and zurichSampleMap', ->
+      @snippetModel.data
+        data: switzerlandData
+        map: zurichSampleMap
+        mappingPropertyOnMap: 'Canton'
+
+
   describe 'Sanitizing visualization data', ->
 
     it 'camelCases all column names', ->

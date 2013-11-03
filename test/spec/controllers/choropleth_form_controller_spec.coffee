@@ -30,7 +30,6 @@ describe 'Choropleth form controller', ->
     describe 'when map is not set', ->
 
       beforeEach ->
-        #@snippetModel.storedData.map = undefined
         @snippetModel.data
           map: undefined
         @choroplethController = instantiateController('ChoroplethFormController',
@@ -48,8 +47,6 @@ describe 'Choropleth form controller', ->
     describe "when data is not set", ->
 
       beforeEach ->
-        #@snippetModel.storedData.data = undefined
-        #@snippetModel.storedData.map = 'someMap'
         @snippetModel.data(
           data: undefined
         )
@@ -67,7 +64,7 @@ describe 'Choropleth form controller', ->
             expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
-    describe 'initializes all when map and data are set', ->
+    describe 'when map and data are set', ->
 
       beforeEach ->
         @choroplethController = instantiateController('ChoroplethFormController',
@@ -75,23 +72,23 @@ describe 'Choropleth form controller', ->
 
 
       ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
-          it "should initialize #{key}", ->
+          it "initializes #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.data(key))
 
 
-    describe 'initialize property selection lists', ->
+    describe 'form selection lists', ->
 
-      describe 'for map selections', ->
+      describe 'for map properties', ->
 
         beforeEach ->
           @choroplethController = instantiateController('ChoroplethFormController',
             $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
-        it 'should initialize available projections', ->
+        it 'initializes available projections', ->
           expect(@scope.projections).to.eql(choroplethMapConfig.availableProjections)
 
 
-        it 'should initialize available mapping properties on map', ->
+        it 'initializes available mapping properties on map', ->
           expect(@scope.availableMapProperties).to.eql([
             label: 'id (e.g. 1)'
             value: 'id'
@@ -104,7 +101,7 @@ describe 'Choropleth form controller', ->
           ])
 
 
-      describe 'for data selections', ->
+      describe 'for data properties', ->
 
         beforeEach ->
           @choroplethController = instantiateController('ChoroplethFormController',
@@ -115,6 +112,9 @@ describe 'Choropleth form controller', ->
           expect(@scope.availableDataProperties).to.eql([
             label: 'id (e.g. 2)'
             key: 'id'
+          ,
+            label: 'alternativeId (e.g. 1)'
+            key: 'alternativeId'
           ,
             label: 'reverseId (e.g. String2)'
             key: 'reverseId'
@@ -135,9 +135,73 @@ describe 'Choropleth form controller', ->
           expect(@scope.maxQuantizeSteps).to.eql(9)
 
 
+  describe 'mapping property on data', ->
+
+    it 'notifies the user when no mappings are possible', ->
+      @snippetModel.data
+        data: switzerlandData
+        map: sampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      expect(@scope.availableDataMappingProperties).to.eql([])
+
+
+    it 'recognizes the suitable mapping property when only one is possible', ->
+      @snippetModel.data
+        data: messyData
+        map: biggerSampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      expect(@scope.availableDataMappingProperties).to.eql([
+        label: 'an id (e.g. 2)'
+        key: 'an id'
+      ])
+
+
+    it 'selects the suitable mapping when only one is possible on the scope', ->
+      @snippetModel.data
+        data: messyData
+        map: biggerSampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      expect(@scope.mappingPropertyOnData).to.eql('an id')
+
+
+    it 'selects the suitable mapping when only one is possible on the snippet model', ->
+      @snippetModel.data
+        data: messyData
+        map: biggerSampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      @scope.$digest()
+      expect(@snippetModel.data('mappingPropertyOnData')).to.eql('an id')
+
+
+    it 'populates a select list with all possible mappings', ->
+      @snippetModel.data
+        data: sample1DData
+        map: sampleMap
+        mappingPropertyOnMap: 'id'
+      @choroplethController = instantiateController('ChoroplethFormController',
+            $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
+      expect(@scope.availableDataMappingProperties).to.eql([
+        label: 'id (e.g. 2)',
+        key: 'id'
+      ,
+        label: 'alternativeId (e.g. 1)'
+        key: 'alternativeId'
+      ])
+
+
   describe 'user input', ->
 
     beforeEach ->
+      @snippetModel.data
+        mappingPropertyOnMap: 'id'
       @choroplethController = instantiateController('ChoroplethFormController',
         $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
@@ -156,6 +220,27 @@ describe 'Choropleth form controller', ->
         @scope.mappingPropertyOnMap = 'fancyNewId'
         @scope.$digest()
         expect(@scope.snippet.model.data('mappingPropertyOnMap')).to.eql('fancyNewId')
+
+
+      it 'changes available data mapping properties', ->
+        @scope.mappingPropertyOnMap = 'name'
+        @scope.$digest()
+        expect(@scope.availableDataMappingProperties).to.eql([])
+
+
+    describe 'on data upload', ->
+
+      it 'changes the data', ->
+        @choroplethController.setData(messyData)
+        expect(@scope.snippet.model.data('data')).to.eql(messyData)
+
+
+      it 'changes the mapping property on data', ->
+        @choroplethController.setData(messyData)
+        expect(@scope.availableDataMappingProperties).to.eql([
+          label: 'an id (e.g. 2)'
+          key: 'an id'
+        ])
 
 
     describe 'on mapping property on data', ->
