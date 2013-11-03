@@ -279,7 +279,19 @@ describe 'Choropleth form controller', ->
         expect(@scope.isCategorical).to.be.false
 
 
+      it 'returns hasTooManyCategories true when there are too many categories', ->
+        @scope.colorScheme = 'Set1'
+        @scope.valueProperty = 'categoricalUnique'
+        @scope.$digest()
+        expect(@scope.hasTooManyCategories()).to.be.true
+
+
     describe 'on color scheme on data', ->
+
+      beforeEach ->
+        @snippetModel.data
+          data: valueTypeSamples
+        @scope.valueProperty = 'categoricalUnique'
 
       it 'changes the color scheme on snippet', ->
         @scope.colorScheme = 'Paired'
@@ -301,6 +313,12 @@ describe 'Choropleth form controller', ->
         @scope.colorScheme = 'YlGn'
         @scope.$digest()
         expect(@scope.quantizeSteps).to.eql(9)
+
+
+      it 'returns hasTooManyCategories true when there are too little color steps', ->
+        @scope.colorScheme = 'Set1'
+        @scope.$digest()
+        expect(@scope.hasTooManyCategories()).to.be.true
 
 
     describe 'on quantize steps on data', ->

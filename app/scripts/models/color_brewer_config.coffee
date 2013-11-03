@@ -18,5 +18,9 @@ do ->
       name: 'Paired'
       cssClass: 'Paired'
       steps: 12
+    ,
+      name: 'Set1'
+      cssClass: 'Set1'
+      steps: 3
     ]
 

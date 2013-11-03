@@ -8,6 +8,7 @@ class ChoroplethFormController
     @$scope.setMap = (data, error) => @setMap(data, error)
     @$scope.setData = (data, error) => @setData(data, error)
     @$scope.openDataModal = (highlighedRows) => @openDataModal(highlighedRows)
+    @$scope.hasTooManyCategories = => @$scope.categoryCount > @$scope.maxQuantizeSteps
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
@@ -102,6 +103,8 @@ class ChoroplethFormController
     if @choroplethInstance.getValueType() == 'numerical'
       @$scope.isCategorical = false
     else
+      categories = @choroplethInstance.getCategoryValues()
+      @$scope.categoryCount = categories.length
       @$scope.isCategorical = true
 
 
