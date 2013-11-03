@@ -115,19 +115,23 @@ valueTypeSamples = [
   categorical: 'Democrat'
   numericalNoisy: ''
   categoricalNoisy: 'Democrat'
+  categoricalUnique: 'Cat1'
 ,
   numerical: 34
   categorical: 'Democrat'
   numericalNoisy: '12'
   categoricalNoisy: 'Republican'
+  categoricalUnique: 'Cat2'
 ,
   numerical: 22
   categorical: 'Republican'
   numericalNoisy: '14'
   categoricalNoisy: 'Democrat'
+  categoricalUnique: 'Cat3'
 ,
   numerical: 11
   categorical: 'Democrat'
   numericalNoisy: '16'
   categoricalNoisy: 5
+  categoricalUnique: 'Cat4'
 ]
