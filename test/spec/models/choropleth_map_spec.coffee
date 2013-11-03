@@ -153,3 +153,13 @@ describe 'ChoroplethMap', ->
       @snippetModel.data
         valueProperty: 'categoricalNoisy'
       expect(@choroplethMap.getValueType()).to.eql('categorical')
+
+
+    it 'gets all categories for categorical data', ->
+      @snippetModel.data
+        valueProperty: 'categorical'
+      expect(@choroplethMap.getCategoryValues()).to.eql([
+        'Democrat',
+        'Republican'
+      ])
+
