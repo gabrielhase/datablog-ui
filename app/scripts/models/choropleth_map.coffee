@@ -64,7 +64,7 @@ class ChoroplethMap
     mappingPropertyOnMap = @_getSnippetModel().data('mappingPropertyOnMap')
     colMatchCount = {}
 
-    data.forEach (row) ->
+    for row in data
       rowAppliedToMap = false
       map?.features?.forEach (feature) ->
         return if rowAppliedToMap # only track application to the map once
@@ -83,6 +83,8 @@ class ChoroplethMap
     return dataColumnsForMapping
 
 
+  # deduces if the selected value property stands for numerical or ordinal data
+  # if >50% of values are numerical decides for numerical otherwise ordinal
   getValueType: ->
     data = @_getSnippetModel().data('data')
     valueProperty = @_getSnippetModel().data('valueProperty')
@@ -90,7 +92,7 @@ class ChoroplethMap
 
     numericalRows = 0
     categoricalRows = 0
-    data.forEach (row) =>
+    for row in data
       valTypeToDetermine = row[valueProperty]
       if @_determineValueType(valTypeToDetermine) == 'numerical'
         numericalRows += 1
@@ -101,6 +103,14 @@ class ChoroplethMap
       'numerical'
     else
       'categorical'
+
+
+  getCategoryValues: ->
+    data = @_getSnippetModel().data('data')
+    valueProperty = @_getSnippetModel().data('valueProperty')
+    return undefined unless data && valueProperty
+
+    _.uniq(data.map (row) -> row[valueProperty])
 
 
   # render a loading bar only if the map changes or if we render a predefined map

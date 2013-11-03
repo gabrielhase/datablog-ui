@@ -51,6 +51,21 @@ sample1DData = [
   alternativeValue: 5
 ]
 
+# in use with US Maps
+sampleCategoricalData = [
+  id: 1
+  party: 'Democrats'
+,
+  id: 2
+  party: 'Republicans'
+,
+  id: 3
+  party: 'Democrats'
+,
+  id: 4
+  party: 'Democrats'
+]
+
 messyData = [
   "Some weird col": "weirdest Value"
   "an id": 3
