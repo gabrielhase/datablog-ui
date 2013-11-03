@@ -1,5 +1,5 @@
 htmlTemplates.sidebar = """
-<div class="upfront-sidebar" id="{{controlId}}"
+<div class="upfront-sidebar"
   ng-class="{'upfront-sidebar-hidden': !foldedOut}">
   <div class="upfront-sidebar-nav">
     <span class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"
