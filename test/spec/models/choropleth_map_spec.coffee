@@ -71,6 +71,16 @@ describe 'ChoroplethMap', ->
       expect(properties).to.eql([])
 
 
+    it 'gets no data properties that can be mappend on switzerlandData and switzerlandMap on mapping NAME_0', ->
+      @snippetModel.data
+        data: switzerlandData
+        map: switzerlandSampleMap
+        mappingPropertyOnMap: 'NAME_0'
+
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql([])
+
+
     # special since there is only one geometry feature (zurich)
     it 'gets one data property that can be mapped on switzerlandData and zurichSampleMap', ->
       @snippetModel.data
