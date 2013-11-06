@@ -185,7 +185,26 @@ describe 'Choropleth directive', ->
           expect($(entries[1]).text()).to.eql('Republicans')
 
 
-        it 'renders only categories that are shown in the map', ->
+        it 'renders only categories that are shown in the map for equal value and mapping', ->
+          @snippetModel.data
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+            valueProperty: 'gov'
+          valueProperty: 'party'
+          directiveScope.map = switzerlandSampleMap
+          directiveScope.data = switzerlandData
+          directiveScope.mappingPropertyOnData = 'Canton'
+          directiveScope.mappingPropertyOnMap = 'NAME_1'
+          directiveScope.valueProperty = 'gov'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(1)
+
+
+        it 'renders only categories that are shown in the map for equal value and mapping', ->
           @snippetModel.data
             data: switzerlandData
             map: switzerlandSampleMap
@@ -220,7 +239,7 @@ describe 'Choropleth directive', ->
       it 'saves a missing region for data point on model', ->
         directiveScope.data = sample1DData
         directiveScope.$digest()
-        expect(@choropleth.dataPointsWithMissingRegion).to.eql(['33'])
+        expect(@choropleth.dataPointsWithMissingRegion).to.eql([{ key: '33', value: 20 }])
 
 
     describe 'legend rendering', ->
