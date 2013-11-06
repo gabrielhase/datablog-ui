@@ -178,6 +178,21 @@ describe 'Choropleth directive', ->
           expect(entries.length).to.eql(2) # Republicans and Democrats
 
 
+        it 'renders the text for each legend entry', ->
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('Democrats')
+          expect($(entries[1]).text()).to.eql('Republicans')
+
+
+        # it 'renders only categories that are shown in the map', ->
+        #   directiveScope.map = switzerlandSampleMap
+        #   directiveScope.data = switzerlandData
+        #   directiveScope.$digest()
+        #   entries = directiveElem.find('li.key')
+        #   expect(entries.length).to.eql(2)
+
+
     describe 'missing data points for region', ->
 
       beforeEach ->
@@ -213,6 +228,23 @@ describe 'Choropleth directive', ->
         directiveScope.$digest()
         entries = directiveElem.find('li.key')
         expect(entries.length).to.eql(3)
+
+
+      it 'renders the extent of each legend entry in the text', ->
+        entries = directiveElem.find('li.key')
+        expect($(entries[0]).text()).to.eql('3 – 3.4')
+        expect($(entries[1]).text()).to.eql('3.4 – 3.9')
+        expect($(entries[2]).text()).to.eql('3.9 – 4.3') # don't test the middle
+        expect($(entries[7]).text()).to.eql('6.1 – 6.6')
+        expect($(entries[8]).text()).to.eql('6.6 – 7')
+
+
+      it 'changes the extent of each legend entry when changing the quantize steps', ->
+        directiveScope.quantizeSteps = 4
+        directiveScope.$digest()
+        entries = directiveElem.find('li.key')
+        expect($(entries[0]).text()).to.eql('3 – 4')
+        expect($(entries[3]).text()).to.eql('6 – 7')
 
 
     describe ' and changing the data properties', ->
