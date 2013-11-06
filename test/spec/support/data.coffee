@@ -101,6 +101,14 @@ switzerlandData = [
   "Through migration": "0.9"
   "Through natural increase": "0.4"
 ,
+  "Canton": "Aargau"
+  "Change in %": "1.1"
+  "Foreign nationals in %": "22.3"
+  "Population density per km_": "443.2"
+  "Residents": "618298"
+  "Through migration": "1.1"
+  "Through natural increase": "0.3"
+,
   "Canton": "Bern"
   "Change in %": "0.5"
   "Foreign nationals in %": "13.7"
