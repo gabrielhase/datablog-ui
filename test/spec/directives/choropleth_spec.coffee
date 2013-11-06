@@ -170,6 +170,14 @@ describe 'Choropleth directive', ->
         expect($(paths[3]).attr('class')).to.eql('q0-2')
 
 
+      describe 'legend rendering', ->
+
+        it 'renders a legend entry for each category', ->
+          directiveScope.$digest()
+          rects = directiveElem.find('rect')
+          expect(rects.length).to.eql(2) # Republicans and Democrats
+
+
     describe 'missing data points for region', ->
 
       beforeEach ->
@@ -187,6 +195,24 @@ describe 'Choropleth directive', ->
         directiveScope.data = sample1DData
         directiveScope.$digest()
         expect(@choropleth.dataPointsWithMissingRegion).to.eql(['33'])
+
+
+    describe 'legend rendering', ->
+
+      beforeEach ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+
+      it 'renders a legend rect for each entry of a numerical data set', ->
+        rects = directiveElem.find('rect')
+        expect(rects.length).to.eql(9)
+
+
+      it 'renders a different number of legend rects when changing the quantize steps', ->
+        directiveScope.quantizeSteps = 3
+        directiveScope.$digest()
+        rects = directiveElem.find('rect')
+        expect(rects.length).to.eql(3)
 
 
     describe ' and changing the data properties', ->
