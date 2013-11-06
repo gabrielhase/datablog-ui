@@ -37,7 +37,6 @@ module.exports = function(config) {
 
       // D3
       'http://d3js.org/d3.v3.js',
-      'https://s3.amazonaws.com/datablog-assets/color_brewer.js',
 
       // ngProgress
       'app/vendor/ng_progress/ng_progress.js',
