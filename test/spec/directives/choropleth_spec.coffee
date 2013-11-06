@@ -174,8 +174,8 @@ describe 'Choropleth directive', ->
 
         it 'renders a legend entry for each category', ->
           directiveScope.$digest()
-          rects = directiveElem.find('rect')
-          expect(rects.length).to.eql(2) # Republicans and Democrats
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(2) # Republicans and Democrats
 
 
     describe 'missing data points for region', ->
@@ -204,15 +204,15 @@ describe 'Choropleth directive', ->
         directiveScope.$digest()
 
       it 'renders a legend rect for each entry of a numerical data set', ->
-        rects = directiveElem.find('rect')
-        expect(rects.length).to.eql(9)
+        entries = directiveElem.find('li.key')
+        expect(entries.length).to.eql(9)
 
 
       it 'renders a different number of legend rects when changing the quantize steps', ->
         directiveScope.quantizeSteps = 3
         directiveScope.$digest()
-        rects = directiveElem.find('rect')
-        expect(rects.length).to.eql(3)
+        entries = directiveElem.find('li.key')
+        expect(entries.length).to.eql(3)
 
 
     describe ' and changing the data properties', ->
@@ -282,10 +282,9 @@ describe 'Choropleth directive', ->
 
 
       it 'assigns different classes when changing the color scheme', ->
-        directiveScope.colorScheme = 'Y1Gn'
+        directiveScope.colorScheme = 'YlGn'
         directiveScope.$digest()
-        svg = directiveElem.find('svg')
-        expect($(svg[0]).attr('class')).to.eql('Y1Gn')
+        expect($(directiveElem).attr('class')).to.eql('YlGn')
 
 
   describe 'changing the projection of a map', ->
