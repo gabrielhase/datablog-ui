@@ -141,17 +141,19 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
 
   renderLegend = (scope, valFn) ->
-    scope.legendGroup.selectAll('rect')
+    scope.legend.selectAll('li.key')
         .data(valFn.range())
       .exit().remove()
 
-    scope.legendGroup.selectAll('rect')
+    scope.legend.selectAll('li.key')
         .data(valFn.range())
-      .enter().append('rect')
-        .attr('height', 8)
-        .attr('x', (d, index) -> index * 20 )
-        .attr('width', 20)
-        .attr('class', (d) -> d)
+      .enter().append('li')
+        .attr('class', (d) -> "key #{d}")
+        .style('border-top-color', (d, index) ->
+          color = scope.colorScheme || defaults.colorScheme
+          steps = scope.quantizeSteps || defaults.quantizeSteps
+          colorbrewer[color][steps][index]
+        )
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -178,15 +180,20 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
     link: (scope, element, attrs) ->
+      # set up color scheme
+      d3.select(element[0])
+        .attr('class', scope.colorScheme || defaults.colorScheme)
+
       # set up initial svg object
       scope.svg = d3.select(element[0])
         .append('svg')
           .attr('width', '100%')
           .attr('height', '0px')
-          .attr('class', scope.colorScheme || defaults.colorScheme)
-      scope.legendGroup = scope.svg.append('g')
-        .attr('class', 'legend')
-        .attr('transform', "translate(#{100},#{100})")
+
+      scope.legend = d3.select(element[0])
+        .append('ul')
+          .attr('class', 'list-inline')
+
       scope.mapGroup = scope.svg.append('g')
         .attr('class', 'map')
 
@@ -256,7 +263,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       scope.$watch('colorScheme', (newVal, oldVal) ->
         return unless scope.map && scope.data
         if newVal
-          scope.svg.attr('class', newVal)
+          d3.select(element[0])
+            .attr('class', newVal)
       )
 
       # TODO: only re-render data here
