@@ -13,7 +13,7 @@ describe 'Choropleth map controller', ->
       mappingPropertyOnData: 'someProp'
       valueProperty: 'someVal'
       quantizeSteps: 9
-      colorScheme: 'boringColors'
+      colorScheme: 'Set1'
 
     @ngProgress = mockNgProgress()
     @choroplethMap = new ChoroplethMap
@@ -146,7 +146,7 @@ describe 'Choropleth map controller', ->
 
 
     it 'changes the color scheme attribute on a colorScheme change', ->
-      newColorScheme = 'fancyColors'
+      newColorScheme = 'YlGn'
       @snippetModel.data
         colorScheme: newColorScheme
       expect(@scope.colorScheme).to.eql(newColorScheme)
