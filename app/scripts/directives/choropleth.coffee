@@ -137,6 +137,21 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
       valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, scope.mapId)
       renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
+      renderLegend(scope, valFn)
+
+
+  renderLegend = (scope, valFn) ->
+    scope.legendGroup.selectAll('rect')
+        .data(valFn.range())
+      .exit().remove()
+
+    scope.legendGroup.selectAll('rect')
+        .data(valFn.range())
+      .enter().append('rect')
+        .attr('height', 8)
+        .attr('x', (d, index) -> index * 20 )
+        .attr('width', 20)
+        .attr('class', (d) -> d)
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -165,11 +180,14 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     link: (scope, element, attrs) ->
       # set up initial svg object
       scope.svg = d3.select(element[0])
-        .append("svg")
-          .attr("width", '100%')
-          .attr("height", '0px')
-          .attr("class", scope.colorScheme || defaults.colorScheme)
-      scope.mapGroup = scope.svg.append("g")
+        .append('svg')
+          .attr('width', '100%')
+          .attr('height', '0px')
+          .attr('class', scope.colorScheme || defaults.colorScheme)
+      scope.legendGroup = scope.svg.append('g')
+        .attr('class', 'legend')
+        .attr('transform', "translate(#{100},#{100})")
+      scope.mapGroup = scope.svg.append('g')
         .attr('class', 'map')
 
       $(element).append("""
