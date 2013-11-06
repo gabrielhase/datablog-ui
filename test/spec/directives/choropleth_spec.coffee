@@ -185,12 +185,23 @@ describe 'Choropleth directive', ->
           expect($(entries[1]).text()).to.eql('Republicans')
 
 
-        # it 'renders only categories that are shown in the map', ->
-        #   directiveScope.map = switzerlandSampleMap
-        #   directiveScope.data = switzerlandData
-        #   directiveScope.$digest()
-        #   entries = directiveElem.find('li.key')
-        #   expect(entries.length).to.eql(2)
+        it 'renders only categories that are shown in the map', ->
+          @snippetModel.data
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+            valueProperty: 'Canton'
+          valueProperty: 'party'
+          directiveScope.map = switzerlandSampleMap
+          directiveScope.data = switzerlandData
+          directiveScope.mappingPropertyOnData = 'Canton'
+          directiveScope.mappingPropertyOnMap = 'NAME_1'
+          directiveScope.valueProperty = 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(1)
 
 
     describe 'missing data points for region', ->

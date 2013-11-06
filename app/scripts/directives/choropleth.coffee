@@ -149,8 +149,15 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .data([])
       .exit().remove()
 
+    if isCategorical
+      data = valFn.range().filter (entry, index) ->
+        category = valFn.domain()[index]
+        category != '' && mapInstance.dataPointsWithMissingRegion.indexOf(category) == -1
+    else
+      data = valFn.range()
+
     scope.legend.selectAll('li.key')
-        .data(valFn.range())
+        .data(data)
       .enter().append('li')
         .attr('class', 'key')
         .text( (d, index) ->
