@@ -148,12 +148,20 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     scope.legend.selectAll('li.key')
         .data(valFn.range())
       .enter().append('li')
-        .attr('class', (d) -> "key #{d}")
-        .style('border-top-color', (d, index) ->
-          color = scope.colorScheme || defaults.colorScheme
-          steps = scope.quantizeSteps || defaults.quantizeSteps
-          colorbrewer[color][steps][index]
-        )
+        .attr('class', 'key')
+      .append('svg')
+        .attr('height', 30)
+      .append('rect')
+        .attr('width', '100%')
+        .attr('height', 10)
+        .attr('y', 10)
+        .attr('x', (d, index) -> $(this).outerWidth() * index)
+        .attr('class', (d) -> "#{d}")
+        # .text( (d) ->
+        #   valFn(d)
+        #   #var r = colors.invertExtent(d);
+        #   #return formats.percent(r[0]);
+        # )
 
 
   # Stop progress bar with a timeout to prevent running conditions
