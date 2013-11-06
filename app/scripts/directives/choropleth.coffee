@@ -48,8 +48,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         valFn(val)
       )
 
-    mapInstance.dataPointsWithMissingRegion = valueById.keys().filter (entry) ->
-      usedDataPoints.indexOf(entry) == -1
+    mapInstance.dataPointsWithMissingRegion = [] # reset
+    for entry in valueById.entries()
+      if usedDataPoints.indexOf(entry.key) == -1
+        mapInstance.dataPointsWithMissingRegion.push(entry)
 
 
   # sets the viewBox attribute on the svg element to cover the whole map
@@ -152,7 +154,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     if isCategorical
       data = valFn.range().filter (entry, index) ->
         category = valFn.domain()[index]
-        category != '' && mapInstance.dataPointsWithMissingRegion.indexOf(category) == -1
+        isNotShownOnMap = false
+        for entry in mapInstance.dataPointsWithMissingRegion
+          if entry.value == category
+            isNotShownOnMap = true
+        category != '' && !isNotShownOnMap
     else
       data = valFn.range()
 
