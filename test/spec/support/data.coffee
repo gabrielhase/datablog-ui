@@ -84,6 +84,7 @@ switzerlandData = [
   "Residents": "2011"
   "Through migration": "2010-2011"
   "Through natural increase": "2010-2011"
+  "gov": "NaN"
 ,
   "Canton": "Switzerland"
   "Change in %": "1.1"
@@ -92,6 +93,7 @@ switzerlandData = [
   "Residents": "7954662"
   "Through migration": "0.7"
   "Through natural increase": "0.2"
+  "gov": "SVP"
 ,
   "Canton": "Zurich"
   "Change in %": "1.4"
@@ -100,6 +102,7 @@ switzerlandData = [
   "Residents": "1392396"
   "Through migration": "0.9"
   "Through natural increase": "0.4"
+  "gov": "SVP"
 ,
   "Canton": "Aargau"
   "Change in %": "1.1"
@@ -108,6 +111,7 @@ switzerlandData = [
   "Residents": "618298"
   "Through migration": "1.1"
   "Through natural increase": "0.3"
+  "gov": "CVP"
 ,
   "Canton": "Bern"
   "Change in %": "0.5"
@@ -116,6 +120,7 @@ switzerlandData = [
   "Residents": "985046"
   "Through migration": "0.4"
   "Through natural increase": "0.0"
+  "gov": "SP"
 ]
 
 valueTypeSamples = [
