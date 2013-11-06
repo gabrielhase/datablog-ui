@@ -141,14 +141,25 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
 
   renderLegend = (scope, valFn) ->
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    isCategorical = mapInstance.getValueType() == 'categorical'
+
+    # always reset first
     scope.legend.selectAll('li.key')
-        .data(valFn.range())
+        .data([])
       .exit().remove()
 
     scope.legend.selectAll('li.key')
         .data(valFn.range())
       .enter().append('li')
         .attr('class', 'key')
+        .text( (d, index) ->
+          if isCategorical
+            valFn.domain()[index]
+          else
+            extent = valFn.invertExtent(d)
+            "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+        )
       .append('svg')
         .attr('height', 30)
       .append('rect')
@@ -157,11 +168,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .attr('y', 10)
         .attr('x', (d, index) -> $(this).outerWidth() * index)
         .attr('class', (d) -> "#{d}")
-        # .text( (d) ->
-        #   valFn(d)
-        #   #var r = colors.invertExtent(d);
-        #   #return formats.percent(r[0]);
-        # )
+
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -192,15 +199,15 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       d3.select(element[0])
         .attr('class', scope.colorScheme || defaults.colorScheme)
 
+      scope.legend = d3.select(element[0])
+      .append('ul')
+        .attr('class', 'list-inline')
+
       # set up initial svg object
       scope.svg = d3.select(element[0])
         .append('svg')
           .attr('width', '100%')
           .attr('height', '0px')
-
-      scope.legend = d3.select(element[0])
-        .append('ul')
-          .attr('class', 'list-inline')
 
       scope.mapGroup = scope.svg.append('g')
         .attr('class', 'map')
