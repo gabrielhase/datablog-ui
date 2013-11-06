@@ -86,7 +86,10 @@ describe 'ChoroplethMap', ->
       @snippetModel.data
         data: switzerlandData
         map: zurichSampleMap
-        mappingPropertyOnMap: 'Canton'
+        mappingPropertyOnMap: 'NAME_1'
+
+      properties = @choroplethMap.getDataPropertiesForMapping()
+      expect(properties).to.eql(['Canton'])
 
 
   describe 'Sanitizing visualization data', ->
