@@ -120,7 +120,6 @@ describe 'Choropleth directive', ->
       expect($('#narrowContainer svg').height()).to.eql(62)
 
 
-
     it 'should raise the height property on dropping into a wider container', ->
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
@@ -139,7 +138,6 @@ describe 'Choropleth directive', ->
 
     beforeEach ->
       directiveScope.map = sampleMap
-
 
     it 'renders data points on a map', ->
       directiveScope.data = sample1DData
@@ -185,7 +183,7 @@ describe 'Choropleth directive', ->
           expect($(entries[1]).text()).to.eql('Republicans')
 
 
-        it 'renders only categories that are shown in the map for equal value and mapping', ->
+        it 'renders only categories that are shown in the map with different value and mapping', ->
           @snippetModel.data
             data: switzerlandData
             map: switzerlandSampleMap
@@ -204,7 +202,26 @@ describe 'Choropleth directive', ->
           expect(entries.length).to.eql(1)
 
 
-        it 'renders only categories that are shown in the map for equal value and mapping', ->
+        it 'renders the correct text for only the category shown in the map', ->
+          @snippetModel.data
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+            valueProperty: 'gov'
+          valueProperty: 'party'
+          directiveScope.map = switzerlandSampleMap
+          directiveScope.data = switzerlandData
+          directiveScope.mappingPropertyOnData = 'Canton'
+          directiveScope.mappingPropertyOnMap = 'NAME_1'
+          directiveScope.valueProperty = 'gov'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('CVP')
+
+
+        it 'renders only categories that are shown in the map with equal value and mapping', ->
           @snippetModel.data
             data: switzerlandData
             map: switzerlandSampleMap
@@ -221,6 +238,25 @@ describe 'Choropleth directive', ->
           directiveScope.$digest()
           entries = directiveElem.find('li.key')
           expect(entries.length).to.eql(1)
+
+
+        it 'renders the correct text for categories that are shown in the map with equal value and mapping', ->
+          @snippetModel.data
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+            valueProperty: 'Canton'
+          valueProperty: 'party'
+          directiveScope.map = switzerlandSampleMap
+          directiveScope.data = switzerlandData
+          directiveScope.mappingPropertyOnData = 'Canton'
+          directiveScope.mappingPropertyOnMap = 'NAME_1'
+          directiveScope.valueProperty = 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('Aargau')
 
 
     describe 'missing data points for region', ->
