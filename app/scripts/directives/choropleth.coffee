@@ -144,6 +144,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       renderLegend(scope, valFn)
 
 
+
+  #    #############################################
+  #      Legend Rendering
+  #    #############################################
+
   renderLegend = (scope, valFn) ->
     # reset current legend
     scope.legend.selectAll('li.key')
@@ -155,22 +160,27 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     isCategorical = mapInstance.getValueType() == 'categorical'
 
     if isCategorical
-      renderCategoricalLegend(scope, valFn, mapInstance)
+      genericLegendRender(scope, $.proxy(filterDataForCategoricalLegend, this, mapInstance, valFn),
+      (d) ->
+        d.value
+      , (d) ->
+        d.key
+      )
     else
-      renderNumericalLegend(scope, valFn, mapInstance)
+      genericLegendRender(scope, valFn.range, (d) ->
+        extent = valFn.invertExtent(d)
+        "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+      , (d) ->
+        d
+      )
 
 
-  renderNumericalLegend = (scope, valFn, mapInstance) ->
-    data = valFn.range()
-
+  genericLegendRender = (scope, dataFn, textFn, classFn) ->
     scope.legend.selectAll('li.key')
-        .data(data)
+        .data(dataFn())
       .enter().append('li')
         .attr('class', 'key')
-        .text( (d, index) ->
-          extent = valFn.invertExtent(d)
-          "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
-        )
+        .text( (d) -> textFn(d) )
       .append('svg')
         .attr('height', 30)
       .append('rect')
@@ -178,34 +188,19 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .attr('height', 10)
         .attr('y', 10)
         .attr('x', (d, index) -> $(this).outerWidth() * index)
-        .attr('class', (d) -> "#{d}")
+        .attr('class', (d) -> classFn(d) )
 
 
-  renderCategoricalLegend = (scope, valFn, mapInstance) ->
+  filterDataForCategoricalLegend = (mapInstance, valFn) ->
     data = []
-    dataUsed = mapInstance.usedDataValues #['SVP', 'SP', 'CVP', 'FDP', 'Uebrige', 'BDP']
+    dataUsed = mapInstance.usedDataValues
     for entry, index in valFn.range()
       category = valFn.domain()[index]
       if dataUsed.indexOf(category) != -1
         data.push
           key: entry
           value: category
-
-    scope.legend.selectAll('li.key')
-      .data(data)
-    .enter().append('li')
-      .attr('class', 'key')
-      .text( (d, index) ->
-        d.value
-      )
-    .append('svg')
-      .attr('height', 30)
-    .append('rect')
-      .attr('width', '100%')
-      .attr('height', 10)
-      .attr('y', 10)
-      .attr('x', (d, index) -> $(this).outerWidth() * index)
-      .attr('class', (d) -> "#{d.key}")
+    data
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -214,6 +209,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       ngProgress.complete()
     , 1000
 
+
+  #    #############################################
+  #      Directive Literal
+  #    #############################################
 
   return {
     restrict: 'EA'
