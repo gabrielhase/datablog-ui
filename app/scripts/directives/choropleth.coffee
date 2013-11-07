@@ -29,6 +29,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     valueById = d3.map()
     mapInstance = mapMediatorService.getUIModel(scope.mapId)
     mapInstance.regionsWithMissingDataPoints = [] # reset
+    mapInstance.usedDataValues = [] # reset
     usedDataPoints = []
     data.forEach (d) ->
       dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
@@ -42,6 +43,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
         val = valueById.get(mapPropertyId)
         if val
+          mapInstance.usedDataValues.push(val) if mapInstance.usedDataValues.indexOf(val) == -1
           usedDataPoints.push("#{mapPropertyId}") # NOTE: since valueById.keys() will return the keys as string in any case, we will push this as strings as well
         else
           mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
@@ -143,35 +145,31 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
 
   renderLegend = (scope, valFn) ->
-    mapInstance = mapMediatorService.getUIModel(scope.mapId)
-    isCategorical = mapInstance.getValueType() == 'categorical'
-
-    # always reset first
+    # reset current legend
     scope.legend.selectAll('li.key')
         .data([])
       .exit().remove()
 
+    # find out which type of data we have
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    isCategorical = mapInstance.getValueType() == 'categorical'
+
     if isCategorical
-      data = valFn.range().filter (entry, index) ->
-        category = valFn.domain()[index]
-        isNotShownOnMap = false
-        for entry in mapInstance.dataPointsWithMissingRegion
-          if entry.value == category
-            isNotShownOnMap = true
-        category != '' && !isNotShownOnMap
+      renderCategoricalLegend(scope, valFn, mapInstance)
     else
-      data = valFn.range()
+      renderNumericalLegend(scope, valFn, mapInstance)
+
+
+  renderNumericalLegend = (scope, valFn, mapInstance) ->
+    data = valFn.range()
 
     scope.legend.selectAll('li.key')
         .data(data)
       .enter().append('li')
         .attr('class', 'key')
         .text( (d, index) ->
-          if isCategorical
-            valFn.domain()[index]
-          else
-            extent = valFn.invertExtent(d)
-            "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+          extent = valFn.invertExtent(d)
+          "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
         )
       .append('svg')
         .attr('height', 30)
@@ -182,6 +180,32 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .attr('x', (d, index) -> $(this).outerWidth() * index)
         .attr('class', (d) -> "#{d}")
 
+
+  renderCategoricalLegend = (scope, valFn, mapInstance) ->
+    data = []
+    dataUsed = mapInstance.usedDataValues #['SVP', 'SP', 'CVP', 'FDP', 'Uebrige', 'BDP']
+    for entry, index in valFn.range()
+      category = valFn.domain()[index]
+      if dataUsed.indexOf(category) != -1
+        data.push
+          key: entry
+          value: category
+
+    scope.legend.selectAll('li.key')
+      .data(data)
+    .enter().append('li')
+      .attr('class', 'key')
+      .text( (d, index) ->
+        d.value
+      )
+    .append('svg')
+      .attr('height', 30)
+    .append('rect')
+      .attr('width', '100%')
+      .attr('height', 10)
+      .attr('y', 10)
+      .attr('x', (d, index) -> $(this).outerWidth() * index)
+      .attr('class', (d) -> "#{d.key}")
 
 
   # Stop progress bar with a timeout to prevent running conditions
