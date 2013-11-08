@@ -1,5 +1,6 @@
 angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMediatorService) ->
 
+  # TODO: once we have initialized everything in the form this can go
   defaults =
     projection: 'mercator'
     quantizeSteps: 9
@@ -7,6 +8,37 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     mappingPropertyOnMap: 'id'
     mappingPropertyOnData: 'id'
     valueProperty: 'value'
+
+  #    #############################################
+  #      Render Entry Point
+  #    #############################################
+
+  renderVisualization = (scope) ->
+    path = deducePathProjection(scope.projection)
+    renderMap(scope, path)
+
+
+    map = scope.map
+    data = scope.data
+    valueProperty = scope.valueProperty
+    mappingPropertyOnMap = scope.mappingPropertyOnMap
+    mappingPropertyOnData = scope.mappingPropertyOnData
+
+
+    bounds =  path.bounds(scope.map)
+    resizeMap(scope.svg, bounds)
+
+    if data
+      quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
+      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap)
+      valFn = deduceValueFunction(scope, quantizeSteps, allMappingPropertiesOnMap)
+      renderData(scope, valFn)
+      renderLegend(scope, valFn)
+
+
+  #    #############################################
+  #      Map Rendering
+  #    #############################################
 
   # remove all paths from the svg
   # this is needed since d3 identifies by array index which is overlapping
@@ -17,39 +49,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     mapPaths.exit().remove()
 
 
-  renderMap = (scope, map, path) ->
+  renderMap = (scope, path) ->
     mapPaths = scope.mapGroup.selectAll('path')
-      .data(map.features)
+      .data(scope.map.features)
     mapPaths.enter().append('path')
       .attr('d', path)
-
-
-  renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
-    return if typeof data != 'object'
-    valueById = d3.map()
-    mapInstance = mapMediatorService.getUIModel(scope.mapId)
-    mapInstance.regionsWithMissingDataPoints = [] # reset
-    usedDataPoints = []
-    data.forEach (d) ->
-      dataPropertyId = d[mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
-      if mapInstance.getValueType() == 'categorical'
-        val = d[valueProperty] || d[defaults.valueProperty]
-      else
-        val = +d[valueProperty] || +d[defaults.valueProperty]
-      valueById.set(dataPropertyId, val)
-    scope.mapGroup.selectAll('path')
-      .attr('class', (d) ->
-        mapPropertyId = d.properties[mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
-        val = valueById.get(mapPropertyId)
-        if val
-          usedDataPoints.push("#{mapPropertyId}") # NOTE: since valueById.keys() will return the keys as string in any case, we will push this as strings as well
-        else
-          mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
-        valFn(val)
-      )
-
-    mapInstance.dataPointsWithMissingRegion = valueById.keys().filter (entry) ->
-      usedDataPoints.indexOf(entry) == -1
 
 
   # sets the viewBox attribute on the svg element to cover the whole map
@@ -72,6 +76,48 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     return path
 
 
+  #    #############################################
+  #      Data Visualization
+  #    #############################################
+
+  renderData = (scope, valFn) ->
+    return if typeof scope.data != 'object'
+
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    mapInstance.resetDataAggregations()
+    valueById = getDataMap(scope, mapInstance)
+
+    usedDataPoints = []
+    scope.mapGroup.selectAll('path')
+      .attr('class', (d) ->
+        mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        val = valueById.get(mapPropertyId)
+        if val
+          mapInstance.usedDataValues.push(val) if mapInstance.usedDataValues.indexOf(val) == -1
+          usedDataPoints.push("#{mapPropertyId}") # NOTE: since valueById.keys() will return the keys as string in any case, we will push this as strings as well
+        else
+          mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
+        valFn(val)
+      )
+
+    for entry in valueById.entries()
+      if usedDataPoints.indexOf(entry.key) == -1
+        mapInstance.dataPointsWithMissingRegion.push(entry)
+
+
+  # returns a map with the key as the mapped property and the value as the visualization value
+  getDataMap = (scope, mapInstance) ->
+    valueById = d3.map()
+    for d in scope.data
+      dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+      if mapInstance.getValueType() == 'categorical'
+        val = d[scope.valueProperty] || d[defaults.valueProperty]
+      else
+        val = +d[scope.valueProperty] || +d[defaults.valueProperty]
+      valueById.set(dataPropertyId, val)
+    valueById
+
+
   deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     minValue = d3.min data, (d) ->
       propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
@@ -86,9 +132,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         +d[valueProperty] || +d[defaults.valueProperty]
 
 
-  # for now fixed to quantize
-  deduceValueFunction = (data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, mapId) ->
-    mapInstance = mapMediatorService.getUIModel(mapId)
+  # either quantize or ordinal depending on type of data
+  deduceValueFunction = (scope, quantizeSteps, allMappingPropertiesOnMap) ->
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
     if mapInstance.getValueType() == 'categorical'
       categoryValues = mapInstance.getCategoryValues()
       valFn = d3.scale.ordinal()
@@ -97,8 +143,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           "q#{i}-#{categoryValues.length}"
         )
     else
-      maxValue = deduceMaxValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
-      minValue = deduceMinValue(data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData)
+      maxValue = deduceMaxValue(scope.data, scope.valueProperty, allMappingPropertiesOnMap, scope.mappingPropertyOnData)
+      minValue = deduceMinValue(scope.data, scope.valueProperty, allMappingPropertiesOnMap, scope.mappingPropertyOnData)
       valFn = d3.scale.quantize()
         .domain([minValue, maxValue])
         .range(d3.range(quantizeSteps).map (i) ->
@@ -107,6 +153,69 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
     return valFn
 
+
+  #    #############################################
+  #      Legend Rendering
+  #    #############################################
+
+  renderLegend = (scope, valFn) ->
+    # reset current legend
+    scope.legend.selectAll('li.key')
+        .data([])
+      .exit().remove()
+
+    # find out which type of data we have
+    mapInstance = mapMediatorService.getUIModel(scope.mapId)
+    isCategorical = mapInstance.getValueType() == 'categorical'
+
+    if isCategorical
+      genericLegendRender(scope, $.proxy(filterDataForCategoricalLegend, this, mapInstance, valFn),
+      (d) ->
+        d.value
+      , (d) ->
+        d.key
+      )
+    else
+      genericLegendRender(scope, valFn.range, (d) ->
+        extent = valFn.invertExtent(d)
+        "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+      , (d) ->
+        d
+      )
+
+
+  genericLegendRender = (scope, dataFn, textFn, classFn) ->
+    scope.legend.selectAll('li.key')
+        .data(dataFn())
+      .enter().append('li')
+        .attr('class', 'key')
+        .text( (d) -> textFn(d) )
+      .append('svg')
+        .attr('height', 30)
+      .append('rect')
+        .attr('width', '100%')
+        .attr('height', 10)
+        .attr('y', 10)
+        .attr('x', (d, index) -> $(this).outerWidth() * index)
+        .attr('class', (d) -> classFn(d) )
+
+
+  # Filter out categorical values that are not shown on the map
+  filterDataForCategoricalLegend = (mapInstance, valFn) ->
+    data = []
+    dataUsed = mapInstance.usedDataValues
+    for entry, index in valFn.range()
+      category = valFn.domain()[index]
+      if dataUsed.indexOf(category) != -1
+        data.push
+          key: entry
+          value: category
+    data
+
+
+  #    #############################################
+  #      Utilities
+  #    #############################################
 
   # gets all mapped property values that are actually on the map
   # Either gets all from the set mappingProperty or gets all from the default
@@ -119,32 +228,16 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         mapEntry.properties[defaults.mappingPropertyOnMap]
 
 
-  renderVisualization = (scope) ->
-    map = scope.map
-    data = scope.data
-    path = deducePathProjection(scope.projection)
-    valueProperty = scope.valueProperty
-    mappingPropertyOnMap = scope.mappingPropertyOnMap
-    mappingPropertyOnData = scope.mappingPropertyOnData
-    quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
-
-    renderMap(scope, map, path)
-
-    bounds =  path.bounds(map)
-    resizeMap(scope.svg, bounds)
-
-    if data
-      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
-      valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, scope.mapId)
-      renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
-
-
   # Stop progress bar with a timeout to prevent running conditions
   stopProgressBar = ->
     $timeout ->
       ngProgress.complete()
     , 1000
 
+
+  #    #############################################
+  #      Directive Literal
+  #    #############################################
 
   return {
     restrict: 'EA'
@@ -163,18 +256,31 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
     link: (scope, element, attrs) ->
+      # set up color scheme
+      d3.select(element[0])
+        .attr('class', scope.colorScheme || defaults.colorScheme)
+
+      scope.legend = d3.select(element[0])
+      .append('ul')
+        .attr('class', 'list-inline')
+
       # set up initial svg object
       scope.svg = d3.select(element[0])
-        .append("svg")
-          .attr("width", '100%')
-          .attr("height", '0px')
-          .attr("class", scope.colorScheme || defaults.colorScheme)
-      scope.mapGroup = scope.svg.append("g")
+        .append('svg')
+          .attr('width', '100%')
+          .attr('height', '0px')
+
+      scope.mapGroup = scope.svg.append('g')
         .attr('class', 'map')
 
       $(element).append("""
         <img class="placeholder-image" src="http://placehold.it/#{$(element).width()}x200}/F55CB7/ffffff&text=select%20this%20snippet%20and%20choose%20a%20map%20in%20the%20sidebar" />
       """)
+
+
+      #    #############################################
+      #      Change Listeners
+      #    #############################################
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
@@ -238,7 +344,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       scope.$watch('colorScheme', (newVal, oldVal) ->
         return unless scope.map && scope.data
         if newVal
-          scope.svg.attr('class', newVal)
+          d3.select(element[0])
+            .attr('class', newVal)
       )
 
       # TODO: only re-render data here

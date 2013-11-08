@@ -4,7 +4,11 @@ class DataModalController
   constructor: (@$scope, @$modalInstance, @mapMediatorService, @highlightedRows, @mapId, @mappedColumn) ->
     @$scope.close = (event) => @close(event)
     @$scope.isHighlighted = (property) =>
-      @highlightedRows.indexOf(property) != -1
+      isHighlighted = false
+      for row in @highlightedRows
+        if row.key == property
+          isHighlighted = true
+      isHighlighted
     @$scope.updateEntity = (row) => @updateEntity(row)
 
     @choroplethMapInstance = @mapMediatorService.getUIModel(@mapId)

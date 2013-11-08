@@ -3,6 +3,21 @@ describe 'Choropleth directive', ->
   directiveElem = null
   directiveScope = null
 
+  # Most of the business logic is implemented on the UI Model which pulls the
+  # data dynamically from the snippet model. Thus for a lot of tests data has
+  # to be set on the snippet model AND the directives scope. This helper makes
+  # this easier.
+  # The coupling between UI model and directive scope is by design to have better
+  # separation of concerns. From an architectural stand-point the snippet model
+  # is sort of a data-layer for the app. It might make sense to wrap/abstract
+  # this part of the snippet model into a data-layer that is globally accessible,
+  # sort of like a database.
+  setData = (snippetModel, scope, data) ->
+    snippetModel.data(data)
+    for key, value of data
+      scope[key] = value
+
+
   # TODO: this might be rewritten as a chai.js extension
   equalPath = (path1, path2, delta) ->
     arr1 = path1.split(',')
@@ -120,7 +135,6 @@ describe 'Choropleth directive', ->
       expect($('#narrowContainer svg').height()).to.eql(62)
 
 
-
     it 'should raise the height property on dropping into a wider container', ->
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
@@ -140,7 +154,6 @@ describe 'Choropleth directive', ->
     beforeEach ->
       directiveScope.map = sampleMap
 
-
     it 'renders data points on a map', ->
       directiveScope.data = sample1DData
       directiveScope.$digest()
@@ -152,13 +165,10 @@ describe 'Choropleth directive', ->
     describe 'for categorical data', ->
 
       beforeEach ->
-        @snippetModel.data
+        setData @snippetModel, directiveScope,
           data: sampleCategoricalData
           map: biggerSampleMap
           valueProperty: 'party'
-        directiveScope.map = biggerSampleMap
-        directiveScope.data = sampleCategoricalData
-        directiveScope.valueProperty = 'party'
 
 
       it 'renders categorical data', ->
@@ -168,6 +178,69 @@ describe 'Choropleth directive', ->
         expect($(paths[1]).attr('class')).to.eql('q1-2')
         expect($(paths[2]).attr('class')).to.eql('q0-2')
         expect($(paths[3]).attr('class')).to.eql('q0-2')
+
+
+      describe 'legend rendering', ->
+
+        it 'renders a legend entry for each category', ->
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(2) # Republicans and Democrats
+
+
+        it 'renders the text for each legend entry', ->
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('Democrats')
+          expect($(entries[1]).text()).to.eql('Republicans')
+
+
+        it 'renders only categories that are shown in the map with different value and mapping', ->
+          setData @snippetModel, directiveScope,
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'gov'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(1)
+
+
+        it 'renders the correct text for only the category shown in the map', ->
+          setData @snippetModel, directiveScope,
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'gov'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('CVP')
+
+
+        it 'renders only categories that are shown in the map with equal value and mapping', ->
+          setData @snippetModel, directiveScope,
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect(entries.length).to.eql(1)
+
+
+        it 'renders the correct text for categories that are shown in the map with equal value and mapping', ->
+          setData @snippetModel, directiveScope,
+            data: switzerlandData
+            map: switzerlandSampleMap
+            valueProperty: 'Canton'
+            mappingPropertyOnMap: 'NAME_1'
+            mappingPropertyOnData: 'Canton'
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('Aargau')
 
 
     describe 'missing data points for region', ->
@@ -186,7 +259,42 @@ describe 'Choropleth directive', ->
       it 'saves a missing region for data point on model', ->
         directiveScope.data = sample1DData
         directiveScope.$digest()
-        expect(@choropleth.dataPointsWithMissingRegion).to.eql(['33'])
+        expect(@choropleth.dataPointsWithMissingRegion).to.eql([{ key: '33', value: 20 }])
+
+
+    describe 'legend rendering', ->
+
+      beforeEach ->
+        directiveScope.data = sample1DData
+        directiveScope.$digest()
+
+      it 'renders a legend rect for each entry of a numerical data set', ->
+        entries = directiveElem.find('li.key')
+        expect(entries.length).to.eql(9)
+
+
+      it 'renders a different number of legend rects when changing the quantize steps', ->
+        directiveScope.quantizeSteps = 3
+        directiveScope.$digest()
+        entries = directiveElem.find('li.key')
+        expect(entries.length).to.eql(3)
+
+
+      it 'renders the extent of each legend entry in the text', ->
+        entries = directiveElem.find('li.key')
+        expect($(entries[0]).text()).to.eql('3 – 3.4')
+        expect($(entries[1]).text()).to.eql('3.4 – 3.9')
+        expect($(entries[2]).text()).to.eql('3.9 – 4.3') # don't test the middle
+        expect($(entries[7]).text()).to.eql('6.1 – 6.6')
+        expect($(entries[8]).text()).to.eql('6.6 – 7')
+
+
+      it 'changes the extent of each legend entry when changing the quantize steps', ->
+        directiveScope.quantizeSteps = 4
+        directiveScope.$digest()
+        entries = directiveElem.find('li.key')
+        expect($(entries[0]).text()).to.eql('3 – 4')
+        expect($(entries[3]).text()).to.eql('6 – 7')
 
 
     describe ' and changing the data properties', ->
@@ -256,10 +364,9 @@ describe 'Choropleth directive', ->
 
 
       it 'assigns different classes when changing the color scheme', ->
-        directiveScope.colorScheme = 'Y1Gn'
+        directiveScope.colorScheme = 'YlGn'
         directiveScope.$digest()
-        svg = directiveElem.find('svg')
-        expect($(svg[0]).attr('class')).to.eql('Y1Gn')
+        expect($(directiveElem).attr('class')).to.eql('YlGn')
 
 
   describe 'changing the projection of a map', ->

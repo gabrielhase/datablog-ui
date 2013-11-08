@@ -6,6 +6,13 @@ class ChoroplethMap
   }) ->
     @dataPointsWithMissingRegion = []
     @regionsWithMissingDataPoints = []
+    @usedDataValues = []
+
+
+  resetDataAggregations: ->
+    @dataPointsWithMissingRegion = []
+    @regionsWithMissingDataPoints = []
+    @usedDataValues = []
 
 
   getTemplate: ->
