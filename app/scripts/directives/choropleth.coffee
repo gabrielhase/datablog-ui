@@ -8,6 +8,35 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     mappingPropertyOnData: 'id'
     valueProperty: 'value'
 
+  #    #############################################
+  #      Render Entry Point
+  #    #############################################
+
+  renderVisualization = (scope) ->
+    map = scope.map
+    data = scope.data
+    path = deducePathProjection(scope.projection)
+    valueProperty = scope.valueProperty
+    mappingPropertyOnMap = scope.mappingPropertyOnMap
+    mappingPropertyOnData = scope.mappingPropertyOnData
+    quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
+
+    renderMap(scope, map, path)
+
+    bounds =  path.bounds(map)
+    resizeMap(scope.svg, bounds)
+
+    if data
+      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
+      valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, scope.mapId)
+      renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
+      renderLegend(scope, valFn)
+
+
+  #    #############################################
+  #      Map Rendering
+  #    #############################################
+
   # remove all paths from the svg
   # this is needed since d3 identifies by array index which is overlapping
   # across maps
@@ -23,6 +52,30 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     mapPaths.enter().append('path')
       .attr('d', path)
 
+
+  # sets the viewBox attribute on the svg element to cover the whole map
+  # dynamically adjusts the snippet height to the ratio to the viewBox
+  resizeMap = (svg, bounds) ->
+    svgHeight = bounds[1][1] - bounds[0][1]
+    svgWidth = bounds[1][0] - bounds[0][0]
+    svg.attr('viewBox', "#{bounds[0][0]} #{bounds[0][1]} #{svgWidth} #{svgHeight}")
+    ratio = $(svg.node()).width() / svgWidth
+    svg.attr('stroke-width', (1 / ratio) )
+    svg.attr('height', ratio * svgHeight)
+
+
+  deducePathProjection = (projection) ->
+    if projection
+      path = d3.geo.path().projection(eval("d3.geo.#{projection}()"))
+    else
+      path = d3.geo.path().projection(eval("d3.geo.#{defaults.projection}()"))
+
+    return path
+
+
+  #    #############################################
+  #      Data Visualization
+  #    #############################################
 
   renderData = (scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn) ->
     return if typeof data != 'object'
@@ -56,26 +109,6 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         mapInstance.dataPointsWithMissingRegion.push(entry)
 
 
-  # sets the viewBox attribute on the svg element to cover the whole map
-  # dynamically adjusts the snippet height to the ratio to the viewBox
-  resizeMap = (svg, bounds) ->
-    svgHeight = bounds[1][1] - bounds[0][1]
-    svgWidth = bounds[1][0] - bounds[0][0]
-    svg.attr('viewBox', "#{bounds[0][0]} #{bounds[0][1]} #{svgWidth} #{svgHeight}")
-    ratio = $(svg.node()).width() / svgWidth
-    svg.attr('stroke-width', (1 / ratio) )
-    svg.attr('height', ratio * svgHeight)
-
-
-  deducePathProjection = (projection) ->
-    if projection
-      path = d3.geo.path().projection(eval("d3.geo.#{projection}()"))
-    else
-      path = d3.geo.path().projection(eval("d3.geo.#{defaults.projection}()"))
-
-    return path
-
-
   deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     minValue = d3.min data, (d) ->
       propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
@@ -90,7 +123,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         +d[valueProperty] || +d[defaults.valueProperty]
 
 
-  # for now fixed to quantize
+  # either quantize or ordinal depending on type of data
   deduceValueFunction = (data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, mapId) ->
     mapInstance = mapMediatorService.getUIModel(mapId)
     if mapInstance.getValueType() == 'categorical'
@@ -110,39 +143,6 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         )
 
     return valFn
-
-
-  # gets all mapped property values that are actually on the map
-  # Either gets all from the set mappingProperty or gets all from the default
-  # no mixing of default and set property!
-  deduceAllAvailableMappingOnMap = (map, mappingPropertyOnMap) ->
-    map.features.map (mapEntry) ->
-      if mappingPropertyOnMap
-        mapEntry.properties[mappingPropertyOnMap]
-      else
-        mapEntry.properties[defaults.mappingPropertyOnMap]
-
-
-  renderVisualization = (scope) ->
-    map = scope.map
-    data = scope.data
-    path = deducePathProjection(scope.projection)
-    valueProperty = scope.valueProperty
-    mappingPropertyOnMap = scope.mappingPropertyOnMap
-    mappingPropertyOnData = scope.mappingPropertyOnData
-    quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
-
-    renderMap(scope, map, path)
-
-    bounds =  path.bounds(map)
-    resizeMap(scope.svg, bounds)
-
-    if data
-      allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(map, mappingPropertyOnMap)
-      valFn = deduceValueFunction(data, valueProperty, quantizeSteps, allMappingPropertiesOnMap, mappingPropertyOnData, scope.mapId)
-      renderData(scope, data, mappingPropertyOnData, valueProperty, mappingPropertyOnMap, valFn)
-      renderLegend(scope, valFn)
-
 
 
   #    #############################################
@@ -191,6 +191,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .attr('class', (d) -> classFn(d) )
 
 
+  # Filter out categorical values that are not shown on the map
   filterDataForCategoricalLegend = (mapInstance, valFn) ->
     data = []
     dataUsed = mapInstance.usedDataValues
@@ -201,6 +202,21 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           key: entry
           value: category
     data
+
+
+  #    #############################################
+  #      Utilities
+  #    #############################################
+
+  # gets all mapped property values that are actually on the map
+  # Either gets all from the set mappingProperty or gets all from the default
+  # no mixing of default and set property!
+  deduceAllAvailableMappingOnMap = (map, mappingPropertyOnMap) ->
+    map.features.map (mapEntry) ->
+      if mappingPropertyOnMap
+        mapEntry.properties[mappingPropertyOnMap]
+      else
+        mapEntry.properties[defaults.mappingPropertyOnMap]
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -251,6 +267,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       $(element).append("""
         <img class="placeholder-image" src="http://placehold.it/#{$(element).width()}x200}/F55CB7/ffffff&text=select%20this%20snippet%20and%20choose%20a%20map%20in%20the%20sidebar" />
       """)
+
+
+      #    #############################################
+      #      Change Listeners
+      #    #############################################
 
       scope.$watch('map', (newVal, oldVal) ->
         return unless newVal
