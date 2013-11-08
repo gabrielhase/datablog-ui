@@ -3,6 +3,21 @@ describe 'Choropleth directive', ->
   directiveElem = null
   directiveScope = null
 
+  # Most of the business logic is implemented on the UI Model which pulls the
+  # data dynamically from the snippet model. Thus for a lot of tests data has
+  # to be set on the snippet model AND the directives scope. This helper makes
+  # this easier.
+  # The coupling between UI model and directive scope is by design to have better
+  # separation of concerns. From an architectural stand-point the snippet model
+  # is sort of a data-layer for the app. It might make sense to wrap/abstract
+  # this part of the snippet model into a data-layer that is globally accessible,
+  # sort of like a database.
+  setData = (snippetModel, scope, data) ->
+    snippetModel.data(data)
+    for key, value of data
+      scope[key] = value
+
+
   # TODO: this might be rewritten as a chai.js extension
   equalPath = (path1, path2, delta) ->
     arr1 = path1.split(',')
@@ -150,13 +165,10 @@ describe 'Choropleth directive', ->
     describe 'for categorical data', ->
 
       beforeEach ->
-        @snippetModel.data
+        setData @snippetModel, directiveScope,
           data: sampleCategoricalData
           map: biggerSampleMap
           valueProperty: 'party'
-        directiveScope.map = biggerSampleMap
-        directiveScope.data = sampleCategoricalData
-        directiveScope.valueProperty = 'party'
 
 
       it 'renders categorical data', ->
@@ -184,76 +196,48 @@ describe 'Choropleth directive', ->
 
 
         it 'renders only categories that are shown in the map with different value and mapping', ->
-          @snippetModel.data
+          setData @snippetModel, directiveScope,
             data: switzerlandData
             map: switzerlandSampleMap
-            valueProperty: 'Canton'
+            valueProperty: 'gov'
             mappingPropertyOnMap: 'NAME_1'
             mappingPropertyOnData: 'Canton'
-            valueProperty: 'gov'
-          valueProperty: 'party'
-          directiveScope.map = switzerlandSampleMap
-          directiveScope.data = switzerlandData
-          directiveScope.mappingPropertyOnData = 'Canton'
-          directiveScope.mappingPropertyOnMap = 'NAME_1'
-          directiveScope.valueProperty = 'gov'
           directiveScope.$digest()
           entries = directiveElem.find('li.key')
           expect(entries.length).to.eql(1)
 
 
         it 'renders the correct text for only the category shown in the map', ->
-          @snippetModel.data
+          setData @snippetModel, directiveScope,
             data: switzerlandData
             map: switzerlandSampleMap
-            valueProperty: 'Canton'
+            valueProperty: 'gov'
             mappingPropertyOnMap: 'NAME_1'
             mappingPropertyOnData: 'Canton'
-            valueProperty: 'gov'
-          valueProperty: 'party'
-          directiveScope.map = switzerlandSampleMap
-          directiveScope.data = switzerlandData
-          directiveScope.mappingPropertyOnData = 'Canton'
-          directiveScope.mappingPropertyOnMap = 'NAME_1'
-          directiveScope.valueProperty = 'gov'
           directiveScope.$digest()
           entries = directiveElem.find('li.key')
           expect($(entries[0]).text()).to.eql('CVP')
 
 
         it 'renders only categories that are shown in the map with equal value and mapping', ->
-          @snippetModel.data
+          setData @snippetModel, directiveScope,
             data: switzerlandData
             map: switzerlandSampleMap
             valueProperty: 'Canton'
             mappingPropertyOnMap: 'NAME_1'
             mappingPropertyOnData: 'Canton'
-            valueProperty: 'Canton'
-          valueProperty: 'party'
-          directiveScope.map = switzerlandSampleMap
-          directiveScope.data = switzerlandData
-          directiveScope.mappingPropertyOnData = 'Canton'
-          directiveScope.mappingPropertyOnMap = 'NAME_1'
-          directiveScope.valueProperty = 'Canton'
           directiveScope.$digest()
           entries = directiveElem.find('li.key')
           expect(entries.length).to.eql(1)
 
 
         it 'renders the correct text for categories that are shown in the map with equal value and mapping', ->
-          @snippetModel.data
+          setData @snippetModel, directiveScope,
             data: switzerlandData
             map: switzerlandSampleMap
             valueProperty: 'Canton'
             mappingPropertyOnMap: 'NAME_1'
             mappingPropertyOnData: 'Canton'
-            valueProperty: 'Canton'
-          valueProperty: 'party'
-          directiveScope.map = switzerlandSampleMap
-          directiveScope.data = switzerlandData
-          directiveScope.mappingPropertyOnData = 'Canton'
-          directiveScope.mappingPropertyOnMap = 'NAME_1'
-          directiveScope.valueProperty = 'Canton'
           directiveScope.$digest()
           entries = directiveElem.find('li.key')
           expect($(entries[0]).text()).to.eql('Aargau')
