@@ -82,18 +82,12 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
   renderData = (scope, valFn) ->
     return if typeof scope.data != 'object'
-    valueById = d3.map()
+
     mapInstance = mapMediatorService.getUIModel(scope.mapId)
-    mapInstance.regionsWithMissingDataPoints = [] # reset
-    mapInstance.usedDataValues = [] # reset
+    mapInstance.resetDataAggregations()
+    valueById = getDataMap(scope, mapInstance)
+
     usedDataPoints = []
-    scope.data.forEach (d) ->
-      dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
-      if mapInstance.getValueType() == 'categorical'
-        val = d[scope.valueProperty] || d[defaults.valueProperty]
-      else
-        val = +d[scope.valueProperty] || +d[defaults.valueProperty]
-      valueById.set(dataPropertyId, val)
     scope.mapGroup.selectAll('path')
       .attr('class', (d) ->
         mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
@@ -106,10 +100,22 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         valFn(val)
       )
 
-    mapInstance.dataPointsWithMissingRegion = [] # reset
     for entry in valueById.entries()
       if usedDataPoints.indexOf(entry.key) == -1
         mapInstance.dataPointsWithMissingRegion.push(entry)
+
+
+  # returns a map with the key as the mapped property and the value as the visualization value
+  getDataMap = (scope, mapInstance) ->
+    valueById = d3.map()
+    for d in scope.data
+      dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+      if mapInstance.getValueType() == 'categorical'
+        val = d[scope.valueProperty] || d[defaults.valueProperty]
+      else
+        val = +d[scope.valueProperty] || +d[defaults.valueProperty]
+      valueById.set(dataPropertyId, val)
+    valueById
 
 
   deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
