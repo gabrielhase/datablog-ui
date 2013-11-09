@@ -29,6 +29,11 @@
   select,
   textarea {
     font-family: @baseFontFamily; // And only set font-family here for those that need it (note the missing label element)
+    &.full-width {
+      width: 100%;
+      max-width: 100%;
+      min-width: 100%;
+    }
   }
 
   // Identify controls by their labels
