@@ -26,7 +26,7 @@ class ChoroplethMap
     sanitizedData = @_getSnippetModel().data('data').map (dataEntry) ->
       sanitizedEntry = {}
       for key, value of dataEntry
-        sanitizedKey = livingmapsWords.camelCase(key).replace('%', 'Percent')
+        sanitizedKey = livingmapsWords.camelCase(key).replace('%', 'Percent').replace('_', '')
         sanitizedValue = value
         sanitizedEntry[sanitizedKey] = sanitizedValue
         keyMapping[key] = sanitizedKey
