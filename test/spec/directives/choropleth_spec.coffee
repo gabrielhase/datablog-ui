@@ -162,6 +162,22 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
+    it 'adds tooltip title for each data point', ->
+      directiveScope.data = sample1DData
+      directiveScope.$digest()
+      paths = directiveElem.find('path')
+      expect($(paths[0]).attr('title')).to.eql('3')
+      expect($(paths[1]).attr('title')).to.eql('7')
+
+
+    it 'adds data-region for each data point mapping', ->
+      directiveScope.data = sample1DData
+      directiveScope.$digest()
+      paths = directiveElem.find('path')
+      expect($(paths[0]).attr('data-region')).to.eql('1')
+      expect($(paths[1]).attr('data-region')).to.eql('2')
+
+
     describe 'for categorical data', ->
 
       beforeEach ->

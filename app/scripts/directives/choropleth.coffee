@@ -80,6 +80,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #      Data Visualization
   #    #############################################
 
+  tooltipShow = (d, i) ->
+    $(this).tooltip(
+      placement: 'auto'
+      container: $(this).parents('.doc-section')
+    ).tooltip('show')
+
+
   renderData = (scope, valFn) ->
     return if typeof scope.data != 'object'
 
@@ -88,7 +95,14 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     valueById = getDataMap(scope, mapInstance)
 
     usedDataPoints = []
-    scope.mapGroup.selectAll('path')
+    paths = scope.mapGroup.selectAll('path')
+      .attr('title', (d) ->
+        mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        valueById.get(mapPropertyId)
+      )
+      .attr('data-region', (d) ->
+        d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+      )
       .attr('class', (d) ->
         mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
         val = valueById.get(mapPropertyId)
@@ -99,6 +113,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
         valFn(val)
       )
+
+    paths.on('mouseover', tooltipShow)
 
     for entry in valueById.entries()
       if usedDataPoints.indexOf(entry.key) == -1
