@@ -39,8 +39,6 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
              ],
              "sidebar": [
               "identifier": "livingmaps.image"
-             ,
-              "identifier": "livingmaps.map"
              ]
           }
 
