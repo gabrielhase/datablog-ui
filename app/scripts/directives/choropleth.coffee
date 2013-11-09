@@ -82,8 +82,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
   tooltipShow = (d, i) ->
     $(this).tooltip(
+      title: "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
       placement: 'auto'
       container: $(this).parents('.doc-section')
+    ).attr('data-original-title',
+            "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
     ).tooltip('show')
 
 
@@ -96,7 +99,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
     usedDataPoints = []
     paths = scope.mapGroup.selectAll('path')
-      .attr('title', (d) ->
+      .attr('data-title', (d) ->
         mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
         valueById.get(mapPropertyId)
       )

@@ -166,8 +166,8 @@ describe 'Choropleth directive', ->
       directiveScope.data = sample1DData
       directiveScope.$digest()
       paths = directiveElem.find('path')
-      expect($(paths[0]).attr('title')).to.eql('3')
-      expect($(paths[1]).attr('title')).to.eql('7')
+      expect($(paths[0]).attr('data-title')).to.eql('3')
+      expect($(paths[1]).attr('data-title')).to.eql('7')
 
 
     it 'adds data-region for each data point mapping', ->
@@ -320,14 +320,14 @@ describe 'Choropleth directive', ->
         directiveScope.mappingPropertyOnMap = 'id'
         directiveScope.mappingPropertyOnData = 'id'
 
-      it 'should render the same data points when selecting the mapping properties', ->
+      it 'renders the same data points when selecting the mapping properties', ->
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
-      it 'should render the same data points when selecting the value property', ->
+      it 'renders the same data points when selecting the value property', ->
         directiveScope.valueProperty = 'value'
         directiveScope.$digest()
         paths = directiveElem.find('path')
@@ -335,7 +335,7 @@ describe 'Choropleth directive', ->
         expect($(paths[1]).attr('class')).to.eql('q8-9')
 
 
-      it 'should render different data points when selecting different mapping properties', ->
+      it 'renders different data points when selecting different mapping properties', ->
         directiveScope.$digest()
         # changed mapping
         directiveScope.mappingPropertyOnMap = 'reverseMapping'
@@ -346,7 +346,7 @@ describe 'Choropleth directive', ->
         expect($(paths[1]).attr('class')).to.eql('q0-9')
 
 
-      it 'should render different data points when selecting a different value property', ->
+      it 'renders different data points when selecting a different value property', ->
         directiveScope.$digest()
         # changed value
         directiveScope.valueProperty = 'alternativeValue'
@@ -354,6 +354,15 @@ describe 'Choropleth directive', ->
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q0-9')
         expect($(paths[1]).attr('class')).to.eql('q8-9')
+
+
+      it 'renders different tooltip titles when selecting a different value property', ->
+        directiveScope.$digest()
+        directiveScope.valueProperty = 'alternativeValue'
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('data-title')).to.eql('4')
+        expect($(paths[1]).attr('data-title')).to.eql('5')
 
 
     describe ' and changing the visual properties', ->
