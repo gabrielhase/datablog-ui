@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'ChoroplethFormController',
 class ChoroplethFormController
 
-  constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService, @dialogService) ->
+  constructor: (@$scope, @$http, @ngProgress, @dataService, @mapMediatorService, @dialogService, @dataSanitizationService) ->
     @choroplethInstance = @mapMediatorService.getUIModel(@$scope.snippet.model.id)
     @$scope.choroplethInstance = @choroplethInstance
 
@@ -104,7 +104,7 @@ class ChoroplethFormController
       @$scope.isCategorical = false
     else
       categories = @choroplethInstance.getCategoryValues()
-      @$scope.categoryCount = categories.length
+      @$scope.categoryCount = categories?.length
       @$scope.isCategorical = true
 
 
@@ -147,9 +147,10 @@ class ChoroplethFormController
     if error?.message
       alert(error.message)
     else
+      sanitizedData = @dataSanitizationService.sanitizeCSV(data)
       @$scope.snippet.model.data
-        data: data
-      @initDataPropertySelection(data)
+        data: sanitizedData
+      @initDataPropertySelection(sanitizedData)
 
 
   setMap: (data, error) ->
