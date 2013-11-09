@@ -1,17 +1,7 @@
-angular.module('ldEditor').factory 'dialogService', ($dialog, $modal, uiStateService) ->
+angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
 
     # Private
     # -------
-
-    imageGalleryDialogOptions =
-      backdrop: true
-      keyboard: true
-      backdropClick: true
-      template: htmlTemplates.imageGallery
-      controller: 'ImageGalleryController'
-      dialogClass: 'upfront-modal'
-      backdropClass: 'upfront-modal-backdrop'
-
 
     dataModalOptions =
       template: htmlTemplates.dataModal
@@ -21,13 +11,6 @@ angular.module('ldEditor').factory 'dialogService', ($dialog, $modal, uiStateSer
 
     # Service
     # -------
-
-    # angular ui bootstrap 0.4.0 dialog
-    openImageGallery: (image, imagePathAttr) ->
-      $dialog.dialog(imageGalleryDialogOptions).open().then (result) =>
-        if result && result.action == 'add'
-          image.model.set(imagePathAttr, result.image.original)
-
 
     # angular ui bootstrap 0.6.0 modal
     openDataModal: (highlightedRows, mapId, mappedColumn) ->
@@ -39,3 +22,7 @@ angular.module('ldEditor').factory 'dialogService', ($dialog, $modal, uiStateSer
         mappedColumn: ->
           mappedColumn
       $modal.open(dataModalOptions)
+
+
+    openImagePopup: (image, imagePathAttr) ->
+      # todo

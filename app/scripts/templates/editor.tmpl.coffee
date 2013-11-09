@@ -23,11 +23,10 @@ htmlTemplates.editor = """
       </ng-include>
     </div>
 
-    <!-- Selected Image Options -->
-    <div popover ng-if="state.isActive('imagePopover')" arrow-distance="10" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">
-      <ng-include src="'image-options.html'"></ng-include>
+    <!-- Selected Image Popover -->
+    <div popover ng-if="state.isActive('imagePopover')" arrow-distance="14" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">
+      <ng-include src="'image-input.html'"></ng-include>
     </div>
-
 
   </div>
 </div>
