@@ -1,5 +1,5 @@
 (function() {
-  var Design, DesignStyle, Directive, DirectiveCollection, DirectiveIterator, DragDrop, EditableController, Focus, History, HistoryAction, InteractivePage, InterfaceInjector, LimitedLocalstore, Loader, ModelDirectives, Page, Renderer, RenderingContainer, SnippetArray, SnippetContainer, SnippetDrag, SnippetModel, SnippetSelection, SnippetTree, SnippetView, Template, assert, chainable, chainableProxy, directiveCompiler, directiveFinder, document, dom, eventing, guid, htmlCompare, jsonHelper, kickstart, localstore, log, mixins, pageReady, setupApi, stash,
+  var CssLoader, Design, DesignStyle, Directive, DirectiveCollection, DirectiveIterator, DragDrop, EditableController, Focus, InteractivePage, LimitedLocalstore, Page, Renderer, RenderingContainer, Semaphore, SnippetArray, SnippetContainer, SnippetDrag, SnippetModel, SnippetTree, SnippetView, Template, assert, chainable, chainableProxy, directiveCompiler, directiveFinder, document, dom, eventing, guid, htmlCompare, jsonHelper, kickstart, localstore, log, mixins, pageReady, setupApi, stash,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -30,6 +30,11 @@
         attr: {
           template: 'data-doc-template',
           placeholder: 'data-doc-placeholder'
+        }
+      },
+      kickstart: {
+        attr: {
+          styles: 'doc-styles'
         }
       },
       directives: {
@@ -69,11 +74,7 @@
             return $elem.slideDown(250);
           },
           hide: function($elem) {
-            if ($elem.css('display') === 'block') {
-              return $elem.slideUp(250);
-            } else {
-              return $elem.hide();
-            }
+            return $elem.slideUp(250);
           }
         }
       },
@@ -228,25 +229,40 @@
         return node.namespaceURI + ':' + node.localName;
       },
       compareAttributes: function(a, b) {
-        var attr, bValue, _i, _len, _ref;
-        if (a.attributes.length === b.attributes.length) {
-          _ref = a.attributes;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            attr = _ref[_i];
-            bValue = b.getAttribute(attr.name);
-            if (!this.compareAttributeValue(attr.name, attr.value, bValue)) {
+        return this.compareAttributesWithOther(a, b) && this.compareAttributesWithOther(b, a);
+      },
+      compareAttributesWithOther: function(a, b) {
+        var aAttr, bValue, _i, _len, _ref;
+        _ref = a.attributes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          aAttr = _ref[_i];
+          bValue = b.getAttribute(aAttr.name);
+          if (!this.compareAttributeValue(aAttr.name, aAttr.value, bValue)) {
+            return false;
+          }
+          if (this.isEmptyAttributeValue(aAttr.value) && this.emptyAttributeCounts(aAttr.name)) {
+            if (!b.hasAttribute(aAttr.name)) {
               return false;
             }
           }
-          return true;
+        }
+        return true;
+      },
+      emptyAttributeCounts: function(attrName) {
+        switch (attrName) {
+          case 'class':
+          case 'style':
+            return false;
+          default:
+            return true;
         }
       },
       compareAttributeValue: function(attrName, aValue, bValue) {
         var aCleaned, aSorted, bCleaned, bSorted;
-        if ((aValue == null) && (bValue == null)) {
+        if (this.isEmptyAttributeValue(aValue) && this.isEmptyAttributeValue(bValue)) {
           return true;
         }
-        if ((aValue == null) || (bValue == null)) {
+        if (this.isEmptyAttributeValue(aValue) || this.isEmptyAttributeValue(bValue)) {
           return false;
         }
         switch (attrName) {
@@ -261,6 +277,9 @@
           default:
             return aValue === bValue;
         }
+      },
+      isEmptyAttributeValue: function(val) {
+        return (val == null) || val === '';
       },
       prepareStyleValue: function(val) {
         val = $.trim(val).replace(/\s*:\s*/g, ':').replace(/\s*;\s*/g, ';').replace(/;$/g, '');
@@ -489,7 +508,19 @@
   };
 
   (function() {
-    var notify;
+    var LivingdocsError, notify;
+    LivingdocsError = (function(_super) {
+      __extends(LivingdocsError, _super);
+
+      function LivingdocsError(message) {
+        LivingdocsError.__super__.constructor.apply(this, arguments);
+        this.message = message;
+        this.thrownByLivingdocs = true;
+      }
+
+      return LivingdocsError;
+
+    })(Error);
     notify = function(message, level) {
       if (level == null) {
         level = 'error';
@@ -505,7 +536,7 @@
         });
       } else {
         if (level === 'critical' || level === 'error') {
-          throw new Error(message);
+          throw new LivingdocsError(message);
         } else {
           log.call(void 0, message);
         }
@@ -540,6 +571,65 @@
     }
     return Mixed;
   };
+
+  Semaphore = (function() {
+    function Semaphore() {
+      this.count = 0;
+      this.started = false;
+      this.wasFired = false;
+      this.callbacks = [];
+    }
+
+    Semaphore.prototype.addCallback = function(callback) {
+      if (this.wasFired) {
+        return callback();
+      } else {
+        return this.callbacks.push(callback);
+      }
+    };
+
+    Semaphore.prototype.start = function() {
+      assert(!this.started, "Unable to start Semaphore once started.");
+      this.started = true;
+      return this.fireIfReady();
+    };
+
+    Semaphore.prototype.increment = function() {
+      assert(!this.wasFired, "Unable to increment count once Semaphore is fired.");
+      return this.count += 1;
+    };
+
+    Semaphore.prototype.decrement = function() {
+      assert(this.count > 0, "Unable to decrement count resulting in negative count.");
+      this.count -= 1;
+      return this.fireIfReady();
+    };
+
+    Semaphore.prototype.wait = function() {
+      var _this = this;
+      this.increment();
+      return function() {
+        return _this.decrement();
+      };
+    };
+
+    Semaphore.prototype.fireIfReady = function() {
+      var callback, _i, _len, _ref, _results;
+      if (this.count === 0 && this.started === true) {
+        this.wasFired = true;
+        _ref = this.callbacks;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          callback = _ref[_i];
+          _results.push(callback());
+        }
+        return _results;
+      }
+    };
+
+    return Semaphore;
+
+  })();
 
   stash = (function() {
     var initialized;
@@ -623,6 +713,11 @@
       readableJson: function(obj) {
         return JSON.stringify(obj, null, 2);
       },
+      camelize: function(str) {
+        return $.trim(str).replace(/[-_\s]+(.)?/g, function(match, c) {
+          return c.toUpperCase();
+        });
+      },
       trim: function(str) {
         return str.replace(/^\s+|\s+$/g, '');
       }
@@ -634,6 +729,9 @@
 
     function RenderingContainer() {
       this.renderNode = $('<div/>')[0];
+      this.readySemaphore = new Semaphore();
+      this.beforeReady();
+      this.readySemaphore.start();
     }
 
     RenderingContainer.prototype.html = function() {
@@ -642,6 +740,12 @@
 
     RenderingContainer.prototype.snippetViewWasInserted = function(snippetView) {};
 
+    RenderingContainer.prototype.beforeReady = function() {};
+
+    RenderingContainer.prototype.ready = function(callback) {
+      return this.readySemaphore.addCallback(callback);
+    };
+
     return RenderingContainer;
 
   })();
@@ -649,14 +753,36 @@
   Page = (function(_super) {
     __extends(Page, _super);
 
-    function Page(renderNode) {
+    function Page(_arg) {
+      var hostWindow, readOnly, renderNode, _ref;
+      _ref = _arg != null ? _arg : {}, renderNode = _ref.renderNode, readOnly = _ref.readOnly, hostWindow = _ref.hostWindow, this.design = _ref.design;
+      if (readOnly != null) {
+        this.isReadOnly = readOnly;
+      }
+      this.setWindow(hostWindow);
       Page.__super__.constructor.call(this);
-      this.document = window.document;
-      this.$document = $(this.document);
-      this.$body = $(this.document.body);
-      this.renderNode = renderNode || $("." + docClass.section)[0];
-      this.loader = new Loader();
+      renderNode = renderNode || $("." + docClass.section, this.$body);
+      if (renderNode.jquery) {
+        this.renderNode = renderNode[0];
+      } else {
+        this.renderNode = renderNode;
+      }
     }
+
+    Page.prototype.beforeReady = function() {
+      var _ref;
+      this.cssLoader = new CssLoader(this.window);
+      if ((_ref = this.design) != null ? _ref.css : void 0) {
+        return this.cssLoader.load(this.design.css, this.readySemaphore.wait());
+      }
+    };
+
+    Page.prototype.setWindow = function(hostWindow) {
+      this.window = hostWindow || window;
+      this.document = this.window.document;
+      this.$document = $(this.document);
+      return this.$body = $(this.document.body);
+    };
 
     return Page;
 
@@ -671,8 +797,10 @@
 
     InteractivePage.prototype.isReadOnly = false;
 
-    function InteractivePage(renderNode) {
-      InteractivePage.__super__.constructor.call(this, renderNode);
+    function InteractivePage(_arg) {
+      var hostWindow, renderNode, _ref;
+      _ref = _arg != null ? _arg : {}, renderNode = _ref.renderNode, hostWindow = _ref.hostWindow;
+      InteractivePage.__super__.constructor.apply(this, arguments);
       this.focus = new Focus();
       this.editableController = new EditableController(this);
       this.imageClick = $.Callbacks();
@@ -811,8 +939,8 @@
           }
           return _results;
         })();
+        return this.editableController.add(editableNodes);
       }
-      return this.editableController.add(editableNodes);
     };
 
     InteractivePage.prototype.afterSnippetFocused = function(snippetView) {
@@ -826,74 +954,6 @@
     return InteractivePage;
 
   })(Page);
-
-  History = (function() {
-    History.prototype.history = [];
-
-    function History() {}
-
-    History.prototype.add = function() {};
-
-    History.prototype.saved = function() {};
-
-    History.prototype.isDirty = function() {
-      if (history.length === 0) {
-        return false;
-      }
-    };
-
-    return History;
-
-  })();
-
-  HistoryAction = (function() {
-    function HistoryAction() {}
-
-    return HistoryAction;
-
-  })();
-
-  ModelDirectives = (function() {
-    function ModelDirectives(snippetModel, templateDirectives) {
-      var directive, list, _i, _len;
-      this.editables = this.images = this.containers = {
-        length: 0
-      };
-      for (_i = 0, _len = templateDirectives.length; _i < _len; _i++) {
-        directive = templateDirectives[_i];
-        this.all[directive.name] = directive;
-        list = (function() {
-          switch (directive.type) {
-            case 'editable':
-              return this.editables;
-            case 'image':
-              return this.images;
-            case 'container':
-              return this.containers;
-          }
-        }).call(this);
-        this.addDirective(list, directive, snippetModel);
-      }
-      ({
-        addDirective: function(list, directive, snippetModel) {
-          var listElem;
-          listElem = directive;
-          if (directive.type === 'container') {
-            listElem = new SnippetContainer({
-              name: directive.name,
-              parentSnippet: snippetModel
-            });
-          }
-          list[list.length] = listElem;
-          list.length += 1;
-          return this.length += 1;
-        }
-      });
-    }
-
-    return ModelDirectives;
-
-  })();
 
   SnippetArray = (function() {
     function SnippetArray(snippets) {
@@ -1531,7 +1591,6 @@
         this.fromJson(content, design);
       }
       this.root.snippetTree = this;
-      this.history = new History();
       this.initializeEvents();
     }
 
@@ -2014,14 +2073,13 @@
 
   Template = (function() {
     function Template(_arg) {
-      var html, identifier, styles, title, version, weight, _ref, _ref1;
-      _ref = _arg != null ? _arg : {}, html = _ref.html, this.namespace = _ref.namespace, this.id = _ref.id, identifier = _ref.identifier, title = _ref.title, styles = _ref.styles, weight = _ref.weight, version = _ref.version;
+      var html, identifier, styles, title, weight, _ref, _ref1;
+      _ref = _arg != null ? _arg : {}, html = _ref.html, this.namespace = _ref.namespace, this.id = _ref.id, identifier = _ref.identifier, title = _ref.title, styles = _ref.styles, weight = _ref.weight;
       assert(html, 'Template: param html missing');
       if (identifier) {
         _ref1 = Template.parseIdentifier(identifier), this.namespace = _ref1.namespace, this.id = _ref1.id;
       }
       this.identifier = this.namespace && this.id ? "" + this.namespace + "." + this.id : void 0;
-      this.version = version || 1;
       this.$template = $(this.pruneHtml(html)).wrap('<div>');
       this.$wrap = this.$template.parent();
       this.title = title || words.humanize(this.id);
@@ -2069,6 +2127,8 @@
             return _this.formatEditable(directive.name, directive.elem);
           case 'container':
             return _this.formatContainer(directive.name, directive.elem);
+          case 'html':
+            return _this.formatHtml(directive.name, directive.elem);
         }
       });
     };
@@ -2111,8 +2171,13 @@
       return elem.innerHTML = '';
     };
 
-    Template.prototype.list = function(listName) {
-      return this.lists[listName];
+    Template.prototype.formatHtml = function(name, elem) {
+      var defaultValue;
+      defaultValue = words.trim(elem.innerHTML);
+      if (defaultValue) {
+        this.defaults[name] = defaultValue;
+      }
+      return elem.innerHTML = '';
     };
 
     Template.prototype.printDoc = function() {
@@ -2147,6 +2212,57 @@
       return log.error("could not parse snippet template identifier: " + identifier);
     }
   };
+
+  CssLoader = (function() {
+    function CssLoader(window) {
+      this.window = window;
+      this.loadedUrls = [];
+    }
+
+    CssLoader.prototype.load = function(urls, callback) {
+      var semaphore, url, _i, _len;
+      if (callback == null) {
+        callback = $.noop;
+      }
+      if (!$.isArray(urls)) {
+        urls = [urls];
+      }
+      semaphore = new Semaphore();
+      semaphore.addCallback(callback);
+      for (_i = 0, _len = urls.length; _i < _len; _i++) {
+        url = urls[_i];
+        this.loadSingleUrl(url, semaphore.wait());
+      }
+      return semaphore.start();
+    };
+
+    CssLoader.prototype.loadSingleUrl = function(url, callback) {
+      var link;
+      if (callback == null) {
+        callback = $.noop;
+      }
+      if (this.isUrlLoaded(url)) {
+        return callback();
+      } else {
+        link = $('<link rel="stylesheet" type="text/css" />')[0];
+        link.onload = callback;
+        link.href = url;
+        this.window.document.head.appendChild(link);
+        return this.markUrlAsLoaded(url);
+      }
+    };
+
+    CssLoader.prototype.isUrlLoaded = function(url) {
+      return this.loadedUrls.indexOf(url) >= 0;
+    };
+
+    CssLoader.prototype.markUrlAsLoaded = function(url) {
+      return this.loadedUrls.push(url);
+    };
+
+    return CssLoader;
+
+  })();
 
   Design = (function() {
     function Design(design) {
@@ -2440,19 +2556,6 @@
   })();
 
   document = (function() {
-    var doBeforeDocumentReady, documentReady, waitingCalls,
-      _this = this;
-    waitingCalls = 1;
-    documentReady = function() {
-      waitingCalls -= 1;
-      if (waitingCalls === 0) {
-        return document.ready.fire();
-      }
-    };
-    doBeforeDocumentReady = function() {
-      waitingCalls += 1;
-      return documentReady;
-    };
     return {
       initialized: false,
       uniqueId: 0,
@@ -2463,10 +2566,10 @@
           _this = this;
         _ref = _arg != null ? _arg : {}, design = _ref.design, json = _ref.json, rootNode = _ref.rootNode;
         if (this.initialized) {
-          return documentReady();
+          return;
         }
         this.initialized = true;
-        this.loadDesign(design);
+        this.design = new Design(design);
         this.snippetTree = json && this.design ? new SnippetTree({
           content: json,
           design: this.design
@@ -2474,21 +2577,47 @@
         this.snippetTree.changed.add(function() {
           return _this.changed.fire();
         });
-        this.page = new InteractivePage(rootNode);
-        if (this.design.css) {
-          this.page.loader.css(this.design.css, doBeforeDocumentReady());
-        }
+        this.page = new InteractivePage({
+          renderNode: rootNode,
+          design: this.design
+        });
         this.renderer = new Renderer({
           snippetTree: this.snippetTree,
           renderingContainer: this.page
         });
-        this.ready.add(function() {
-          return _this.renderer.render();
+        return this.renderer.ready(function() {
+          return _this.ready.fire();
         });
-        return documentReady();
       },
-      loadDesign: function(design) {
-        return this.design = new Design(design);
+      createView: function(parent) {
+        var $parent, createRendererAndResolvePromise, deferred, iframe,
+          _this = this;
+        if (parent == null) {
+          parent = window.document.body;
+        }
+        createRendererAndResolvePromise = function() {
+          var page, renderer;
+          page = new Page({
+            renderNode: iframe.contentDocument.body,
+            hostWindow: iframe.contentWindow,
+            design: _this.design
+          });
+          renderer = new Renderer({
+            renderingContainer: page,
+            snippetTree: _this.snippetTree
+          });
+          return deferred.resolve({
+            iframe: iframe,
+            renderer: renderer
+          });
+        };
+        deferred = $.Deferred();
+        $parent = $(parent).first();
+        iframe = $parent[0].ownerDocument.createElement('iframe');
+        iframe.src = 'about:blank';
+        iframe.onload = createRendererAndResolvePromise;
+        $parent.append(iframe);
+        return deferred.promise();
       },
       eachContainer: function(callback) {
         return this.snippetTree.eachContainer(callback);
@@ -3283,197 +3412,174 @@
 
   })();
 
-  InterfaceInjector = (function() {
-    function InterfaceInjector(_arg) {
-      var _ref, _ref1, _ref2;
-      this.snippet = _arg.snippet, this.snippetContainer = _arg.snippetContainer, this.renderer = _arg.renderer;
-      if (this.snippet) {
-        assert((_ref = this.snippet.snippetView) != null ? _ref.isAttachedToDom : void 0, 'snippet is not attached to the DOM');
-      }
-      if (this.snippetContainer) {
-        if (!this.snippetContainer.isRoot && !((_ref1 = this.snippetContainer.parentSnippet) != null ? (_ref2 = _ref1.snippetView) != null ? _ref2.isAttachedToDom : void 0 : void 0)) {
-          log.error('snippetContainer is not attached to the DOM');
-        }
-      }
-    }
-
-    InterfaceInjector.prototype.before = function($elem) {
-      assert(this.snippet, 'cannot use before on a snippetContainer');
-      this.beforeInjecting($elem);
-      return this.snippet.snippetView.$html.before($elem);
-    };
-
-    InterfaceInjector.prototype.after = function($elem) {
-      assert(this.snippet, 'cannot use after on a snippetContainer');
-      this.beforeInjecting($elem);
-      return this.snippet.snippetView.$html.after($elem);
-    };
-
-    InterfaceInjector.prototype.append = function($elem) {
-      assert(this.snippetContainer, 'cannot use append on a snippet');
-      this.beforeInjecting($elem);
-      return this.renderer.appendToContainer(this.snippetContainer, $elem);
-    };
-
-    InterfaceInjector.prototype.remove = function() {
-      var $elem, _i, _len, _ref;
-      _ref = this.injected;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        $elem = _ref[_i];
-        $elem.remove();
-      }
-      return this.injected = void 0;
-    };
-
-    InterfaceInjector.prototype.beforeInjecting = function($elem) {
-      this.injected || (this.injected = []);
-      this.injected.push($elem);
-      return $elem.addClass(docClass["interface"]);
-    };
-
-    return InterfaceInjector;
-
-  })();
-
   kickstart = (function() {
     return {
-      init: function(destination, design) {
-        var domElements,
+      init: function(_arg) {
+        var design, destination, destinationNode, scriptNode, xmlTemplate,
           _this = this;
-        domElements = $(destination).children().not('script');
-        $(destination).html('<div class="doc-section"></div>');
-        doc.init({
-          design: design
-        });
-        return doc.ready(function() {
-          return domElements.each(function(index, element) {
-            var row;
-            row = doc.add(_this.nodeToSnippetName(element));
-            return _this.setChildren(row, element);
+        xmlTemplate = _arg.xmlTemplate, scriptNode = _arg.scriptNode, destination = _arg.destination, design = _arg.design;
+        if (scriptNode) {
+          xmlTemplate = $(scriptNode).text();
+        }
+        assert(xmlTemplate, 'Please provide parameter "xmlTemplate" or "scriptNode"');
+        destinationNode = $(destination)[0];
+        if (!doc.document.initialized) {
+          doc.init({
+            design: design,
+            rootNode: destinationNode
           });
+        }
+        return doc.ready(function() {
+          var rootSnippets, snippet, _i, _len, _results;
+          rootSnippets = _this.parseDocumentTemplate(xmlTemplate);
+          _results = [];
+          for (_i = 0, _len = rootSnippets.length; _i < _len; _i++) {
+            snippet = rootSnippets[_i];
+            _results.push(doc.add(snippet));
+          }
+          return _results;
         });
       },
-      parseContainers: function(snippet, data) {
-        var child, containers, editableContainer, _i, _j, _len, _len1, _ref, _ref1, _results;
-        containers = snippet.containers ? Object.keys(snippet.containers) : [];
-        if (containers.length === 1 && containers.indexOf('default') !== -1 && !$(data).children('default').length) {
-          _ref = $(data).children();
+      parseDocumentTemplate: function(xmlTemplate) {
+        var root;
+        root = $.parseXML("<root>" + xmlTemplate + "</root>").firstChild;
+        return this.addRootSnippets($(root).children());
+      },
+      addRootSnippets: function(xmlElements) {
+        var index, rootSnippets, snippetModel, xmlElement, _i, _len;
+        rootSnippets = [];
+        for (index = _i = 0, _len = xmlElements.length; _i < _len; index = ++_i) {
+          xmlElement = xmlElements[index];
+          snippetModel = doc.create(this.nodeToSnippetName(xmlElement));
+          rootSnippets.push(snippetModel);
+          this.setChildren(snippetModel, xmlElement);
+        }
+        return rootSnippets;
+      },
+      setChildren: function(snippetModel, snippetXML) {
+        this.populateSnippetContainers(snippetModel, snippetXML);
+        this.setEditables(snippetModel, snippetXML);
+        return this.setEditableStyles(snippetModel, snippetXML);
+      },
+      populateSnippetContainers: function(snippetModel, snippetXML) {
+        var child, container, containerDirective, containers, directives, editableContainer, hasOnlyOneContainer, _i, _j, _len, _len1, _ref, _results, _results1;
+        directives = snippetModel.template.directives;
+        if (directives.length === 1 && directives.container) {
+          hasOnlyOneContainer = true;
+          containerDirective = directives.container[0];
+        }
+        if (hasOnlyOneContainer && !this.descendants(snippetXML, containerDirective.name).length) {
+          _ref = this.descendants(snippetXML);
+          _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             child = _ref[_i];
-            this.parseSnippets(snippet, 'default', child);
+            _results.push(this.appendSnippetToContainer(snippetModel, child, containerDirective.name));
           }
+          return _results;
+        } else {
+          containers = snippetModel.containers ? Object.keys(snippetModel.containers) : [];
+          _results1 = [];
+          for (_j = 0, _len1 = containers.length; _j < _len1; _j++) {
+            container = containers[_j];
+            _results1.push((function() {
+              var _k, _len2, _ref1, _results2;
+              _ref1 = this.descendants(snippetXML, container);
+              _results2 = [];
+              for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
+                editableContainer = _ref1[_k];
+                _results2.push((function() {
+                  var _l, _len3, _ref2, _results3;
+                  _ref2 = this.descendants(editableContainer);
+                  _results3 = [];
+                  for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
+                    child = _ref2[_l];
+                    _results3.push(this.appendSnippetToContainer(snippetModel, child, this.nodeNameToCamelCase(editableContainer)));
+                  }
+                  return _results3;
+                }).call(this));
+              }
+              return _results2;
+            }).call(this));
+          }
+          return _results1;
         }
-        _ref1 = $(containers.join(','), data);
-        _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          editableContainer = _ref1[_j];
-          _results.push((function() {
-            var _k, _len2, _ref2, _results1;
-            _ref2 = $(editableContainer).children();
-            _results1 = [];
-            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-              child = _ref2[_k];
-              _results1.push(this.parseSnippets(snippet, editableContainer.localName, child));
-            }
-            return _results1;
-          }).call(this));
-        }
-        return _results;
       },
-      parseSnippets: function(parentContainer, region, data) {
+      appendSnippetToContainer: function(snippetModel, snippetXML, region) {
         var snippet;
-        snippet = doc.create(this.nodeToSnippetName(data));
-        parentContainer.append(region, snippet);
-        return this.setChildren(snippet, data);
+        snippet = doc.create(this.nodeToSnippetName(snippetXML));
+        snippetModel.append(region, snippet);
+        return this.setChildren(snippet, snippetXML);
       },
-      setChildren: function(snippet, data) {
-        this.parseContainers(snippet, data);
-        return this.setEditables(snippet, data);
-      },
-      setEditables: function(snippet, data) {
-        var child, directive, key, _results;
+      setEditables: function(snippetModel, snippetXML) {
+        var editableName, value, _results;
         _results = [];
-        for (key in snippet.content) {
-          directive = snippet.template.directives.get(key);
-          snippet.set(key, null);
-          child = $(key, data).get()[0];
-          if (key === 'image' && !child) {
-            child = $('img', data).get()[0];
+        for (editableName in snippetModel.content) {
+          value = this.getValueForEditable(editableName, snippetXML, snippetModel.template.directives.length);
+          if (value) {
+            _results.push(snippetModel.set(editableName, value));
+          } else {
+            _results.push(void 0);
           }
-          if (!child) {
-            log('The snippet "' + key + '" has no content. Display parent HTML instead.');
-            child = data;
-          }
-          _results.push(snippet.set(key, child.innerHTML));
         }
         return _results;
+      },
+      getValueForEditable: function(editableName, snippetXML, directivesQuantity) {
+        var child, value;
+        child = this.descendants(snippetXML, editableName)[0];
+        value = this.getXmlValue(child);
+        if (!value && directivesQuantity === 1) {
+          log.warn("The editable '" + editableName + "' of '" + (this.nodeToSnippetName(snippetXML)) + "' has no content. Display parent HTML instead.");
+          value = this.getXmlValue(snippetXML);
+        }
+        return value;
+      },
+      nodeNameToCamelCase: function(element) {
+        return words.camelize(element.nodeName);
+      },
+      setEditableStyles: function(snippetModel, snippetXML) {
+        var style, styles, _i, _len, _results;
+        styles = $(snippetXML).attr(config.kickstart.attr.styles);
+        if (styles) {
+          styles = styles.split(/\s*;\s*/);
+          _results = [];
+          for (_i = 0, _len = styles.length; _i < _len; _i++) {
+            style = styles[_i];
+            style = style.split(/\s*:\s*/);
+            if (style.length > 1) {
+              _results.push(snippetModel.setStyle(style[0], style[1]));
+            } else {
+              _results.push(void 0);
+            }
+          }
+          return _results;
+        }
       },
       nodeToSnippetName: function(element) {
         var snippet, snippetName;
-        snippetName = $.camelCase(element.localName);
-        snippet = doc.document.design.get(snippetName);
-        if (snippetName === 'img' && !snippet) {
-          snippetName = 'image';
-          snippet = doc.document.design.get('image');
-        }
+        snippetName = this.nodeNameToCamelCase(element);
+        snippet = doc.getDesign().get(snippetName);
         assert(snippet, "The Template named '" + snippetName + "' does not exist.");
         return snippetName;
-      }
-    };
-  })();
-
-  Loader = (function() {
-    function Loader() {
-      this.loadedCssFiles = [];
-    }
-
-    Loader.prototype.replaceCss = function(cssUrl, callback) {
-      this.removeCss();
-      return this.css(cssUrl, callback);
-    };
-
-    Loader.prototype.css = function(cssUrl, callback) {
-      var filesToLoad, url;
-      if (!$.isArray(cssUrl)) {
-        cssUrl = [cssUrl];
-      }
-      cssUrl = (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = cssUrl.length; _i < _len; _i++) {
-          url = cssUrl[_i];
-          this.loadedCssFiles.push(url);
-          _results.push(words.prefix('css!', url));
+      },
+      descendants: function(xml, nodeName) {
+        var tagLimiter;
+        if (nodeName) {
+          tagLimiter = words.snakeCase(nodeName);
         }
-        return _results;
-      }).call(this);
-      filesToLoad = cssUrl.length;
-      return yepnope({
-        load: cssUrl,
-        callback: function() {
-          filesToLoad -= 1;
-          if (callback && filesToLoad <= 0) {
-            return callback();
+        return $(xml).children(tagLimiter);
+      },
+      getXmlValue: function(node) {
+        var end, start, string;
+        if (node) {
+          string = new XMLSerializer().serializeToString(node);
+          start = string.indexOf('>') + 1;
+          end = string.lastIndexOf('<');
+          if (end > start) {
+            return string.substring(start, end);
           }
         }
-      });
-    };
-
-    Loader.prototype.removeCss = function(cssUrl) {
-      var url, _i, _len;
-      if ((cssUrl != null) && !$.isArray(cssUrl)) {
-        cssUrl = [cssUrl];
       }
-      cssUrl = cssUrl || this.loadedCssFiles;
-      for (_i = 0, _len = cssUrl.length; _i < _len; _i++) {
-        url = cssUrl[_i];
-        $("link[rel=stylesheet][href~='" + url + "']").remove();
-      }
-      return this.loadedCssFiles = [];
     };
-
-    return Loader;
-
   })();
 
   Renderer = (function() {
@@ -3484,7 +3590,23 @@
       this.$root = $(this.renderingContainer.renderNode);
       this.setupSnippetTreeListeners();
       this.snippetViews = {};
+      this.readySemaphore = new Semaphore();
+      this.renderOncePageReady();
+      this.readySemaphore.start();
     }
+
+    Renderer.prototype.renderOncePageReady = function() {
+      var _this = this;
+      this.readySemaphore.increment();
+      return this.renderingContainer.ready(function() {
+        _this.render();
+        return _this.readySemaphore.decrement();
+      });
+    };
+
+    Renderer.prototype.ready = function(callback) {
+      return this.readySemaphore.addCallback(callback);
+    };
 
     Renderer.prototype.html = function() {
       this.render();
@@ -3567,60 +3689,50 @@
       }
       snippetView = this.snippetViewForSnippet(model);
       snippetView.setAttachedToDom(true);
-      return this.renderingContainer.snippetViewWasInserted(snippetView);
+      this.renderingContainer.snippetViewWasInserted(snippetView);
+      return this.attachChildSnippets(model);
     };
 
     Renderer.prototype.isSnippetAttached = function(model) {
       return model && this.snippetViewForSnippet(model).isAttachedToDom;
     };
 
+    Renderer.prototype.attachChildSnippets = function(model) {
+      var _this = this;
+      return model.children(function(childModel) {
+        if (!_this.isSnippetAttached(childModel)) {
+          return _this.insertSnippet(childModel);
+        }
+      });
+    };
+
     Renderer.prototype.insertSnippetAsSibling = function(sibling, model) {
-      var method, siblingSnippetView, snippetView;
+      var method;
       method = sibling === model.previous ? 'after' : 'before';
-      snippetView = this.snippetViewForSnippet(model);
-      siblingSnippetView = this.snippetViewForSnippet(sibling);
-      return siblingSnippetView.$html[method](snippetView.$html);
+      return this.$nodeForSnippet(sibling)[method](this.$nodeForSnippet(model));
     };
 
     Renderer.prototype.appendSnippetToParentContainer = function(model) {
-      var $snippetViewHtml, container, parentContainer, parentSnippetView;
-      parentContainer = model.parentContainer;
-      $snippetViewHtml = this.snippetViewForSnippet(model).$html;
-      container = parentContainer.isRoot ? this.$root : (parentSnippetView = this.snippetViewForSnippet(parentContainer.parentSnippet), parentSnippetView.getDirectiveElement(parentContainer.name));
-      return $snippetViewHtml.appendTo(container);
+      return this.$nodeForSnippet(model).appendTo(this.$nodeForContainer(model.parentContainer));
+    };
+
+    Renderer.prototype.$nodeForSnippet = function(model) {
+      return this.snippetViewForSnippet(model).$html;
+    };
+
+    Renderer.prototype.$nodeForContainer = function(container) {
+      var parentView;
+      if (container.isRoot) {
+        return this.$root;
+      } else {
+        parentView = this.snippetViewForSnippet(container.parentSnippet);
+        return $(parentView.getDirectiveElement(container.name));
+      }
     };
 
     Renderer.prototype.removeSnippet = function(model) {
-      var snippetView;
-      snippetView = this.snippetViewForSnippet(model);
-      snippetView.setAttachedToDom(false);
-      return snippetView.$html.detach();
-    };
-
-    Renderer.prototype.createInterfaceInjector = function(snippetOrContainer) {
-      if (snippetOrContainer instanceof SnippetModel) {
-        return this.createSnippetInterfaceInjector(snippetOrContainer);
-      } else if (snippetOrContainer instanceof SnippetContainer) {
-        return this.createSnippetContainerInterfaceInjector(snippetOrContainer);
-      }
-    };
-
-    Renderer.prototype.createSnippetInterfaceInjector = function(model) {
-      if (model.uiInjector === void 0) {
-        return model.uiInjector = new InterfaceInjector({
-          snippet: model,
-          renderer: this
-        });
-      }
-    };
-
-    Renderer.prototype.createSnippetContainerInterfaceInjector = function(snippetContainer) {
-      if (snippetContainer.uiInjector === void 0) {
-        return snippetContainer.uiInjector = new InterfaceInjector({
-          snippetContainer: snippetContainer,
-          renderer: this
-        });
-      }
+      this.snippetViewForSnippet(model).setAttachedToDom(false);
+      return this.$nodeForSnippet(model).detach();
     };
 
     return Renderer;
@@ -3733,15 +3845,6 @@
 
   })();
 
-  SnippetSelection = (function() {
-    function SnippetSelection() {
-      this.snippets = [];
-    }
-
-    return SnippetSelection;
-
-  })();
-
   SnippetView = (function() {
     function SnippetView(_arg) {
       this.model = _arg.model, this.$html = _arg.$html, this.directives = _arg.directives, this.isReadOnly = _arg.isReadOnly;
@@ -3762,7 +3865,7 @@
     SnippetView.prototype.updateContent = function() {
       this.content(this.model.content);
       if (!this.hasFocus()) {
-        this.hideEmptyOptionals();
+        this.displayOptionals();
       }
       return this.stripHtmlIfReadOnly();
     };
@@ -3775,6 +3878,21 @@
         this.style(name, value);
       }
       return this.stripHtmlIfReadOnly();
+    };
+
+    SnippetView.prototype.displayOptionals = function() {
+      var _this = this;
+      return this.directives.each(function(directive) {
+        var $elem;
+        if (directive.optional) {
+          $elem = $(directive.elem);
+          if (_this.model.isEmpty(directive.name)) {
+            return $elem.css('display', 'none');
+          } else {
+            return $elem.css('display', '');
+          }
+        }
+      });
     };
 
     SnippetView.prototype.showOptionals = function() {
@@ -3874,7 +3992,7 @@
       $elem = this.directives.$getElem(name);
       placeholder = value ? config.zeroWidthCharacter : this.template.defaults[name];
       $elem.attr(config.html.attr.placeholder, placeholder);
-      return $elem.html(value);
+      return $elem.html(value || '');
     };
 
     SnippetView.prototype.focusEditable = function(name) {
@@ -3900,8 +4018,12 @@
     SnippetView.prototype.setHtml = function(name, value) {
       var $elem;
       $elem = this.directives.$getElem(name);
-      $elem.html(value);
-      this.blockInteraction($elem);
+      $elem.html(value || '');
+      if (!value) {
+        $elem.html(this.template.defaults[name]);
+      } else if (value && !this.isReadOnly) {
+        this.blockInteraction($elem);
+      }
       this.directivesToReset || (this.directivesToReset = {});
       return this.directivesToReset[name] = name;
     };
@@ -4118,6 +4240,7 @@
     this.kickstart = chainable(kickstart, 'init');
     this.init = chainable(document, 'init');
     this.ready = chainable(document.ready, 'add');
+    this.createView = $.proxy(document, 'createView');
     this.getDesign = function() {
       return document.design;
     };
