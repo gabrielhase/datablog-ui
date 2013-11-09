@@ -49,6 +49,11 @@ do ->
         placeholder: 'data-doc-placeholder'
 
 
+    # kickstart config
+    kickstart:
+      attr:
+        styles: 'doc-styles'
+
     # Directive definitions
     #
     # attr: attribute used in templates to define the directive
@@ -89,10 +94,7 @@ do ->
           $elem.slideDown(250)
 
         hide: ($elem) ->
-          if $elem.css('display') == 'block'
-            $elem.slideUp(250)
-          else
-            $elem.hide()
+          $elem.slideUp(250)
 
 
     editable:
@@ -249,17 +251,36 @@ htmlCompare = do ->
 
 
   compareAttributes: (a, b) ->
-    if a.attributes.length == b.attributes.length
-      for attr in a.attributes
-        bValue = b.getAttribute(attr.name)
-        return false if not @compareAttributeValue(attr.name, attr.value, bValue)
+    @compareAttributesWithOther(a, b) &&
+    @compareAttributesWithOther(b, a)
 
-      return true
+
+  compareAttributesWithOther: (a, b) ->
+    for aAttr in a.attributes
+      bValue = b.getAttribute(aAttr.name)
+      return false if not @compareAttributeValue(aAttr.name, aAttr.value, bValue)
+
+      if  @isEmptyAttributeValue(aAttr.value) &&
+          @emptyAttributeCounts(aAttr.name)
+        return false if not b.hasAttribute(aAttr.name)
+
+    return true
+
+
+  emptyAttributeCounts: (attrName) ->
+    switch attrName
+      when 'class', 'style'
+        return false
+      else
+        return true
 
 
   compareAttributeValue: (attrName, aValue, bValue) ->
-    return true if not aValue? and not bValue?
-    return false if not aValue? or not bValue?
+    return true if  @isEmptyAttributeValue(aValue) &&
+                    @isEmptyAttributeValue(bValue)
+
+    return false if @isEmptyAttributeValue(aValue) ||
+                    @isEmptyAttributeValue(bValue)
 
     switch attrName
       when 'class'
@@ -272,6 +293,11 @@ htmlCompare = do ->
         aCleaned == bCleaned
       else
         aValue == bValue
+
+
+  # consider undefined, null and '' as empty
+  isEmptyAttributeValue: (val) ->
+    not val? || val == ''
 
 
   prepareStyleValue: (val) ->
@@ -512,6 +538,16 @@ log = (args...) ->
 
 do ->
 
+  # Custom error type for livingdocs.
+  # We can use this to track the origin of an expection in unit tests.
+  class LivingdocsError extends Error
+
+    constructor: (message) ->
+      super
+      @message = message
+      @thrownByLivingdocs = true
+
+
   # @param level: one of these strings:
   # 'critical', 'error', 'warning', 'info', 'debug'
   notify = (message, level = 'error') ->
@@ -523,7 +559,7 @@ do ->
           log.call(undefined, message)
     else
       if (level == 'critical' or level == 'error')
-        throw new Error(message)
+        throw new LivingdocsError(message)
       else
         log.call(undefined, message)
 
@@ -561,6 +597,78 @@ mixins = (mixins...) ->
       Mixed::[name] = method
 
   Mixed
+
+# This class can be used to wait for tasks to finish before firing a series of
+# callbacks. Once start() is called, the callbacks fire as soon as the count
+# reaches 0. Thus, you should increment the count before starting it. When
+# adding a callback after having fired causes the callback to be called right
+# away. Incrementing the count after it fired results in an error.
+#
+# @example
+#
+#   semaphore = new Semaphore()
+#
+#   semaphore.increment()
+#   doSomething().then(semaphore.decrement())
+#
+#   doAnotherThingThatTakesACallback(semaphore.wait())
+#
+#   semaphore.start()
+#
+#   semaphore.addCallback(-> print('hello'))
+#
+#   # Once count reaches 0 callback is executed:
+#   # => 'hello'
+#
+#   # Assuming that semaphore was already fired:
+#   semaphore.addCallback(-> print('this will print immediately'))
+#   # => 'this will print immediately'
+class Semaphore
+
+  constructor: ->
+    @count = 0
+    @started = false
+    @wasFired = false
+    @callbacks = []
+
+
+  addCallback: (callback) ->
+    if @wasFired
+      callback()
+    else
+      @callbacks.push(callback)
+
+
+  start: ->
+    assert not @started,
+      "Unable to start Semaphore once started."
+    @started = true
+    @fireIfReady()
+
+
+  increment: ->
+    assert not @wasFired,
+      "Unable to increment count once Semaphore is fired."
+    @count += 1
+
+
+  decrement: ->
+    assert @count > 0,
+      "Unable to decrement count resulting in negative count."
+    @count -= 1
+    @fireIfReady()
+
+
+  wait: ->
+    @increment()
+    => @decrement()
+
+
+  # @private
+  fireIfReady: ->
+    if @count == 0 && @started == true
+      @wasFired = true
+      callback() for callback in @callbacks
 
 stash = do ->
   initialized = false
@@ -649,6 +757,10 @@ stash = do ->
   readableJson: (obj) ->
     JSON.stringify(obj, null, 2) # "\t"
 
+  camelize: (str) ->
+    $.trim(str).replace(/[-_\s]+(.)?/g, (match, c) ->
+      c.toUpperCase()
+    )
 
   trim: (str) ->
     str.replace(/^\s+|\s+$/g, '')
@@ -680,6 +792,9 @@ class RenderingContainer
 
   constructor: ->
     @renderNode = $('<div/>')[0]
+    @readySemaphore = new Semaphore()
+    @beforeReady()
+    @readySemaphore.start()
 
 
   html: ->
@@ -688,20 +803,43 @@ class RenderingContainer
 
   snippetViewWasInserted: (snippetView) ->
 
+
+  # This is called before the semaphore is started to give subclasses a chance
+  # to increment the semaphore so it does not fire immediately.
+  beforeReady: ->
+
+
+  ready: (callback) ->
+    @readySemaphore.addCallback(callback)
+
 # A Page is a subclass of RenderingContainer which is intended to be shown to
 # the user. It has a Loader which allows you to inject CSS and JS files into the
 # page.
 class Page extends RenderingContainer
 
-  constructor: (renderNode) ->
+  constructor: ({ renderNode, readOnly, hostWindow, @design }={}) ->
+    @isReadOnly = readOnly if readOnly?
+    @setWindow(hostWindow)
+
     super()
 
-    @document = window.document
+    renderNode = renderNode || $(".#{ docClass.section }", @$body)
+    if renderNode.jquery
+      @renderNode = renderNode[0]
+    else
+      @renderNode = renderNode
+
+
+  beforeReady: ->
+    @cssLoader = new CssLoader(@window)
+    @cssLoader.load(@design.css, @readySemaphore.wait()) if @design?.css
+
+
+  setWindow: (hostWindow) ->
+    @window = hostWindow || window
+    @document = @window.document
     @$document = $(@document)
     @$body = $(@document.body)
-    @renderNode = renderNode || $(".#{ docClass.section }")[0]
-
-    @loader = new Loader()
 
 # An InteractivePage is a subclass of Page which allows for manipulation of the
 # rendered SnippetTree.
@@ -712,8 +850,8 @@ class InteractivePage extends Page
   isReadOnly: false
 
 
-  constructor: (renderNode) ->
-    super(renderNode)
+  constructor: ({ renderNode, hostWindow }={}) ->
+    super
 
     @focus = new Focus()
     @editableController = new EditableController(this)
@@ -847,7 +985,7 @@ class InteractivePage extends Page
       editableNodes = for directive in snippetView.directives.editable
         directive.elem
 
-    @editableController.add(editableNodes)
+      @editableController.add(editableNodes)
 
 
   afterSnippetFocused: (snippetView) ->
@@ -856,68 +994,6 @@ class InteractivePage extends Page
 
   afterSnippetBlurred: (snippetView) ->
     snippetView.afterBlurred()
-
-# History
-# -------
-# Represents the performed actions in a document
-class History
-
-  history: []
-
-  constructor: () ->
-    #todo
-
-
-  # add an action to the history
-  add: () ->
-    #todo
-
-
-  # track the saved state
-  saved: () ->
-    #todo
-
-
-  # The history is dirty if there are unsaved actions in the history
-  isDirty: () ->
-    return false if history.length == 0
-
-
-
-class HistoryAction
-
-  constructor: () ->
-    #todo
-
-class ModelDirectives
-
-  constructor: (snippetModel, templateDirectives) ->
-    @editables = @images = @containers = { length: 0 }
-
-    for directive in templateDirectives
-      @all[directive.name] = directive
-
-      list = switch directive.type
-        when 'editable'
-          @editables
-        when 'image'
-          @images
-        when 'container'
-          @containers
-
-      @addDirective(list, directive, snippetModel)
-
-
-    addDirective: (list, directive, snippetModel) ->
-      listElem = directive
-      if directive.type == 'container'
-        listElem = new SnippetContainer
-          name: directive.name
-          parentSnippet: snippetModel
-
-      list[list.length] = listElem
-      list.length += 1
-      @length += 1
 
 # jQuery like results when searching for snippets.
 # `doc("hero")` will return a SnippetArray that works similar to a jQuery object.
@@ -1495,8 +1571,6 @@ class SnippetTree
       @fromJson(content, design)
 
     @root.snippetTree = this
-
-    @history = new History()
     @initializeEvents()
 
 
@@ -1941,25 +2015,11 @@ class DirectiveIterator
 
 # Template
 # --------
-# Parses snippet templates and creates snippet html.
-#
-# __Methods:__
-# @snippet() create new snippets with content
-#
-# Consider: allow tags to be optional. These tags can then be hidden by
-# the user. The template needs to know where to reinsert the tag if it is
-# reinserted again.
-# Options could be to set `display:none` or to remove the element and
-# leave a marker instead.
-# (a comment or a script tag like ember does for example)
-#
-# Consider: Replace lists with inline Templates. Inline
-# Templates are repeatable and can only be used inside their
-# defining snippet.
+# Parses snippet templates and creates SnippetModels and SnippetViews.
 class Template
 
 
-  constructor: ({ html, @namespace, @id, identifier, title, styles, weight, version } = {}) ->
+  constructor: ({ html, @namespace, @id, identifier, title, styles, weight } = {}) ->
     assert html, 'Template: param html missing'
 
     if identifier
@@ -1968,7 +2028,6 @@ class Template
     @identifier = if @namespace && @id
       "#{ @namespace }.#{ @id }"
 
-    @version = version || 1
     @$template = $( @pruneHtml(html) ).wrap('<div>')
     @$wrap = @$template.parent()
 
@@ -2018,6 +2077,8 @@ class Template
           @formatEditable(directive.name, directive.elem)
         when 'container'
           @formatContainer(directive.name, directive.elem)
+        when 'html'
+          @formatHtml(directive.name, directive.elem)
 
 
   # In the html of the template find and store all DOM nodes
@@ -2059,9 +2120,10 @@ class Template
     elem.innerHTML = ''
 
 
-  # alias to lists
-  list: (listName) ->
-    @lists[listName]
+  formatHtml: (name, elem) ->
+    defaultValue = words.trim(elem.innerHTML)
+    @defaults[name] = defaultValue if defaultValue
+    elem.innerHTML = ''
 
 
   # output the accepted content of the snippet
@@ -2089,6 +2151,41 @@ Template.parseIdentifier = (identifier) ->
     { namespace: parts[0], id: parts[1] }
   else
     log.error("could not parse snippet template identifier: #{ identifier }")
+
+class CssLoader
+
+  constructor: (@window) ->
+    @loadedUrls = []
+
+
+  load: (urls, callback=$.noop) ->
+    urls = [urls] unless $.isArray(urls)
+    semaphore = new Semaphore()
+    semaphore.addCallback(callback)
+    @loadSingleUrl(url, semaphore.wait()) for url in urls
+    semaphore.start()
+
+
+  # @private
+  loadSingleUrl: (url, callback=$.noop) ->
+    if @isUrlLoaded(url)
+      callback()
+    else
+      link = $('<link rel="stylesheet" type="text/css" />')[0]
+      link.onload = callback
+      link.href = url
+      @window.document.head.appendChild(link)
+      @markUrlAsLoaded(url)
+
+
+  # @private
+  isUrlLoaded: (url) ->
+    @loadedUrls.indexOf(url) >= 0
+
+
+  # @private
+  markUrlAsLoaded: (url) ->
+    @loadedUrls.push(url)
 
 class Design
 
@@ -2326,23 +2423,6 @@ class DesignStyle
 # Link the SnippetTree with the DomTree.
 document = do ->
 
-  # Private Closure
-  # ---------------
-
-  waitingCalls = 1 # 1 -> init
-
-
-  documentReady = =>
-    waitingCalls -= 1
-    if waitingCalls == 0
-      document.ready.fire()
-
-
-  doBeforeDocumentReady = () ->
-    waitingCalls += 1
-    return documentReady
-
-
   # Document object
   # ---------------
 
@@ -2355,11 +2435,12 @@ document = do ->
   # *Public API*
   init: ({ design, json, rootNode }={}) ->
     if @initialized
-      return documentReady()
+      return
+    #  return documentReady()
     #assert not @initialized, 'document is already initialized'
     @initialized = true
 
-    @loadDesign(design)
+    @design = new Design(design)
 
     @snippetTree = if json && @design
       new SnippetTree(content: json, design: @design)
@@ -2371,25 +2452,37 @@ document = do ->
       @changed.fire()
 
     # Page initialization
-    @page = new InteractivePage(rootNode)
-
-    # load design assets into page
-    if @design.css
-      @page.loader.css(@design.css, doBeforeDocumentReady())
+    @page = new InteractivePage(renderNode: rootNode, design: @design)
 
     # render document
     @renderer = new Renderer
       snippetTree: @snippetTree
       renderingContainer: @page
 
-    @ready.add =>
-      @renderer.render()
-
-    documentReady()
+    @renderer.ready => @ready.fire()
 
 
-  loadDesign: (design) ->
-    @design = new Design(design)
+  createView: (parent=window.document.body) ->
+    createRendererAndResolvePromise = =>
+      page = new Page
+        renderNode: iframe.contentDocument.body
+        hostWindow: iframe.contentWindow
+        design: @design
+      renderer = new Renderer
+        renderingContainer: page
+        snippetTree: @snippetTree
+      deferred.resolve
+        iframe: iframe
+        renderer: renderer
+
+    deferred = $.Deferred()
+    $parent = $(parent).first()
+    iframe = $parent[0].ownerDocument.createElement('iframe')
+    iframe.src = 'about:blank'
+    iframe.onload = createRendererAndResolvePromise
+    $parent.append(iframe)
+
+    deferred.promise()
 
 
   eachContainer: (callback) ->
@@ -3183,160 +3276,123 @@ class Focus
 
 
 
-class InterfaceInjector
-
-  constructor: ({ @snippet, @snippetContainer, @renderer }) ->
-    if @snippet
-      assert @snippet.snippetView?.isAttachedToDom,
-        'snippet is not attached to the DOM'
-
-    if @snippetContainer
-      if not @snippetContainer.isRoot && not @snippetContainer.parentSnippet?.snippetView?.isAttachedToDom
-        log.error('snippetContainer is not attached to the DOM')
-
-
-  before: ($elem) ->
-    assert @snippet, 'cannot use before on a snippetContainer'
-    @beforeInjecting($elem)
-    @snippet.snippetView.$html.before($elem)
-
-
-  after: ($elem) ->
-    assert @snippet, 'cannot use after on a snippetContainer'
-    @beforeInjecting($elem)
-    @snippet.snippetView.$html.after($elem)
-
-
-  append: ($elem) ->
-    assert @snippetContainer, 'cannot use append on a snippet'
-    @beforeInjecting($elem)
-    @renderer.appendToContainer(@snippetContainer, $elem)
-
-
-  remove: () ->
-    for $elem in @injected
-      $elem.remove()
-
-    @injected = undefined
-
-
-  beforeInjecting: ($elem) ->
-    @injected ||= []
-    @injected.push($elem)
-    $elem.addClass(docClass.interface)
-
 kickstart = do ->
 
-  init: (destination, design) ->
-    domElements = $(destination).children().not('script')
-    $(destination).html('<div class="doc-section"></div>')
-    doc.init(design: design)
+  init: ({ xmlTemplate, scriptNode, destination, design }) ->
+    if scriptNode
+      xmlTemplate = $(scriptNode).text()
+
+    assert xmlTemplate, 'Please provide parameter "xmlTemplate" or "scriptNode"'
+
+    destinationNode = $(destination)[0]
+    if not doc.document.initialized
+      doc.init(design: design, rootNode: destinationNode)
+
     doc.ready =>
-      #add all root snippets, set their editables
-      domElements.each (index, element) =>
-        row = doc.add(@nodeToSnippetName(element))
-        @setChildren(row, element)
+      rootSnippets = @parseDocumentTemplate(xmlTemplate)
+      for snippet in rootSnippets
+        doc.add(snippet)
 
 
-  parseContainers: (snippet, data) ->
-    containers = if snippet.containers then Object.keys(snippet.containers) else []
-    if containers.length == 1 && containers.indexOf('default') != -1 && !$(data).children('default').length
-      for child in $(data).children()
-        @parseSnippets(snippet, 'default', child)
-
-    for editableContainer in $(containers.join(','), data)
-      for child in $(editableContainer).children()
-        @parseSnippets(snippet, editableContainer.localName, child)
+  parseDocumentTemplate: (xmlTemplate) ->
+    root = $.parseXML("<root>#{xmlTemplate}</root>").firstChild
+    @addRootSnippets($(root).children())
 
 
-  parseSnippets: (parentContainer, region, data) ->
-    snippet = doc.create(@nodeToSnippetName(data))
-    parentContainer.append(region, snippet)
-    @setChildren(snippet, data)
+  addRootSnippets: (xmlElements) ->
+    rootSnippets = []
+    for xmlElement, index in xmlElements
+      snippetModel = doc.create(@nodeToSnippetName(xmlElement))
+      rootSnippets.push(snippetModel)
+      @setChildren(snippetModel, xmlElement)
+
+    rootSnippets
 
 
-  setChildren: (snippet, data) ->
-    @parseContainers(snippet, data)
-    @setEditables(snippet, data)
+  setChildren: (snippetModel, snippetXML) ->
+    @populateSnippetContainers(snippetModel, snippetXML)
+    @setEditables(snippetModel, snippetXML)
+    @setEditableStyles(snippetModel, snippetXML)
 
 
-  setEditables: (snippet, data) ->
-    for key of snippet.content
-      directive = snippet.template.directives.get(key)
-      snippet.set(key, null)
-      child = $(key, data).get()[0]
+  populateSnippetContainers: (snippetModel, snippetXML) ->
+    directives = snippetModel.template.directives
+    if directives.length == 1 && directives.container
+      hasOnlyOneContainer = true
+      containerDirective = directives.container[0]
 
-      if key == 'image' && !child
-        child = $('img', data).get()[0]
+    # add snippets to default container if no other containers exists
+    if hasOnlyOneContainer && !@descendants(snippetXML, containerDirective.name).length
+      for child in @descendants(snippetXML)
+        @appendSnippetToContainer(snippetModel, child, containerDirective.name)
 
-      if !child
-        log('The snippet "' + key + '" has no content. Display parent HTML instead.')
-        child = data
+    else
+      containers = if snippetModel.containers then Object.keys(snippetModel.containers) else []
+      for container in containers
+        for editableContainer in @descendants(snippetXML, container)
+          for child in @descendants(editableContainer)
+            @appendSnippetToContainer(snippetModel, child, @nodeNameToCamelCase(editableContainer))
 
-      snippet.set(key, child.innerHTML)
+
+  appendSnippetToContainer: (snippetModel, snippetXML, region) ->
+    snippet = doc.create(@nodeToSnippetName(snippetXML))
+    snippetModel.append(region, snippet)
+    @setChildren(snippet, snippetXML)
+
+
+  setEditables: (snippetModel, snippetXML) ->
+    for editableName of snippetModel.content
+      value = @getValueForEditable(editableName, snippetXML, snippetModel.template.directives.length)
+      snippetModel.set(editableName, value) if value
+
+
+  getValueForEditable: (editableName, snippetXML, directivesQuantity) ->
+    child = @descendants(snippetXML, editableName)[0]
+    value = @getXmlValue(child)
+
+    if !value && directivesQuantity == 1
+      log.warn("The editable '#{editableName}' of '#{@nodeToSnippetName(snippetXML)}' has no content. Display parent HTML instead.")
+      value = @getXmlValue(snippetXML)
+
+    value
+
+
+  nodeNameToCamelCase: (element) ->
+    words.camelize(element.nodeName)
+
+
+  setEditableStyles: (snippetModel, snippetXML) ->
+    styles = $(snippetXML).attr(config.kickstart.attr.styles)
+    if styles
+      styles = styles.split(/\s*;\s*/)
+      for style in styles
+        style = style.split(/\s*:\s*/)
+        snippetModel.setStyle(style[0], style[1]) if style.length > 1
 
 
   # Convert a dom element into a camelCase snippetName
   nodeToSnippetName: (element) ->
-    snippetName = $.camelCase(element.localName)
-    snippet = doc.document.design.get(snippetName)
-
-    # check deprecated HTML elements that automatically convert to new element name.
-    if snippetName == 'img' && !snippet
-      snippetName = 'image'
-      snippet = doc.document.design.get('image')
+    snippetName = @nodeNameToCamelCase(element)
+    snippet = doc.getDesign().get(snippetName)
 
     assert snippet,
       "The Template named '#{snippetName}' does not exist."
 
     snippetName
 
-# Script Loader
-# -------------
-# Loading of Javascript and CSS files using yepnope
-class Loader
 
-  constructor: ->
-    @loadedCssFiles = []
+  descendants: (xml, nodeName) ->
+    tagLimiter = words.snakeCase(nodeName) if nodeName
+    $(xml).children(tagLimiter)
 
 
-  replaceCss: (cssUrl, callback) ->
-    @removeCss()
-    @css(cssUrl, callback)
-
-
-  # laod css files
-  # @param cssUrl: can be either a string or an array
-  # @param callback: callback when all scripts are loaded
-  css: (cssUrl, callback) ->
-    cssUrl = [cssUrl] if !$.isArray(cssUrl)
-
-    # add `css!` prefix to urls so yepnope always treats them as css files
-    cssUrl = for url in cssUrl
-      @loadedCssFiles.push(url)
-      words.prefix('css!', url)
-
-    # yepnope calls the callback for each file to load
-    # but we want to execute the callback only once all files are loaded
-    filesToLoad = cssUrl.length
-
-    yepnope
-      load: cssUrl
-      callback: () ->
-        filesToLoad -= 1
-        callback() if callback && filesToLoad <= 0 # < is for the case where the array is empty
-
-
-  # @param cssUrl: string or array. if not passed all loaded css files
-  # will be unloaded
-  removeCss: (cssUrl) ->
-    cssUrl = [cssUrl] if cssUrl? && !$.isArray(cssUrl)
-    cssUrl =  cssUrl || @loadedCssFiles
-
-    for url in cssUrl
-      $("link[rel=stylesheet][href~='#{ url }']").remove()
-
-    @loadedCssFiles = []
+  getXmlValue: (node) ->
+    if node
+      string = new XMLSerializer().serializeToString(node)
+      start = string.indexOf('>') + 1
+      end = string.lastIndexOf('<')
+      if end > start
+        string.substring(start, end)
 
 class Renderer
 
@@ -3348,6 +3404,21 @@ class Renderer
     @$root = $(@renderingContainer.renderNode)
     @setupSnippetTreeListeners()
     @snippetViews = {}
+
+    @readySemaphore = new Semaphore()
+    @renderOncePageReady()
+    @readySemaphore.start()
+
+
+  renderOncePageReady: ->
+    @readySemaphore.increment()
+    @renderingContainer.ready =>
+      @render()
+      @readySemaphore.decrement()
+
+
+  ready: (callback) ->
+    @readySemaphore.addCallback(callback)
 
 
   html: ->
@@ -3434,61 +3505,43 @@ class Renderer
     snippetView = @snippetViewForSnippet(model)
     snippetView.setAttachedToDom(true)
     @renderingContainer.snippetViewWasInserted(snippetView)
+    @attachChildSnippets(model)
 
 
   isSnippetAttached: (model) ->
     model && @snippetViewForSnippet(model).isAttachedToDom
 
 
+  attachChildSnippets: (model) ->
+    model.children (childModel) =>
+      if not @isSnippetAttached(childModel)
+        @insertSnippet(childModel)
+
+
   insertSnippetAsSibling: (sibling, model) ->
     method = if sibling == model.previous then 'after' else 'before'
-    snippetView = @snippetViewForSnippet(model)
-    siblingSnippetView = @snippetViewForSnippet(sibling)
-    siblingSnippetView.$html[method](snippetView.$html)
+    @$nodeForSnippet(sibling)[method](@$nodeForSnippet(model))
 
 
   appendSnippetToParentContainer: (model) ->
-    parentContainer = model.parentContainer
-    $snippetViewHtml = @snippetViewForSnippet(model).$html
+    @$nodeForSnippet(model).appendTo(@$nodeForContainer(model.parentContainer))
 
-    container = if parentContainer.isRoot
+
+  $nodeForSnippet: (model) ->
+    @snippetViewForSnippet(model).$html
+
+
+  $nodeForContainer: (container) ->
+    if container.isRoot
       @$root
     else
-      parentSnippetView = @snippetViewForSnippet(parentContainer.parentSnippet)
-      parentSnippetView.getDirectiveElement(parentContainer.name)
-
-    $snippetViewHtml.appendTo(container)
+      parentView = @snippetViewForSnippet(container.parentSnippet)
+      $(parentView.getDirectiveElement(container.name))
 
 
   removeSnippet: (model) ->
-    snippetView = @snippetViewForSnippet(model)
-    snippetView.setAttachedToDom(false)
-    snippetView.$html.detach()
-
-
-  # UI Inserts
-  # ----------
-
-  createInterfaceInjector: (snippetOrContainer) ->
-    if snippetOrContainer instanceof SnippetModel
-      @createSnippetInterfaceInjector(snippetOrContainer)
-    else if snippetOrContainer instanceof SnippetContainer
-      @createSnippetContainerInterfaceInjector(snippetOrContainer)
-
-
-  createSnippetInterfaceInjector: (model) ->
-    if model.uiInjector == undefined
-      model.uiInjector = new InterfaceInjector
-        snippet: model
-        renderer: this
-
-
-  createSnippetContainerInterfaceInjector: (snippetContainer) ->
-    if snippetContainer.uiInjector == undefined
-      snippetContainer.uiInjector = new InterfaceInjector
-        snippetContainer: snippetContainer
-        renderer: this
-
+    @snippetViewForSnippet(model).setAttachedToDom(false)
+    @$nodeForSnippet(model).detach()
 
 
 class SnippetDrag
@@ -3589,17 +3642,6 @@ class SnippetDrag
       #consider: maybe add a 'drop failed' effect
 
 
-# SnippetSelection
-# ----------------
-# Manage selection and manipulation of multiple snippets at once
-class SnippetSelection
-
-  constructor: () ->
-    @snippets = []
-
-
-
-
 class SnippetView
 
   constructor: ({ @model, @$html, @directives, @isReadOnly }) ->
@@ -3626,7 +3668,7 @@ class SnippetView
     @content(@model.content)
 
     if not @hasFocus()
-      @hideEmptyOptionals()
+      @displayOptionals()
 
     @stripHtmlIfReadOnly()
 
@@ -3638,7 +3680,18 @@ class SnippetView
     @stripHtmlIfReadOnly()
 
 
+  displayOptionals: ->
+    @directives.each (directive) =>
+      if directive.optional
+        $elem = $(directive.elem)
+        if @model.isEmpty(directive.name)
+          $elem.css('display', 'none')
+        else
+          $elem.css('display', '')
+
+
   # Show all doc-optionals whether they are empty or not.
+  # Use on focus.
   showOptionals: ->
     @directives.each (directive) =>
       if directive.optional
@@ -3646,6 +3699,7 @@ class SnippetView
 
 
   # Hide all empty doc-optionals
+  # Use on blur.
   hideEmptyOptionals: ->
     @directives.each (directive) =>
       if directive.optional && @model.isEmpty(directive.name)
@@ -3718,7 +3772,7 @@ class SnippetView
       @template.defaults[name]
 
     $elem.attr(config.html.attr.placeholder, placeholder)
-    $elem.html(value)
+    $elem.html(value || '')
 
 
   focusEditable: (name) ->
@@ -3739,8 +3793,12 @@ class SnippetView
 
   setHtml: (name, value) ->
     $elem = @directives.$getElem(name)
-    $elem.html(value)
-    @blockInteraction($elem)
+    $elem.html(value || '')
+
+    if not value
+      $elem.html(@template.defaults[name])
+    else if value and not @isReadOnly
+      @blockInteraction($elem)
 
     @directivesToReset ||= {}
     @directivesToReset[name] = name
@@ -3920,6 +3978,8 @@ setupApi = ->
     # Initialize the document
   @init = chainable(document, 'init')
   @ready = chainable(document.ready, 'add')
+
+  @createView = $.proxy(document, 'createView')
 
   # Add Templates to the documents
   @getDesign = -> document.design
