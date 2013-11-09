@@ -56,10 +56,10 @@ angular.module('ldEditor').factory 'livingdocsService',
           bottom: positionService.mouse().y
           left: positionService.mouse().x
           width: 0  # mouse pointer is sooooo slim :)
-        $rootScope.$apply(
-          uiStateService.set('imagePopover',
-            boundingBox: boundingBox
-            image: snippet
-            imagePath: imagePath
-          )
-        )
+        # $rootScope.$apply(
+        #   uiStateService.set('imagePopover',
+        #     boundingBox: boundingBox
+        #     image: snippet
+        #     imagePath: imagePath
+        #   )
+        # )
