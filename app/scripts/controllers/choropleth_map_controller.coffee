@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'ChoroplethMapController',
 class ChoroplethMapController
 
-  constructor: (@$scope, @ngProgress, @mapMediatorService) ->
+  constructor: (@$scope, @ngProgress, @mapMediatorService, @$timeout) ->
     @choroplethMapInstance = @mapMediatorService.getUIModel(@$scope.mapId)
     @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
 
@@ -9,6 +9,14 @@ class ChoroplethMapController
       lastPositioned: (new Date()).getTime()
 
     @setupSnippetChangeListener()
+    @$timeout => # the timeout makes sure that the choropleth property listeners are already setup
+      @initScope()
+
+
+  initScope: ->
+    for trackedProperty in choroplethMapConfig.trackedProperties
+      if propertyValue = @snippetModel.data(trackedProperty)
+        @$scope[trackedProperty] = propertyValue
 
 
   setupSnippetChangeListener: ->
