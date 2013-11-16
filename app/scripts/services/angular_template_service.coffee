@@ -1,5 +1,7 @@
 angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compile, mapMediatorService) ->
 
+  yepnopeQueue = {}
+
   # Service
 
   isAngularTemplate: (snippetModel) ->
@@ -31,11 +33,17 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     dependency = $node.data('dependency')
     resourceList = $node.data('dependency-resources')
     if dependency
+      cb = yepnopeQueue[dependency]
+      unless cb
+        cb = $.Callbacks()
+        yepnopeQueue[dependency] = cb
+      cb.add(callback)
+
       yepnope [{
         test: window.hasOwnProperty(dependency)
         nope: resourceList.split(';')
         complete: =>
-          callback()
+          yepnopeQueue[dependency].fire()
       }]
     else
       callback()
