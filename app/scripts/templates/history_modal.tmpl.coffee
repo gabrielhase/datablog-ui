@@ -9,8 +9,19 @@ htmlTemplates.historyModal = """
   <div ng-show="history.length == 0">
     There is no history for this snippet yet.
   </div>
-  <div ng-show="history.length > 0">
-    HERE COMES THE HISTORY MERGE VIEW
+  <div class="upfront-snippet-history" ng-show="history.length > 0">
+    <div class="history-explorer">
+
+    </div>
+
+    <div class="latest-preview">
+
+    </div>
+
+
+    <div class="diff-viewer">
+      HERE COMES THE HISTORY MERGE VIEW
+    </div>
   </div>
 </div>
 <div class="upfront-modal-footer upfront-control">
