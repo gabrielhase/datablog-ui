@@ -1,6 +1,11 @@
 angular.module('ldEditor').directive 'autosave', (pageStateService, $timeout) ->
 
+  autosavePaused = false
+
   (scope, element, attrs) ->
+
+    attrs.$observe 'autosavePaused', (val) ->
+      autosavePaused = scope.$eval(val)
 
     hideAfterTimeout = ->
       $timeout(
@@ -22,4 +27,5 @@ angular.module('ldEditor').directive 'autosave', (pageStateService, $timeout) ->
       showMessage(failure: reason)
 
     doc.changed ->
-      pageStateService.dirty()
+      if !autosavePaused
+        pageStateService.dirty()

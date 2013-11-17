@@ -8,6 +8,10 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       controller: 'DataModalController'
       windowClass: 'upfront-modal-full-width'
 
+    historyModalOptions =
+      template: htmlTemplates.historyModal
+      controller: 'HistoryModalController'
+      windowClass: 'upfront-modal-full-width'
 
     # Service
     # -------
@@ -24,5 +28,8 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       $modal.open(dataModalOptions)
 
 
-    openImagePopup: (image, imagePathAttr) ->
-      # todo
+    openHistoryModal: (snippet) ->
+      historyModalOptions.resolve =
+        snippet: ->
+          snippet.model
+      $modal.open(historyModalOptions)

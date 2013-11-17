@@ -72,7 +72,7 @@ module.exports = function(config) {
 
     // test results reporter to use
     // possible values: dots || progress || growl
-    reporters: ['dots', 'coverage'],
+    reporters: ['spec'],
 
     // web server port
     port: 8090,
@@ -105,12 +105,6 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, it capture browsers, run tests and exit
-    singleRun: false,
-
-    coverageReporter: {
-      type: 'html',
-      dir: 'coverage/'
-    }
-
+    singleRun: false
   });
 };

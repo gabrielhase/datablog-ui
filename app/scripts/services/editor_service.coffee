@@ -9,6 +9,10 @@ angular.module('ldEditor').factory 'editorService', ->
       doc.init(design: design.livingmaps, json: document.data)
 
 
+    getCurrentDocument: ->
+      @currentDocument
+
+
     updateDocument: ->
       @currentDocument.data = doc.toJson()
       @currentDocument.html = $('.doc-section').html()
