@@ -27,13 +27,15 @@ angular.module('ldEditor').factory 'livingdocsService',
 
       doc.snippetFocused (snippet) ->
         snippetInlineOptionsService.drawEditButton(snippet)
-        snippetInlineOptionsService.drawHistoryButton(snippet)
+        if snippet.template.identifier == 'livingmaps.choropleth'
+          snippetInlineOptionsService.drawHistoryButton(snippet)
         uiStateService.set 'propertiesPanel',
           snippet: snippet
 
       doc.snippetBlurred (snippet) ->
         snippetInlineOptionsService.removeEditButton()
-        snippetInlineOptionsService.removeHistoryButton()
+        if snippet.template.identifier == 'livingmaps.choropleth'
+          snippetInlineOptionsService.removeHistoryButton()
         currentSelection = undefined # set the current selection in the scope
         $rootScope.$apply(
           uiStateService.set('propertiesPanel', false)
