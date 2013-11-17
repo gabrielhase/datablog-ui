@@ -5,13 +5,37 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
   # Service
   # -------
 
+  getHistory: (documentId, snippetModelId) ->
+    historyPromise = $q.defer()
+
+    history = [
+      new Document
+        id: documentId
+        title: 'Test Story Original'
+        revisionNumber: 1
+        updatedAt: new Date()
+        data:
+          "content": [
+            "identifier": "livingmaps.column"
+            "containers": [
+              "default": [
+                @_getMockedSwissMap
+              ]
+            ]
+          ]
+    ]
+
+    historyPromise.resolve(history)
+    historyPromise.promise
+
+
   get: (id) ->
     documentPromise = $q.defer()
 
     docs[id] ||= new Document
       id: id
       title: 'Test Story'
-      revisionNumber: 1
+      revisionNumber: 4
       updatedAt: new Date()
       data:
         "content": [
