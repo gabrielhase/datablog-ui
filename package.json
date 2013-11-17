@@ -23,11 +23,12 @@
     "grunt-ngmin": "~0.0.2",
     "grunt-ng-constant": "~0.4.2",
     "grunt-karma": "~0.7.1",
-    "karma": "~0.10.2",
-    "karma-mocha": "",
+    "karma": "~0.10.0",
+    "karma-mocha": "~0.1.0",
     "karma-sinon-chai": "",
     "karma-coverage": "git://github.com/moorcock/karma-coverage.git",
-    "grunt-simple-mocha": ""
+    "grunt-simple-mocha": "",
+    "karma-spec-reporter": ""
   },
   "engines": {
     "node": ">=0.8.0"
