@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'livingdocsService',
 
-  ($rootScope, $timeout, editableEventsService, uiStateService, propertiesPanelService, positionService, angularTemplateService, prefillChoroplethService, ngProgress) ->
+  ($rootScope, $timeout, editableEventsService, uiStateService, snippetInlineOptionsService, positionService, angularTemplateService, prefillChoroplethService, ngProgress) ->
 
     # Service
     # -------
@@ -26,12 +26,14 @@ angular.module('ldEditor').factory 'livingdocsService',
         editableEventsService.textSelected(snippet, elem, selection)
 
       doc.snippetFocused (snippet) ->
-        propertiesPanelService.drawEditButton(snippet)
+        snippetInlineOptionsService.drawEditButton(snippet)
+        snippetInlineOptionsService.drawHistoryButton(snippet)
         uiStateService.set 'propertiesPanel',
           snippet: snippet
 
       doc.snippetBlurred (snippet) ->
-        propertiesPanelService.removeEditButton()
+        snippetInlineOptionsService.removeEditButton()
+        snippetInlineOptionsService.removeHistoryButton()
         currentSelection = undefined # set the current selection in the scope
         $rootScope.$apply(
           uiStateService.set('propertiesPanel', false)
