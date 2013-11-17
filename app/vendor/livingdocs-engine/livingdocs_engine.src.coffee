@@ -1378,8 +1378,12 @@ class SnippetModel
           @snippetTree.htmlChanging(this, 'style', { name, value })
 
 
-  copy: ->
-    log.warn("SnippetModel#copy() is not implemented yet.")
+  copy: (design) ->
+    json = @toJson()
+    json.id = guid.next()
+    SnippetModel.fromJson(json, design)
+
+    #log.warn("SnippetModel#copy() is not implemented yet.")
 
     # serializing/deserializing should work but needs to get some tests first
     # json = @toJson()
@@ -2436,8 +2440,6 @@ document = do ->
   init: ({ design, json, rootNode }={}) ->
     if @initialized
       return
-    #  return documentReady()
-    #assert not @initialized, 'document is already initialized'
     @initialized = true
 
     @design = new Design(design)
