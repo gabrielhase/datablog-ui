@@ -1386,8 +1386,11 @@
       }
     };
 
-    SnippetModel.prototype.copy = function() {
-      return log.warn("SnippetModel#copy() is not implemented yet.");
+    SnippetModel.prototype.copy = function(design) {
+      var json;
+      json = this.toJson();
+      json.id = guid.next();
+      return SnippetModel.fromJson(json, design);
     };
 
     SnippetModel.prototype.copyWithoutContent = function() {
