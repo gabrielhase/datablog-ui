@@ -35,7 +35,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
     if dependency
       cb = yepnopeQueue[dependency]
       unless cb
-        cb = $.Callbacks()
+        cb = $.Callbacks('once memory')
         yepnopeQueue[dependency] = cb
       cb.add(callback)
 
