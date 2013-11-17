@@ -31,5 +31,5 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
     openHistoryModal: (snippet) ->
       historyModalOptions.resolve =
         snippet: ->
-          snippet
+          snippet.model
       $modal.open(historyModalOptions)
