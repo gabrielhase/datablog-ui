@@ -8,9 +8,6 @@ class HistoryModalController
     @documentService.getHistory(@editorService.getCurrentDocument().id, @snippet.id).then (history) =>
       @$scope.history = history
 
-    # temporarily disable autosave
-    @uiStateService.set('autosave', false)
-
 
     @$timeout => # we need a timeout to make sure the modal html template is ready
       @setupLatestVersion()
@@ -33,7 +30,5 @@ class HistoryModalController
     # TODO: put the changed data from @latestVersionSnippet to @snippet and save
 
     @removeLatestVersionInstance()
-    # re-enable autosave
-    @uiStateService.set('autosave', {})
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost

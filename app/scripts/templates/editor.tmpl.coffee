@@ -1,6 +1,6 @@
 htmlTemplates.editor = """
 <div>
-  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave autosave-paused="!state.isActive('autosave')">
+  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>
 
     <!-- Autosave messages -->
     <div class='top-message'
