@@ -28,8 +28,6 @@ angular.module('ldEditor').factory 'uiStateService', ->
     # mode for inserting snippets, affects whole editor
     'insertMode':
       active: false
-    'autosave':
-      active: true
     isActive: (uiElementState) ->
       @[uiElementState].active != false
 
@@ -91,13 +89,6 @@ angular.module('ldEditor').factory 'uiStateService', ->
       else
         @state['imagePopover'] = value
         @state['imagePopover'].active = true
-
-    autosave: (value) ->
-      unless value
-        @state['autosave'].active = false
-      else
-        @state['autosave'] = value
-        @state['autosave'].active = true
   }
 
 
