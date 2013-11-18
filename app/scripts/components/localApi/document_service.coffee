@@ -17,11 +17,10 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
         data:
           "content": [
             "identifier": "livingmaps.column"
-            "containers": [
+            "containers":
               "default": [
-                @_getMockedSwissMap
+                @_getMockedSwissMap()
               ]
-            ]
           ]
     ]
 
