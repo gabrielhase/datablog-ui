@@ -1383,13 +1383,6 @@ class SnippetModel
     json.id = guid.next()
     SnippetModel.fromJson(json, design)
 
-    #log.warn("SnippetModel#copy() is not implemented yet.")
-
-    # serializing/deserializing should work but needs to get some tests first
-    # json = @toJson()
-    # json.id = guid.next()
-    # SnippetModel.fromJson(json)
-
 
   copyWithoutContent: ->
     @template.createModel()
@@ -4000,6 +3993,8 @@ setupApi = ->
   @toJson = $.proxy(document, 'toJson')
   @toHtml = $.proxy(document, 'toHtml')
   @readableJson = -> words.readableJson( document.toJson() )
+
+  @snippetFromJson = $.proxy(SnippetModel, 'fromJson')
 
   # Print the content of the snippetTree in a readable string
   @printTree = $.proxy(document, 'printTree')
