@@ -4254,6 +4254,7 @@
     this.readableJson = function() {
       return words.readableJson(document.toJson());
     };
+    this.snippetFromJson = $.proxy(SnippetModel, 'fromJson');
     this.printTree = $.proxy(document, 'printTree');
     this.eachContainer = chainable(document, 'eachContainer');
     this.document = document;
