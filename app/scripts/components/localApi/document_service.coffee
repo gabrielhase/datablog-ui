@@ -1,4 +1,4 @@
-angular.module('ldLocalApi').factory 'documentService', ($q) ->
+angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
 
   docs = {}
 
@@ -9,23 +9,44 @@ angular.module('ldLocalApi').factory 'documentService', ($q) ->
     historyPromise = $q.defer()
 
     history = [
-      new Document
-        id: documentId
-        title: 'Test Story Original'
-        revisionNumber: 1
-        updatedAt: new Date()
-        data:
-          "content": [
-            "identifier": "livingmaps.column"
-            "containers":
-              "default": [
-                @_getMockedSwissMap()
-              ]
-          ]
+      revisionId: 3
+      userId: 8
+      changeImpact: 3.2
+    ,
+      revisionId: 2
+      userId: 8
+      changeImpact: 1.4
     ]
 
     historyPromise.resolve(history)
     historyPromise.promise
+
+
+  getRevision: (documentId, revisionId) ->
+    revisionPromise = $q.defer()
+
+    switch revisionId
+      when 3
+        $timeout =>
+          revisionPromise.resolve(
+            new Document
+              id: documentId
+              title: 'Test Story Original'
+              revisionNumber: 1
+              updatedAt: new Date()
+              data:
+                "content": [
+                  "identifier": "livingmaps.column"
+                  "containers":
+                    "default": [
+                      @_getMockedSwissMap()
+                    ]
+                ]
+          )
+      else
+        log.error "unknown revision #{revisionId} for document #{documentId}"
+
+    revisionPromise.promise
 
 
   get: (id) ->

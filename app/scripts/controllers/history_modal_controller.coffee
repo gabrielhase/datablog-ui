@@ -1,32 +1,38 @@
 angular.module('ldEditor').controller 'HistoryModalController',
 class HistoryModalController
 
-  constructor: (@$scope, @$modalInstance, @snippet, @documentService, @$timeout,
+  constructor: (@$scope, @$modalInstance, @$timeout, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
     @$scope.close = (event) => @close(event)
     @$scope.snippet = @snippet
     @documentService.getHistory(@editorService.getCurrentDocument().id, @snippet.id).then (history) =>
       @$scope.history = history
       if history.length > 0
-        @$timeout =>
-          @addHistoryVersion(history[history.length - 1])
+        @$modalInstance.opened.then =>
+          @$timeout =>
+            @addHistoryVersion(history[0])
+
+    # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
+    # the modal is rendered. This is pretty ugly, so we probalby should move away from
+    # angular-ui-bootstrap...
+    # http://stackoverflow.com/questions/14833326/how-to-set-focus-in-angularjs
+    @$modalInstance.opened.then =>
+      @$timeout =>
+        @setupLatestVersion()
 
 
-    @$timeout => # we need a timeout to make sure the modal html template is ready
-      @setupLatestVersion()
+  addHistoryVersion: (historyRevision) ->
+    @documentService.getRevision(@editorService.getCurrentDocument().id, historyRevision.revisionId).then (documentRevision) =>
+      $previewRoot = $('.upfront-snippet-history .history-explorer')
+      if documentRevision.data.content
+        for snippetJson in documentRevision.data.content
+          @searchHistorySnippet(snippetJson)
 
+      log.error 'The history document has to contain the map' unless @historyVersionSnippet
 
-  addHistoryVersion: (historyDocument) ->
-    $previewRoot = $('.upfront-snippet-history .history-explorer')
-    if historyDocument.data.content
-      for snippetJson in historyDocument.data.content
-        @searchHistorySnippet(snippetJson)
-
-    log.error 'The history document has to contain the map' unless @historyVersionSnippet
-
-    @angularTemplateService.insertTemplateInstance @historyVersionSnippet, $previewRoot, new ChoroplethMap
-      id: @historyVersionSnippet.id
-      mapMediatorService: @mapMediatorService
+      @angularTemplateService.insertTemplateInstance @historyVersionSnippet, $previewRoot, new ChoroplethMap
+        id: @historyVersionSnippet.id
+        mapMediatorService: @mapMediatorService
 
 
   # takes array of snippets or containers and looks for the snippet in the snippet tree
