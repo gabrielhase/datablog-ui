@@ -12,6 +12,25 @@ htmlTemplates.historyModal = """
   <div class="upfront-snippet-history" ng-show="history.length > 0">
     <div class="history-explorer">
 
+
+      <div class="upfront-timeline">
+        <ol class="upfront-timeline-entries" style="width: 76px; left: 0px;">
+
+          <li role="tab"
+              ng-click="chooseRevision(historyEntry)"
+              class="upfront-timeline-entry active-entry latest-entry"
+              ng-repeat="historyEntry in history | orderBy:'revisionId':reverse">
+            <a ng-class="{'selected': isSelected(historyEntry)}">
+              <span ng-class="{'arrow arrow-top': isSelected(historyEntry)}"></span>
+            </a>
+          </li>
+
+        </ol>
+      </div>
+
+      <div class="current-history-map">
+
+      </div>
     </div>
 
     <div class="latest-preview">
