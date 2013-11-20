@@ -4,6 +4,8 @@ class HistoryModalController
   constructor: (@$scope, @$modalInstance, @$timeout, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
     @$scope.close = (event) => @close(event)
+    @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
+    @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
     @$scope.snippet = @snippet
     @documentService.getHistory(@editorService.getCurrentDocument().id, @snippet.id).then (history) =>
       @$scope.history = history
@@ -21,9 +23,19 @@ class HistoryModalController
         @setupLatestVersion()
 
 
+  isSelected: (historyRevision) ->
+    historyRevision == @selectedHistoryRevision
+
+
+  chooseRevision: (historyRevision) ->
+    @removeHistoryVersionInstance()
+    @addHistoryVersion(historyRevision)
+
+
   addHistoryVersion: (historyRevision) ->
+    @selectedHistoryRevision = historyRevision
     @documentService.getRevision(@editorService.getCurrentDocument().id, historyRevision.revisionId).then (documentRevision) =>
-      $previewRoot = $('.upfront-snippet-history .history-explorer')
+      $previewRoot = $('.upfront-snippet-history .history-explorer .current-history-map')
       if documentRevision.data.content
         for snippetJson in documentRevision.data.content
           @searchHistorySnippet(snippetJson)
