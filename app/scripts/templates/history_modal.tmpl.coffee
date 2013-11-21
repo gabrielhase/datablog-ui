@@ -14,12 +14,14 @@ htmlTemplates.historyModal = """
 
 
       <div class="upfront-timeline">
-        <ol class="upfront-timeline-entries" style="width: 76px; left: 0px;">
+        <ol class="upfront-timeline-entries"
+            style="width: 76px; left: 0px;">
 
           <li role="tab"
               ng-click="chooseRevision(historyEntry)"
               class="upfront-timeline-entry active-entry latest-entry"
-              ng-repeat="historyEntry in history | orderBy:'revisionId':reverse">
+              ng-repeat="historyEntry in history | orderBy:'revisionId':reverse"
+              data-version="{{historyEntry.revisionId}}">
             <a ng-class="{'selected': isSelected(historyEntry)}">
               <span ng-class="{'arrow arrow-top': isSelected(historyEntry)}"></span>
             </a>
@@ -34,6 +36,9 @@ htmlTemplates.historyModal = """
     </div>
 
     <div class="latest-preview">
+      <h2>Current Version</h2>
+      <div class="latest-version-map">
+      </div>
 
     </div>
 

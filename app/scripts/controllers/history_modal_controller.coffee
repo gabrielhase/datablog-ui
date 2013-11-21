@@ -12,6 +12,7 @@ class HistoryModalController
       if history.length > 0
         @$modalInstance.opened.then =>
           @$timeout =>
+            @setupHistoryPopovers()
             @addHistoryVersion(history[0])
 
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
@@ -70,11 +71,22 @@ class HistoryModalController
 
 
   setupLatestVersion: ->
-    $previewRoot = $('.upfront-snippet-history .latest-preview')
+    $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
     @latestVersionSnippet = @snippet.copy(doc.document.design)
     @angularTemplateService.insertTemplateInstance @latestVersionSnippet, $previewRoot, new ChoroplethMap
       id: @latestVersionSnippet.id
       mapMediatorService: @mapMediatorService
+
+
+  # As long as we don't need complicated content this is just a hacked Twitter
+  # Bootstrap popover
+  setupHistoryPopovers: ->
+    $('.history-explorer').on 'mouseover', '.upfront-timeline-entry', (event) ->
+      $el = $(event.currentTarget)
+      $el.tooltip(
+        title: "Version #{$el.data('version')}"
+        placement: 'bottom'
+      ).tooltip('show')
 
 
   removeLatestVersionInstance: ->
