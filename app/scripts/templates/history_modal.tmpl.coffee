@@ -21,7 +21,8 @@ htmlTemplates.historyModal = """
               ng-click="chooseRevision(historyEntry)"
               class="upfront-timeline-entry active-entry latest-entry"
               ng-repeat="historyEntry in history | orderBy:'revisionId':reverse"
-              data-version="{{historyEntry.revisionId}}">
+              data-version="{{historyEntry.revisionId}}"
+              data-timestamp="{{historyEntry.lastChanged}}">
             <a ng-class="{'selected': isSelected(historyEntry)}">
               <span ng-class="{'arrow arrow-top': isSelected(historyEntry)}"></span>
             </a>
