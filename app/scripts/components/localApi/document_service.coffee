@@ -85,8 +85,6 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
               "default": [
                 @_getMockedSwissMap()
               ,
-                "identifier": "livingmaps.choropleth"
-              ,
                 "identifier": "livingmaps.title"
                 "content": {"title": "livingmaps"}
               ]
