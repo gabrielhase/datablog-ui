@@ -84,9 +84,6 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
             "containers":
               "default": [
                 @_getMockedSwissMap()
-              ,
-                "identifier": "livingmaps.title"
-                "content": {"title": "livingmaps"}
               ]
           },
           {
