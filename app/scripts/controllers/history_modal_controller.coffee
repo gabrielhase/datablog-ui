@@ -58,6 +58,7 @@ class HistoryModalController
         for childSnippetJson in containerJson
           @searchHistorySnippet(childSnippetJson)
     else
+      # NOTE: this will only work for one mocked map since in the mock the snippt id is always the same
       if snippetJson.id == @snippet.id
         # NOTE: here we change the id in order not to conflict with the version on the page
         snippetJson.id = "#{snippetJson.id}-101"
@@ -98,7 +99,7 @@ class HistoryModalController
 
   close: (event) ->
     # TODO: put the changed data from @latestVersionSnippet to @snippet and save
-    @removeLatestVersionInstance()
-    @removeHistoryVersionInstance()
+    @removeLatestVersionInstance() if @latestVersionSnippet
+    @removeHistoryVersionInstance() if @historyVersionSnippet
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost
