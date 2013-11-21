@@ -83,8 +83,10 @@ class HistoryModalController
   setupHistoryPopovers: ->
     $('.history-explorer').on 'mouseover', '.upfront-timeline-entry', (event) ->
       $el = $(event.currentTarget)
+      date = moment($el.data('timestamp'), 'YYYY-MM-DD hh:mm:ss')
       $el.tooltip(
-        title: "Version #{$el.data('version')}"
+        html: true
+        title: "<h5>Version #{$el.data('version')}</h5><p>#{date.fromNow()}</p>"
         placement: 'bottom'
       ).tooltip('show')
 
