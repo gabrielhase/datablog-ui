@@ -1,2 +1,2 @@
-angular.module('envApi', ['ldApi']);
+angular.module('envApi', ['ldLocalApi']);
 ;
