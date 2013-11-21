@@ -3,17 +3,10 @@ class HistoryModalController
 
   constructor: (@$scope, @$modalInstance, @$timeout, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
+    @$scope.snippet = @snippet
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
     @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
-    @$scope.snippet = @snippet
-    @documentService.getHistory(@editorService.getCurrentDocument().id, @snippet.id).then (history) =>
-      @$scope.history = history
-      if history.length > 0
-        @$modalInstance.opened.then =>
-          @$timeout =>
-            @setupHistoryPopovers()
-            @addHistoryVersion(history[0])
 
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
@@ -21,11 +14,58 @@ class HistoryModalController
     # http://stackoverflow.com/questions/14833326/how-to-set-focus-in-angularjs
     @$modalInstance.opened.then =>
       @$timeout =>
-        @setupLatestVersion()
+        @setupModalContent()
 
+
+  setupModalContent: ->
+    @setupLatestVersion()
+    @documentService.getHistory(@editorService.getCurrentDocument().id, @snippet.id).then (history) =>
+      @$scope.history = history
+      if history.length > 0
+        @setupHistoryPopovers()
+        @addHistoryVersion(history[0])
+
+
+  setupLatestVersion: ->
+    $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
+    @latestVersionSnippet = @snippet.copy(doc.document.design)
+    @angularTemplateService.insertTemplateInstance @latestVersionSnippet, $previewRoot, new ChoroplethMap
+      id: @latestVersionSnippet.id
+      mapMediatorService: @mapMediatorService
+
+
+  removeLatestVersionInstance: ->
+    @angularTemplateService.removeAngularTemplate(@latestVersionSnippet)
+    delete @latestVersionSnippet
+
+
+  close: (event) ->
+    # TODO: put the changed data from @latestVersionSnippet to @snippet and save
+    @removeLatestVersionInstance() if @latestVersionSnippet
+    @removeHistoryVersionInstance() if @historyVersionSnippet
+    @$modalInstance.dismiss('close')
+    event.stopPropagation() # so sidebar selection is not lost
+
+
+  # #########################
+  # HISTORY VIEW
+  # #########################
 
   isSelected: (historyRevision) ->
     historyRevision == @selectedHistoryRevision
+
+
+  # As long as we don't need complicated content this is just a hacked Twitter
+  # Bootstrap popover
+  setupHistoryPopovers: ->
+    $('.history-explorer').on 'mouseover', '.upfront-timeline-entry', (event) ->
+      $el = $(event.currentTarget)
+      date = moment($el.data('timestamp'), 'YYYY-MM-DD hh:mm:ss')
+      $el.tooltip(
+        html: true
+        title: "<h5>Version #{$el.data('version')}</h5><p>#{date.fromNow()}</p>"
+        placement: 'bottom'
+      ).tooltip('show')
 
 
   chooseRevision: (historyRevision) ->
@@ -69,37 +109,3 @@ class HistoryModalController
   removeHistoryVersionInstance: ->
     @angularTemplateService.removeAngularTemplate(@historyVersionSnippet)
     delete @historyVersionSnippet
-
-
-  setupLatestVersion: ->
-    $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
-    @latestVersionSnippet = @snippet.copy(doc.document.design)
-    @angularTemplateService.insertTemplateInstance @latestVersionSnippet, $previewRoot, new ChoroplethMap
-      id: @latestVersionSnippet.id
-      mapMediatorService: @mapMediatorService
-
-
-  # As long as we don't need complicated content this is just a hacked Twitter
-  # Bootstrap popover
-  setupHistoryPopovers: ->
-    $('.history-explorer').on 'mouseover', '.upfront-timeline-entry', (event) ->
-      $el = $(event.currentTarget)
-      date = moment($el.data('timestamp'), 'YYYY-MM-DD hh:mm:ss')
-      $el.tooltip(
-        html: true
-        title: "<h5>Version #{$el.data('version')}</h5><p>#{date.fromNow()}</p>"
-        placement: 'bottom'
-      ).tooltip('show')
-
-
-  removeLatestVersionInstance: ->
-    @angularTemplateService.removeAngularTemplate(@latestVersionSnippet)
-    delete @latestVersionSnippet
-
-
-  close: (event) ->
-    # TODO: put the changed data from @latestVersionSnippet to @snippet and save
-    @removeLatestVersionInstance() if @latestVersionSnippet
-    @removeHistoryVersionInstance() if @historyVersionSnippet
-    @$modalInstance.dismiss('close')
-    event.stopPropagation() # so sidebar selection is not lost
