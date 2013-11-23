@@ -45,7 +45,26 @@ htmlTemplates.historyModal = """
 
 
     <div class="diff-viewer">
-      HERE COMES THE HISTORY MERGE VIEW
+      <ul class="upfront-list">
+        <li ng-repeat="section in versionDifference">
+          <h3>{{section.sectionTitle}}</h3>
+          <ul class="upfront-list">
+            <li ng-repeat="property in section.properties">
+              <div ng-show="property.difference">
+                <div ng-if="property.difference.type == 'change'">
+                  <ng-include src="'diff-change-entry.html'"></ng-include>
+                </div>
+                <div ng-if="property.difference.type == 'add' || property.difference.type == 'delete'">
+                  <ng-include src="'diff-add-del-entry.html'"></ng-include>
+                </div>
+              </div>
+              <div ng-show="!property.difference">
+                <span class="entypo-cc-nd"></span> {{property.label}} {{property.info}}
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
     </div>
   </div>
 </div>

@@ -173,7 +173,8 @@ class ChoroplethMap
 
   _getMockedDifference: ->
     return [
-      map: [
+      sectionTitle: 'Map'
+      properties: [
         label: 'regions'
       ,
         label: 'projection'
@@ -181,13 +182,16 @@ class ChoroplethMap
           type: 'change'
           previous: 'orthographic'
           after: 'mercator'
-      ],
-      dataMapping: [
+      ]
+    ,
+      sectionTitle: 'Data Mapping'
+      properties: [
         label: 'mapping'
-        difference: {}
         info: 'on property NAME_1'
-      ],
-      data: [
+      ]
+    ,
+      sectionTitle: 'Data'
+      properties: [
         label: ''
         difference:
           type: 'add'
@@ -197,15 +201,17 @@ class ChoroplethMap
         difference:
           type: 'delete'
           content: 'Lucerne, 381966, 267.3, 1.2, 0.6, 0.3, 16.8, CVP'
-      ],
-      visualization: [
+      ]
+    ,
+      sectionTitle: 'Visualization'
+      properties: [
         label: 'value property'
         info: 'Population'
       ,
         label: 'color scheme'
         difference:
           type: 'change'
-          previouse: 'YlGn'
+          previous: 'YlGn'
           after: 'Set1'
       ,
         label: 'color steps'
