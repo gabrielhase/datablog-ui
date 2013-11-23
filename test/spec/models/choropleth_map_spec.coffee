@@ -24,6 +24,58 @@ describe 'ChoroplethMap', ->
     expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
+  describe 'Difference caculation', ->
+    beforeEach ->
+      @oldSnippetModel = @snippetModel
+
+    describe 'Map Section', ->
+
+      it 'calculates the difference between two geometries in the geojson as a blobChange'
+
+
+      it 'calculates the difference between two projections as a change'
+
+
+    describe 'Mapping Section', ->
+
+      it 'calculates the difference between two mappings on the map as a change'
+
+
+      it 'calculates the difference between two mappings on the data as a change'
+
+
+      it 'calculates the addition of a mapping on the data as an add diff'
+
+
+      it 'calculates the deletion of a a mapping on the data as a delete diff'
+
+
+    describe 'Data Section', ->
+
+      it 'calculates an addition of a row as an add diff'
+
+
+      it 'calculates a deletion of a row as a delete diff'
+
+
+      it 'calculates a changed value in a cell as one add diff and one delete diff'
+
+
+      it 'calculates a complete add and delete diff for the whole table when a column is added'
+
+
+    describe 'Visualization Section', ->
+
+      # maybe at some point we want to indicate the diff between numerical and categorical values
+      it 'calculates the difference between two value properties as a change'
+
+
+      it 'calculates the difference between two color schemes as a change'
+
+
+      it 'calculates the difference between two color steps as a change'
+
+
   describe 'Geojson properties for mapping', ->
 
     beforeEach ->
