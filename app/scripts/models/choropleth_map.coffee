@@ -121,7 +121,15 @@ class ChoroplethMap
 
 
   calculateDifference: (otherVersion) ->
-    @_getMockedDifference()
+    versionDifferences = []
+    versionDifferences.push
+      sectionTitle: 'Map'
+      properties: []
+    versionDifferences[0].properties.push(@_calculateMapDifference(otherVersion))
+    versionDifferences[0].properties.push(@_calculatePropertyDifference('projection', otherVersion))
+
+    versionDifferences
+    #@_getMockedDifference()
 
 
   # render a loading bar only if the map changes or if we render a predefined map
@@ -171,6 +179,59 @@ class ChoroplethMap
     @mapMediatorService.getSnippetModel(@id)
 
 
+  # ########################
+  # DIFFERENCE CALCULATIONS
+  # ########################
+
+  _calculateMapDifference: (otherVersionSnippetModel) ->
+    currentMap = @_getSnippetModel().data('map')
+    otherMap = otherVersionSnippetModel.data('map')
+    # only diff the regions
+    currentRegions = currentMap?.features.map (feature) -> feature.geometry
+    otherRegions = otherMap?.features.map (feature) -> feature.geometry
+    mapDiffEntry =
+      label: 'regions'
+    if !@_deepEquals(currentRegions, otherRegions)
+      mapDiffEntry.difference =
+        type: 'blobChange'
+
+    return mapDiffEntry
+
+
+  # generic calculation for change properties
+  _calculatePropertyDifference: (property, otherVersionSnippetModel) ->
+    currentValue = @_getSnippetModel().data(property)
+    otherValue = otherVersionSnippetModel.data(property)
+    propertyDiffEntry =
+      label: property
+    if !currentValue
+      propertyDiffEntry.difference =
+        type: 'delete'
+        content: otherValue
+    else if !otherValue
+      propertyDiffEntry.difference =
+        type: 'add'
+        content: currentValue
+    else if currentValue != otherValue
+      propertyDiffEntry.difference =
+        type: 'change'
+        previous: otherValue
+        after: currentValue
+
+    return propertyDiffEntry
+
+
+  # special difference handling for the data part
+  _calculateDataDifference: ->
+
+
+  # very primitive implementation that does NOT work when contents come
+  # in a different order, e.g. {a: 1, b: 2} != {b: 2, a: 1}
+  # a better solution is here: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+  _deepEquals: (o1, o2) ->
+    JSON.stringify(o1) == JSON.stringify(o2)
+
+
   _getMockedDifference: ->
     return [
       sectionTitle: 'Map'
@@ -215,5 +276,6 @@ class ChoroplethMap
           after: 'Set1'
       ,
         label: 'color steps'
+        info: 3
       ]
     ]

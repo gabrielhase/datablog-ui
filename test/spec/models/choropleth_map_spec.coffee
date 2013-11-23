@@ -25,15 +25,51 @@ describe 'ChoroplethMap', ->
 
 
   describe 'Difference caculation', ->
+
     beforeEach ->
-      @oldSnippetModel = @snippetModel
+      @snippetModel.data
+        projection: 'mercator'
+      @oldSnippetModel = {}
+      $.extend(true, @oldSnippetModel, @snippetModel)
 
     describe 'Map Section', ->
 
-      it 'calculates the difference between two geometries in the geojson as a blobChange'
+      it 'recognizes an unchanged map', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[0].properties[0]).to.eql(
+          label: 'regions'
+        )
 
 
-      it 'calculates the difference between two projections as a change'
+      it 'calculates the difference between two geometries in the geojson as a blobChange', ->
+        @snippetModel.data
+          map: smallerSampleMap
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[0].properties[0]).to.eql(
+          label: 'regions'
+          difference:
+            type: 'blobChange'
+        )
+
+
+      it 'recognizes an unchanged projection', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[0].properties[1]).to.eql(
+          label: 'projection'
+        )
+
+
+      it 'calculates the difference between two projections as a change', ->
+        @snippetModel.data
+          projection: 'orthographic'
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[0].properties[1]).to.eql(
+          label: 'projection'
+          difference:
+            type: 'change'
+            previous: 'mercator'
+            after: 'orthographic'
+        )
 
 
     describe 'Mapping Section', ->
