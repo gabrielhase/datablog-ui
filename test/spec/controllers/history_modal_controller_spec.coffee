@@ -24,12 +24,17 @@ describe 'HistoryModalController', ->
         id: 4
     @scope = retrieveService('$rootScope').$new()
     @timeout = retrieveService('$timeout')
+    @q = retrieveService('$q')
     @documentService = retrieveService('documentService')
     @uiStateService = retrieveService('uiStateService')
     @angularTemplateService = retrieveService('angularTemplateService')
     @mapMediatorService = retrieveService('mapMediatorService')
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
     @historyModalController = instantiateController('HistoryModalController',
-      $scope: @scope, $modalInstance: @modalInstance, $timeout: @timeout, snippet: @snippetModel,
+      $scope: @scope, $modalInstance: @modalInstance, $timeout: @timeout, $q: @q, snippet: @snippetModel,
       documentService: @documentService, editorService: @editorService,
       uiStateService: @uiStateService, angularTemplateService: @angularTemplateService,
       mapMediatorService: @mapMediatorService)

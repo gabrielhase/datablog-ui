@@ -120,6 +120,10 @@ class ChoroplethMap
     _.uniq(data.map (row) -> row[valueProperty])
 
 
+  calculateDifference: (otherVersion) ->
+    @_getMockedDifference()
+
+
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (property) ->
@@ -165,3 +169,45 @@ class ChoroplethMap
 
   _getSnippetModel: ->
     @mapMediatorService.getSnippetModel(@id)
+
+
+  _getMockedDifference: ->
+    return [
+      map: [
+        label: 'regions'
+      ,
+        label: 'projection'
+        difference:
+          type: 'change'
+          previous: 'orthographic'
+          after: 'mercator'
+      ],
+      dataMapping: [
+        label: 'mapping'
+        difference: {}
+        info: 'on property NAME_1'
+      ],
+      data: [
+        label: ''
+        difference:
+          type: 'add'
+          content: 'Zurich, 1392396, 838.3, 1.4, 0.9, 0.4, 24.6, SVP'
+      ,
+        label: ''
+        difference:
+          type: 'delete'
+          content: 'Lucerne, 381966, 267.3, 1.2, 0.6, 0.3, 16.8, CVP'
+      ],
+      visualization: [
+        label: 'value property'
+        info: 'Population'
+      ,
+        label: 'color scheme'
+        difference:
+          type: 'change'
+          previouse: 'YlGn'
+          after: 'Set1'
+      ,
+        label: 'color steps'
+      ]
+    ]
