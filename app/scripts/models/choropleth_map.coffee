@@ -128,6 +128,11 @@ class ChoroplethMap
     versionDifferences[0].properties.push(@_calculateMapDifference(otherVersion))
     versionDifferences[0].properties.push(@_calculatePropertyDifference('projection', otherVersion))
 
+    versionDifferences.push
+      sectionTitle: 'Mapping'
+      properties: []
+    versionDifferences[1].properties.push(@_calculateMappingDifference(otherVersion))
+
     versionDifferences
     #@_getMockedDifference()
 
@@ -198,31 +203,40 @@ class ChoroplethMap
     return mapDiffEntry
 
 
+  _calculateMappingDifference: (otherVersionSnippetModel) ->
+    currentValue = @_getSnippetModel().data('mappingPropertyOnMap')
+    otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap')
+    propertyDiffEntry =
+      label: 'mapping'
+    propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
+    unless propertyDiffEntry.difference
+      propertyDiffEntry.info = "on property #{currentValue}"
+    propertyDiffEntry
+
+
   # generic calculation for change properties
   _calculatePropertyDifference: (property, otherVersionSnippetModel) ->
     currentValue = @_getSnippetModel().data(property)
     otherValue = otherVersionSnippetModel.data(property)
     propertyDiffEntry =
       label: property
+    propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
+    propertyDiffEntry
+
+
+  _getDifferenceType: (currentValue, otherValue) ->
     if !currentValue
-      propertyDiffEntry.difference =
-        type: 'delete'
-        content: otherValue
+      type: 'delete'
+      content: otherValue
     else if !otherValue
-      propertyDiffEntry.difference =
-        type: 'add'
-        content: currentValue
+      type: 'add'
+      content: currentValue
     else if currentValue != otherValue
-      propertyDiffEntry.difference =
-        type: 'change'
-        previous: otherValue
-        after: currentValue
-
-    return propertyDiffEntry
-
-
-  # special difference handling for the data part
-  _calculateDataDifference: ->
+      type: 'change'
+      previous: otherValue
+      after: currentValue
+    else
+      undefined
 
 
   # very primitive implementation that does NOT work when contents come

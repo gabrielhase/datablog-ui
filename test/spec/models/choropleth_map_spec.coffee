@@ -29,6 +29,8 @@ describe 'ChoroplethMap', ->
     beforeEach ->
       @snippetModel.data
         projection: 'mercator'
+        mappingPropertyOnMap: 'id'
+        mappingPropertyOnData: 'id'
       @oldSnippetModel = {}
       $.extend(true, @oldSnippetModel, @snippetModel)
 
@@ -56,6 +58,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
+          difference: undefined
         )
 
 
@@ -74,16 +77,37 @@ describe 'ChoroplethMap', ->
 
     describe 'Mapping Section', ->
 
-      it 'calculates the difference between two mappings on the map as a change'
+      it 'recognizes an unchanged mapping', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties[0]).to.eql(
+          label: 'mapping'
+          difference: undefined
+          info: 'on property id'
+        )
 
 
-      it 'calculates the difference between two mappings on the data as a change'
+      it 'calculates the difference between two mappings on the map as a change', ->
+        @snippetModel.data
+          mappingPropertyOnMap: 'name'
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties[0]).to.eql(
+          label: 'mapping'
+          difference:
+            type: 'change'
+            previous: 'id'
+            after: 'name'
+        )
 
 
-      it 'calculates the addition of a mapping on the data as an add diff'
+      # NOTE: this is too complicated for now since it requires the difference calculator
+      # to know how many different mappings are possible on the data
+      # it 'calculates the difference between two mappings on the data as a change'
 
 
-      it 'calculates the deletion of a a mapping on the data as a delete diff'
+      # it 'calculates the addition of a mapping on the data as an add diff'
+
+
+      # it 'calculates the deletion of a a mapping on the data as a delete diff'
 
 
     describe 'Data Section', ->
