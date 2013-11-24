@@ -146,7 +146,6 @@ class ChoroplethMap
     versionDifferences[3].properties.push(@_calculatePropertyDifference('quantizeSteps', otherVersion))
 
     versionDifferences
-    #@_getMockedDifference()
 
 
   # render a loading bar only if the map changes or if we render a predefined map
@@ -282,52 +281,3 @@ class ChoroplethMap
   # a better solution is here: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
   _deepEquals: (o1, o2) ->
     JSON.stringify(o1) == JSON.stringify(o2)
-
-
-  _getMockedDifference: ->
-    return [
-      sectionTitle: 'Map'
-      properties: [
-        label: 'regions'
-      ,
-        label: 'projection'
-        difference:
-          type: 'change'
-          previous: 'orthographic'
-          after: 'mercator'
-      ]
-    ,
-      sectionTitle: 'Data Mapping'
-      properties: [
-        label: 'mapping'
-        info: 'on property NAME_1'
-      ]
-    ,
-      sectionTitle: 'Data'
-      properties: [
-        label: ''
-        difference:
-          type: 'add'
-          content: 'Zurich, 1392396, 838.3, 1.4, 0.9, 0.4, 24.6, SVP'
-      ,
-        label: ''
-        difference:
-          type: 'delete'
-          content: 'Lucerne, 381966, 267.3, 1.2, 0.6, 0.3, 16.8, CVP'
-      ]
-    ,
-      sectionTitle: 'Visualization'
-      properties: [
-        label: 'value property'
-        info: 'Population'
-      ,
-        label: 'color scheme'
-        difference:
-          type: 'change'
-          previous: 'YlGn'
-          after: 'Set1'
-      ,
-        label: 'color steps'
-        info: 3
-      ]
-    ]
