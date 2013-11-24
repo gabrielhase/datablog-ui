@@ -8,25 +8,39 @@
     display: none;
   }
 
+  .preview-wrapper {
+    overflow: hidden;
+    width: 100%;
+  }
+
   .history-explorer {
     width: 50%;
     float: left;
+    border: 1px solid @blue;
+
+    // css hack to have equal height floating elements
+    padding-bottom: 500em;
+    margin-bottom: -500em;
 
     .current-history-map {
-      margin-top: -5px;
       padding: 10px;
-      border: 1px solid @grayLight;
-      border-bottom: none;
     }
   }
 
   .latest-preview {
     width: 40%;
     float: right;
+
+    // css hack to have equal height floating elements
+    padding-bottom: 500em;
+    margin-bottom: -500em;
   }
 
   .diff-viewer {
+    padding: 10px 10px;
     clear: both;
+    border: 1px solid @blue;
+    //border-top: none;
   }
 
 }

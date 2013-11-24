@@ -1,4 +1,5 @@
 .upfront-timeline {
+  margin-top: 17px;
   color: @grayLight;
   border-top: 1px dashed @gray;
 
@@ -76,6 +77,20 @@
   border-bottom-color: @blue;
   &:after {
     border-width: 0 @panelArrowOuterWidth @panelArrowOuterWidth @panelArrowOuterWidth;
+    border-top-color: @panelArrowOuterColor;
+    bottom: -1px;
+    left: -@panelArrowOuterWidth;
+  }
+}
+
+.upfront-timeline-entry .arrow-bottom {
+  bottom: -@panelArrowWidth + 22;
+  left: 50%;
+  margin-left: -@panelArrowWidth;
+  border-width: @panelArrowWidth @panelArrowWidth 0;
+  border-top-color: @blue;
+  &:after {
+    border-width: @panelArrowOuterWidth @panelArrowOuterWidth 0;
     border-top-color: @panelArrowOuterColor;
     bottom: -1px;
     left: -@panelArrowOuterWidth;
