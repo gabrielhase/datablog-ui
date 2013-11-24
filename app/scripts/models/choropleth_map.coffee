@@ -133,6 +133,11 @@ class ChoroplethMap
       properties: []
     versionDifferences[1].properties.push(@_calculateMappingDifference(otherVersion))
 
+    versionDifferences.push
+      sectionTitle: 'Data'
+      properties: []
+    versionDifferences[2].properties = @_calculateDataSetDifference(otherVersion)
+
     versionDifferences
     #@_getMockedDifference()
 
@@ -222,6 +227,30 @@ class ChoroplethMap
       label: property
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
     propertyDiffEntry
+
+
+  _calculateDataSetDifference: (otherVersionSnippetModel) ->
+    currentData = @_getSnippetModel().data('data')
+    otherData = otherVersionSnippetModel.data('data')
+
+    differences = []
+    additions = livingmapsDiff.differenceObjects(currentData, otherData)
+    deletions = livingmapsDiff.differenceObjects(otherData, currentData)
+
+    for addition in additions
+      differences.push
+        label: ''
+        difference:
+          type: 'add'
+          content: _.values(addition).join(', ')
+    for deletion in deletions
+      differences.push
+        label: ''
+        difference:
+          type: 'delete'
+          content: _.values(deletion).join(', ')
+
+    return differences
 
 
   _getDifferenceType: (currentValue, otherValue) ->

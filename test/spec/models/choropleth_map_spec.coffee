@@ -2,18 +2,11 @@ describe 'ChoroplethMap', ->
 
   beforeEach ->
     @mapMediatorService = retrieveService('mapMediatorService')
-    @snippetModel =
-      id: 123
-      storedData:
-        map: biggerSampleMap
-        data: messyData
-      data: (d) ->
-        if typeof d == 'string'
-          @storedData[d]
-        else
-          for key, value of d
-            @storedData[key] = value
-
+    @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
+    @snippetModel.data
+      map: biggerSampleMap
+      data: messyData
     @choroplethMap = new ChoroplethMap
       id: @snippetModel.id
       mapMediatorService: @mapMediatorService
@@ -24,7 +17,7 @@ describe 'ChoroplethMap', ->
     expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
-  describe 'Difference caculation', ->
+  describe 'Difference calculation', ->
 
     beforeEach ->
       @snippetModel.data
@@ -90,13 +83,12 @@ describe 'ChoroplethMap', ->
         @snippetModel.data
           mappingPropertyOnMap: 'name'
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
-        expect(diff[1].properties[0]).to.eql(
+        expect(diff[1].properties[0]).to.eql
           label: 'mapping'
           difference:
             type: 'change'
             previous: 'id'
             after: 'name'
-        )
 
 
       # NOTE: this is too complicated for now since it requires the difference calculator
@@ -112,16 +104,84 @@ describe 'ChoroplethMap', ->
 
     describe 'Data Section', ->
 
-      it 'calculates an addition of a row as an add diff'
+      beforeEach ->
+        @reorderedMessyData = []
+        @moreMessyData = []
+        @lessMessyData = []
+        @changedMessyData = []
+        @differentMessyData = []
+        $.extend(true, @reorderedMessyData, messyData)
+        $.extend(true, @moreMessyData, messyData)
+        $.extend(true, @lessMessyData, messyData)
+        $.extend(true, @changedMessyData, messyData)
+        $.extend(true, @differentMessyData, messyData)
+        @reorderedMessyData.reverse()
+        @moreMessyData.push
+          "Some weird col": "more weird values"
+          "an id": 4
+          "value": "3'333'333.010101010"
+        @lessMessyData.splice(messyData.length - 1, 1)
+        @changedMessyData[0]['value'] = "42"
+        for i in [0..@differentMessyData.length-1]
+          @differentMessyData[i].newCol = i
 
 
-      it 'calculates a deletion of a row as a delete diff'
+      it 'recognizes two equal data sets', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties.length).to.equal(0)
 
 
-      it 'calculates a changed value in a cell as one add diff and one delete diff'
+      it 'does not care about reordering the same rows', ->
+        @snippetModel.data
+          data: @reorderedMessyData
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties.length).to.equal(0)
 
 
-      it 'calculates a complete add and delete diff for the whole table when a column is added'
+      it 'calculates an addition of a row as an add diff', ->
+        @snippetModel.data
+          data: @moreMessyData
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties[0]).to.eql
+          label: ''
+          difference:
+            type: 'add'
+            content: "more weird values, 4, 3'333'333.010101010"
+
+
+      it 'calculates a deletion of a row as a delete diff', ->
+        @snippetModel.data
+          data: @lessMessyData
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties[0]).to.eql
+          label: ''
+          difference:
+            type: 'delete'
+            content: "who parses json like this?, 2, 2'222'222.00000002"
+
+
+      it 'calculates a changed value in a cell as one add diff and one delete diff', ->
+        @snippetModel.data
+          data: @changedMessyData
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties).to.eql([
+          label: ''
+          difference:
+            type: 'add'
+            content: "weirdest Value, 3, 42"
+        ,
+          label: ''
+          difference:
+            type: 'delete'
+            content: "weirdest Value, 3, 1'111'111.34"
+        ])
+
+
+      it 'calculates a complete add and delete diff for the whole table when a column is added', ->
+        @snippetModel.data
+          data: @differentMessyData
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[2].properties.length).to.equal(4)
 
 
     describe 'Visualization Section', ->
