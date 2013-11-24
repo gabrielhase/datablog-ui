@@ -1,13 +1,14 @@
 angular.module('ldEditor').controller 'HistoryModalController',
 class HistoryModalController
 
-  constructor: (@$scope, @$modalInstance, @$timeout, @snippet, @documentService,
+  constructor: (@$scope, @$modalInstance, @$timeout, @$q, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
     @$scope.snippet = @snippet
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
     @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
 
+    @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
     # angular-ui-bootstrap...
@@ -23,7 +24,8 @@ class HistoryModalController
       @$scope.history = history
       if history.length > 0
         @setupHistoryPopovers()
-        @addHistoryVersion(history[0])
+        @addHistoryVersion(history[0]).then (historyVersion) =>
+          @$scope.versionDifference = @modelInstance.calculateDifference(historyVersion)
 
 
   setupLatestVersion: ->
@@ -70,10 +72,12 @@ class HistoryModalController
 
   chooseRevision: (historyRevision) ->
     @removeHistoryVersionInstance()
-    @addHistoryVersion(historyRevision)
+    @addHistoryVersion(historyRevision).then (historyVersion) =>
+      @$scope.versionDifference = @modelInstance.calculateDifference(historyVersion)
 
 
   addHistoryVersion: (historyRevision) ->
+    historyReady = @$q.defer()
     @selectedHistoryRevision = historyRevision
     @documentService.getRevision(@editorService.getCurrentDocument().id, historyRevision.revisionId).then (documentRevision) =>
       $previewRoot = $('.upfront-snippet-history .history-explorer .current-history-map')
@@ -86,7 +90,9 @@ class HistoryModalController
       @angularTemplateService.insertTemplateInstance @historyVersionSnippet, $previewRoot, new ChoroplethMap
         id: @historyVersionSnippet.id
         mapMediatorService: @mapMediatorService
+      historyReady.resolve(@historyVersionSnippet)
 
+    historyReady.promise
 
   # takes array of snippets or containers and looks for the snippet in the snippet tree
   # that has the same id.

@@ -120,6 +120,34 @@ class ChoroplethMap
     _.uniq(data.map (row) -> row[valueProperty])
 
 
+  calculateDifference: (otherVersion) ->
+    versionDifferences = []
+    versionDifferences.push
+      sectionTitle: 'Map'
+      properties: []
+    versionDifferences[0].properties.push(@_calculateMapDifference(otherVersion))
+    versionDifferences[0].properties.push(@_calculatePropertyDifference('projection', otherVersion))
+
+    versionDifferences.push
+      sectionTitle: 'Mapping'
+      properties: []
+    versionDifferences[1].properties.push(@_calculateMappingDifference(otherVersion))
+
+    versionDifferences.push
+      sectionTitle: 'Data'
+      properties: []
+    versionDifferences[2].properties = @_calculateDataSetDifference(otherVersion)
+
+    versionDifferences.push
+      sectionTitle: 'Visualization'
+      properties: []
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('valueProperty', otherVersion))
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('colorScheme', otherVersion))
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('quantizeSteps', otherVersion))
+
+    versionDifferences
+
+
   # render a loading bar only if the map changes or if we render a predefined map
   # everyhing else should be quick enough not to require a loading bar
   shouldRenderLoadingBar: (property) ->
@@ -165,3 +193,91 @@ class ChoroplethMap
 
   _getSnippetModel: ->
     @mapMediatorService.getSnippetModel(@id)
+
+
+  # ########################
+  # DIFFERENCE CALCULATIONS
+  # ########################
+
+  _calculateMapDifference: (otherVersionSnippetModel) ->
+    currentMap = @_getSnippetModel().data('map')
+    otherMap = otherVersionSnippetModel.data('map')
+    # only diff the regions
+    currentRegions = currentMap?.features.map (feature) -> feature.geometry
+    otherRegions = otherMap?.features.map (feature) -> feature.geometry
+    mapDiffEntry =
+      label: 'regions'
+    if !@_deepEquals(currentRegions, otherRegions)
+      mapDiffEntry.difference =
+        type: 'blobChange'
+
+    return mapDiffEntry
+
+
+  _calculateMappingDifference: (otherVersionSnippetModel) ->
+    currentValue = @_getSnippetModel().data('mappingPropertyOnMap')
+    otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap')
+    propertyDiffEntry =
+      label: 'mapping'
+    propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
+    unless propertyDiffEntry.difference
+      propertyDiffEntry.info = "on property #{currentValue}"
+    propertyDiffEntry
+
+
+  # generic calculation for change properties
+  _calculatePropertyDifference: (property, otherVersionSnippetModel) ->
+    currentValue = @_getSnippetModel().data(property)
+    otherValue = otherVersionSnippetModel.data(property)
+    propertyDiffEntry =
+      label: livingmapsWords.wordize(property)
+    propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
+    unless propertyDiffEntry.difference
+      propertyDiffEntry.info = "(#{currentValue})"
+    propertyDiffEntry
+
+
+  _calculateDataSetDifference: (otherVersionSnippetModel) ->
+    currentData = @_getSnippetModel().data('data')
+    otherData = otherVersionSnippetModel.data('data')
+
+    differences = []
+    additions = livingmapsDiff.differenceObjects(currentData, otherData)
+    deletions = livingmapsDiff.differenceObjects(otherData, currentData)
+
+    for addition in additions
+      differences.push
+        label: ''
+        difference:
+          type: 'add'
+          content: _.values(addition).join(', ')
+    for deletion in deletions
+      differences.push
+        label: ''
+        difference:
+          type: 'delete'
+          content: _.values(deletion).join(', ')
+
+    return differences
+
+
+  _getDifferenceType: (currentValue, otherValue) ->
+    if !currentValue
+      type: 'delete'
+      content: otherValue
+    else if !otherValue
+      type: 'add'
+      content: currentValue
+    else if currentValue != otherValue
+      type: 'change'
+      previous: otherValue
+      after: currentValue
+    else
+      undefined
+
+
+  # very primitive implementation that does NOT work when contents come
+  # in a different order, e.g. {a: 1, b: 2} != {b: 2, a: 1}
+  # a better solution is here: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+  _deepEquals: (o1, o2) ->
+    JSON.stringify(o1) == JSON.stringify(o2)
