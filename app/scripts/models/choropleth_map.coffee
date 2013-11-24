@@ -231,6 +231,7 @@ class ChoroplethMap
     otherValue = otherVersionSnippetModel.data(property)
     propertyDiffEntry =
       label: livingmapsWords.wordize(property)
+      key: property
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
     unless propertyDiffEntry.difference
       propertyDiffEntry.info = "(#{currentValue})"
