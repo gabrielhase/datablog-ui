@@ -24,6 +24,9 @@ describe 'ChoroplethMap', ->
         projection: 'mercator'
         mappingPropertyOnMap: 'id'
         mappingPropertyOnData: 'id'
+        valueProperty: 'value'
+        colorScheme: 'YlGn'
+        quantizeSteps: 3
       @oldSnippetModel = {}
       $.extend(true, @oldSnippetModel, @snippetModel)
 
@@ -52,6 +55,7 @@ describe 'ChoroplethMap', ->
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
           difference: undefined
+          info: "(mercator)"
         )
 
 
@@ -186,14 +190,65 @@ describe 'ChoroplethMap', ->
 
     describe 'Visualization Section', ->
 
+      it 'recognizes an unchanged value property', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[0]).to.eql
+          label: 'value property'
+          difference: undefined
+          info: '(value)'
+
+
       # maybe at some point we want to indicate the diff between numerical and categorical values
-      it 'calculates the difference between two value properties as a change'
+      it 'calculates the difference between two value properties as a change', ->
+        @snippetModel.data
+          valueProperty: 'an id'
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[0]).to.eql
+          label: 'value property'
+          difference:
+            type: 'change'
+            previous: 'value'
+            after: 'an id'
 
 
-      it 'calculates the difference between two color schemes as a change'
+      it 'recognizes an unchanged color scheme', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[1]).to.eql
+          label: 'color scheme'
+          difference: undefined
+          info: '(YlGn)'
 
 
-      it 'calculates the difference between two color steps as a change'
+      it 'calculates the difference between two color schemes as a change', ->
+        @snippetModel.data
+          colorScheme: 'Set1'
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[1]).to.eql
+          label: 'color scheme'
+          difference:
+            type: 'change'
+            previous: 'YlGn'
+            after: 'Set1'
+
+
+      it 'recognizes an unchanged number of color steps', ->
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[2]).to.eql
+          label: 'quantize steps'
+          difference: undefined
+          info: '(3)'
+
+
+      it 'calculates the difference between two color steps as a change', ->
+        @snippetModel.data
+          quantizeSteps: 4
+        diff = @choroplethMap.calculateDifference(@oldSnippetModel)
+        expect(diff[3].properties[2]).to.eql
+          label: 'quantize steps'
+          difference:
+            type: 'change'
+            previous: 3
+            after: 4
 
 
   describe 'Geojson properties for mapping', ->

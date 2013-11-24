@@ -138,6 +138,13 @@ class ChoroplethMap
       properties: []
     versionDifferences[2].properties = @_calculateDataSetDifference(otherVersion)
 
+    versionDifferences.push
+      sectionTitle: 'Visualization'
+      properties: []
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('valueProperty', otherVersion))
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('colorScheme', otherVersion))
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('quantizeSteps', otherVersion))
+
     versionDifferences
     #@_getMockedDifference()
 
@@ -224,8 +231,10 @@ class ChoroplethMap
     currentValue = @_getSnippetModel().data(property)
     otherValue = otherVersionSnippetModel.data(property)
     propertyDiffEntry =
-      label: property
+      label: livingmapsWords.wordize(property)
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
+    unless propertyDiffEntry.difference
+      propertyDiffEntry.info = "(#{currentValue})"
     propertyDiffEntry
 
 

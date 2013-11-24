@@ -7,6 +7,10 @@
   snakeCase: (str) ->
     $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase()
 
+  # convert 'camelCase to camel case'
+  wordize: (str) ->
+    $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, ' ').toLowerCase()
+
 
   camelCase: (str) ->
     trimmedString = $.trim(str)
