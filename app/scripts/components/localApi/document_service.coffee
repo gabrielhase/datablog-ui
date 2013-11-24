@@ -12,12 +12,12 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
       revisionId: 3
       userId: 8
       changeImpact: 3.2
-      lastChanged: '2013-11-01 10:11:32'
+      lastChanged: '2013-11-16 22:02:15'
     ,
       revisionId: 2
       userId: 8
       changeImpact: 1.4
-      lastChanged: '2013-11-16 22:02:15'
+      lastChanged: '2013-11-01 10:11:32'
     ]
 
     historyPromise.resolve(history)
