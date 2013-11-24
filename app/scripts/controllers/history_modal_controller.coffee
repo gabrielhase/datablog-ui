@@ -7,6 +7,7 @@ class HistoryModalController
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
     @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
+    @$scope.revertChange = (property) => @revertChange(property)
 
     @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
@@ -115,3 +116,16 @@ class HistoryModalController
   removeHistoryVersionInstance: ->
     @angularTemplateService.removeAngularTemplate(@historyVersionSnippet)
     delete @historyVersionSnippet
+
+
+  revertChange: (property) ->
+    key = property.key
+    newData = {}
+    newData[property.key] = @historyVersionSnippet.data(property.key)
+    @latestVersionSnippet.data(newData)
+    # NOTE: we need to fire the change event manually since the latestVersionSnippet
+    # is note in the snippetTree. This is kind of a hack and should be made better when
+    # the engine allows multiple documents.
+    doc.document.snippetTree.snippetDataChanged.fire(@latestVersionSnippet, ['projection'])
+    property.difference = undefined
+    property.info = "(#{newData[property.key]})"
