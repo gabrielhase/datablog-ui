@@ -207,6 +207,7 @@ class ChoroplethMap
     otherRegions = otherMap?.features.map (feature) -> feature.geometry
     mapDiffEntry =
       label: 'regions'
+      key: 'map'
     if !@_deepEquals(currentRegions, otherRegions)
       mapDiffEntry.difference =
         type: 'blobChange'
@@ -219,6 +220,7 @@ class ChoroplethMap
     otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap')
     propertyDiffEntry =
       label: 'mapping'
+      key: 'mappingPropertyOnMap'
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
     unless propertyDiffEntry.difference
       propertyDiffEntry.info = "on property #{currentValue}"

@@ -52,7 +52,7 @@ htmlTemplates.historyModal = """
           <ul class="upfront-list">
             <li ng-repeat="property in section.properties">
               <div ng-show="property.difference">
-                <div ng-if="property.difference.type == 'change'">
+                <div ng-if="property.difference.type == 'change' || property.difference.type == 'blobChange'">
                   <ng-include src="'diff-change-entry.html'"></ng-include>
                 </div>
                 <div ng-if="property.difference.type == 'add' || property.difference.type == 'delete'">

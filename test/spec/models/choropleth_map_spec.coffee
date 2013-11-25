@@ -36,6 +36,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[0]).to.eql(
           label: 'regions'
+          key: 'map'
         )
 
 
@@ -45,6 +46,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[0]).to.eql(
           label: 'regions'
+          key: 'map'
           difference:
             type: 'blobChange'
         )
@@ -80,6 +82,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[1].properties[0]).to.eql(
           label: 'mapping'
+          key: 'mappingPropertyOnMap'
           difference: undefined
           info: 'on property id'
         )
@@ -91,6 +94,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[1].properties[0]).to.eql
           label: 'mapping'
+          key: 'mappingPropertyOnMap'
           difference:
             type: 'change'
             previous: 'id'
