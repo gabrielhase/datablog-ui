@@ -78,15 +78,15 @@ describe 'HistoryModalController', ->
 
     it 'creates a snippet copy from the snippet model found by id', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.data('testId')).to.equal('I am the one')
+      expect(@scope.historyVersionSnippet.data('testId')).to.equal('I am the one')
 
 
     it 'creates a snippet copy from the snippet model found by id in the sidebar', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.data('testId')).to.equal('I am the one')
+      expect(@scope.historyVersionSnippet.data('testId')).to.equal('I am the one')
 
 
     it 'assigns a novel id to the snippet copy', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.id).not.to.equal(@snippetModel.id)
+      expect(@scope.historyVersionSnippet.id).not.to.equal(@snippetModel.id)
 

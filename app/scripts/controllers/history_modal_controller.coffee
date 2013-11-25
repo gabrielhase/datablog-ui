@@ -7,7 +7,6 @@ class HistoryModalController
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
     @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
-    @$scope.revertChange = (property) => @revertChange(property)
 
     @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
@@ -31,21 +30,21 @@ class HistoryModalController
 
   setupLatestVersion: ->
     $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
-    @latestVersionSnippet = @snippet.copy(doc.document.design)
-    @angularTemplateService.insertTemplateInstance @latestVersionSnippet, $previewRoot, new ChoroplethMap
-      id: @latestVersionSnippet.id
+    @$scope.latestSnippetVersion = @snippet.copy(doc.document.design)
+    @angularTemplateService.insertTemplateInstance @$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap
+      id: @$scope.latestSnippetVersion.id
       mapMediatorService: @mapMediatorService
 
 
   removeLatestVersionInstance: ->
-    @angularTemplateService.removeAngularTemplate(@latestVersionSnippet)
-    delete @latestVersionSnippet
+    @angularTemplateService.removeAngularTemplate(@$scope.latestSnippetVersion)
+    delete @$scope.latestSnippetVersion
 
 
   close: (event) ->
-    # TODO: put the changed data from @latestVersionSnippet to @snippet and save
-    @removeLatestVersionInstance() if @latestVersionSnippet
-    @removeHistoryVersionInstance() if @historyVersionSnippet
+    # TODO: put the changed data from @$scope.latestSnippetVersion to @snippet and save
+    @removeLatestVersionInstance() if @$scope.latestSnippetVersion
+    @removeHistoryVersionInstance() if @$scope.historyVersionSnippet
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost
 
@@ -86,18 +85,18 @@ class HistoryModalController
         for snippetJson in documentRevision.data.content
           @searchHistorySnippet(snippetJson)
 
-      log.error 'The history document has to contain the map' unless @historyVersionSnippet
+      log.error 'The history document has to contain the map' unless @$scope.historyVersionSnippet
 
-      @angularTemplateService.insertTemplateInstance @historyVersionSnippet, $previewRoot, new ChoroplethMap
-        id: @historyVersionSnippet.id
+      @angularTemplateService.insertTemplateInstance @$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap
+        id: @$scope.historyVersionSnippet.id
         mapMediatorService: @mapMediatorService
-      historyReady.resolve(@historyVersionSnippet)
+      historyReady.resolve(@$scope.historyVersionSnippet)
 
     historyReady.promise
 
   # takes array of snippets or containers and looks for the snippet in the snippet tree
   # that has the same id.
-  # Assigns this snippet to @historyVersionSnippet
+  # Assigns this snippet to @$scope.historyVersionSnippet
   searchHistorySnippet: (snippetJson) ->
     if snippetJson.hasOwnProperty('containers')
       for container of snippetJson.containers
@@ -110,22 +109,9 @@ class HistoryModalController
         # NOTE: here we change the id in order not to conflict with the version on the page
         snippetJson.id = "#{snippetJson.id}-101"
         # TODO: make a bit of a safer key function
-        @historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design)
+        @$scope.historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design)
 
 
   removeHistoryVersionInstance: ->
-    @angularTemplateService.removeAngularTemplate(@historyVersionSnippet)
-    delete @historyVersionSnippet
-
-
-  revertChange: (property) ->
-    key = property.key
-    newData = {}
-    newData[property.key] = @historyVersionSnippet.data(property.key)
-    @latestVersionSnippet.data(newData)
-    # NOTE: we need to fire the change event manually since the latestVersionSnippet
-    # is note in the snippetTree. This is kind of a hack and should be made better when
-    # the engine allows multiple documents.
-    doc.document.snippetTree.snippetDataChanged.fire(@latestVersionSnippet, ['projection'])
-    property.difference = undefined
-    property.info = "(#{newData[property.key]})"
+    @angularTemplateService.removeAngularTemplate(@$scope.historyVersionSnippet)
+    delete @$scope.historyVersionSnippet
