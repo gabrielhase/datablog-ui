@@ -13592,6 +13592,22 @@ angular.module('ngProgress', [
 ]);
 (function () {
   var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, Map, MapController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, htmlTemplates, log, __slice = [].slice;
+  this.livingmapsDiff = function () {
+    return {
+      differenceObjects: function (arr1, arr2) {
+        return _.filter(arr1, function (val) {
+          var presentInArr2;
+          presentInArr2 = false;
+          _.any(arr2, function (element) {
+            if (_.isEqual(val, element)) {
+              return presentInArr2 = true;
+            }
+          });
+          return !presentInArr2;
+        });
+      }
+    };
+  }();
   log = function () {
     var args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -13644,6 +13660,9 @@ angular.module('ngProgress', [
     return {
       snakeCase: function (str) {
         return $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase();
+      },
+      wordize: function (str) {
+        return $.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, ' ').toLowerCase();
       },
       camelCase: function (str) {
         var capitalizedWords, trimmedString, words;
@@ -14242,11 +14261,12 @@ angular.module('ngProgress', [
     return FlowtextOptionsController;
   }());
   angular.module('ldEditor').controller('HistoryModalController', HistoryModalController = function () {
-    function HistoryModalController($scope, $modalInstance, $timeout, snippet, documentService, editorService, uiStateService, angularTemplateService, mapMediatorService) {
+    function HistoryModalController($scope, $modalInstance, $timeout, $q, snippet, documentService, editorService, uiStateService, angularTemplateService, mapMediatorService) {
       var _this = this;
       this.$scope = $scope;
       this.$modalInstance = $modalInstance;
       this.$timeout = $timeout;
+      this.$q = $q;
       this.snippet = snippet;
       this.documentService = documentService;
       this.editorService = editorService;
@@ -14263,6 +14283,7 @@ angular.module('ngProgress', [
       this.$scope.isSelected = function (historyRevision) {
         return _this.isSelected(historyRevision);
       };
+      this.modelInstance = this.mapMediatorService.getUIModel(this.snippet.id);
       this.$modalInstance.opened.then(function () {
         return _this.$timeout(function () {
           return _this.setupModalContent();
@@ -14276,7 +14297,9 @@ angular.module('ngProgress', [
         _this.$scope.history = history;
         if (history.length > 0) {
           _this.setupHistoryPopovers();
-          return _this.addHistoryVersion(history[0]);
+          return _this.addHistoryVersion(history[0]).then(function (historyVersion) {
+            return _this.$scope.versionDifference = _this.modelInstance.calculateDifference(historyVersion);
+          });
         }
       });
     };
@@ -14319,13 +14342,17 @@ angular.module('ngProgress', [
       });
     };
     HistoryModalController.prototype.chooseRevision = function (historyRevision) {
+      var _this = this;
       this.removeHistoryVersionInstance();
-      return this.addHistoryVersion(historyRevision);
+      return this.addHistoryVersion(historyRevision).then(function (historyVersion) {
+        return _this.$scope.versionDifference = _this.modelInstance.calculateDifference(historyVersion);
+      });
     };
     HistoryModalController.prototype.addHistoryVersion = function (historyRevision) {
-      var _this = this;
+      var historyReady, _this = this;
+      historyReady = this.$q.defer();
       this.selectedHistoryRevision = historyRevision;
-      return this.documentService.getRevision(this.editorService.getCurrentDocument().id, historyRevision.revisionId).then(function (documentRevision) {
+      this.documentService.getRevision(this.editorService.getCurrentDocument().id, historyRevision.revisionId).then(function (documentRevision) {
         var $previewRoot, snippetJson, _i, _len, _ref;
         $previewRoot = $('.upfront-snippet-history .history-explorer .current-history-map');
         if (documentRevision.data.content) {
@@ -14338,11 +14365,13 @@ angular.module('ngProgress', [
         if (!_this.historyVersionSnippet) {
           log.error('The history document has to contain the map');
         }
-        return _this.angularTemplateService.insertTemplateInstance(_this.historyVersionSnippet, $previewRoot, new ChoroplethMap({
+        _this.angularTemplateService.insertTemplateInstance(_this.historyVersionSnippet, $previewRoot, new ChoroplethMap({
           id: _this.historyVersionSnippet.id,
           mapMediatorService: _this.mapMediatorService
         }));
+        return historyReady.resolve(_this.historyVersionSnippet);
       });
+      return historyReady.promise;
     };
     HistoryModalController.prototype.searchHistorySnippet = function (snippetJson) {
       var childSnippetJson, container, containerJson, _results;
@@ -15402,6 +15431,34 @@ angular.module('ngProgress', [
         return row[valueProperty];
       }));
     };
+    ChoroplethMap.prototype.calculateDifference = function (otherVersion) {
+      var versionDifferences;
+      versionDifferences = [];
+      versionDifferences.push({
+        sectionTitle: 'Map',
+        properties: []
+      });
+      versionDifferences[0].properties.push(this._calculateMapDifference(otherVersion));
+      versionDifferences[0].properties.push(this._calculatePropertyDifference('projection', otherVersion));
+      versionDifferences.push({
+        sectionTitle: 'Mapping',
+        properties: []
+      });
+      versionDifferences[1].properties.push(this._calculateMappingDifference(otherVersion));
+      versionDifferences.push({
+        sectionTitle: 'Data',
+        properties: []
+      });
+      versionDifferences[2].properties = this._calculateDataSetDifference(otherVersion);
+      versionDifferences.push({
+        sectionTitle: 'Visualization',
+        properties: []
+      });
+      versionDifferences[3].properties.push(this._calculatePropertyDifference('valueProperty', otherVersion));
+      versionDifferences[3].properties.push(this._calculatePropertyDifference('colorScheme', otherVersion));
+      versionDifferences[3].properties.push(this._calculatePropertyDifference('quantizeSteps', otherVersion));
+      return versionDifferences;
+    };
     ChoroplethMap.prototype.shouldRenderLoadingBar = function (property) {
       var prefilledMapNames;
       prefilledMapNames = choroplethMapConfig.prefilledMaps.map(function (map) {
@@ -15462,6 +15519,97 @@ angular.module('ngProgress', [
     };
     ChoroplethMap.prototype._getSnippetModel = function () {
       return this.mapMediatorService.getSnippetModel(this.id);
+    };
+    ChoroplethMap.prototype._calculateMapDifference = function (otherVersionSnippetModel) {
+      var currentMap, currentRegions, mapDiffEntry, otherMap, otherRegions;
+      currentMap = this._getSnippetModel().data('map');
+      otherMap = otherVersionSnippetModel.data('map');
+      currentRegions = currentMap != null ? currentMap.features.map(function (feature) {
+        return feature.geometry;
+      }) : void 0;
+      otherRegions = otherMap != null ? otherMap.features.map(function (feature) {
+        return feature.geometry;
+      }) : void 0;
+      mapDiffEntry = { label: 'regions' };
+      if (!this._deepEquals(currentRegions, otherRegions)) {
+        mapDiffEntry.difference = { type: 'blobChange' };
+      }
+      return mapDiffEntry;
+    };
+    ChoroplethMap.prototype._calculateMappingDifference = function (otherVersionSnippetModel) {
+      var currentValue, otherValue, propertyDiffEntry;
+      currentValue = this._getSnippetModel().data('mappingPropertyOnMap');
+      otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap');
+      propertyDiffEntry = { label: 'mapping' };
+      propertyDiffEntry.difference = this._getDifferenceType(currentValue, otherValue);
+      if (!propertyDiffEntry.difference) {
+        propertyDiffEntry.info = 'on property ' + currentValue;
+      }
+      return propertyDiffEntry;
+    };
+    ChoroplethMap.prototype._calculatePropertyDifference = function (property, otherVersionSnippetModel) {
+      var currentValue, otherValue, propertyDiffEntry;
+      currentValue = this._getSnippetModel().data(property);
+      otherValue = otherVersionSnippetModel.data(property);
+      propertyDiffEntry = { label: livingmapsWords.wordize(property) };
+      propertyDiffEntry.difference = this._getDifferenceType(currentValue, otherValue);
+      if (!propertyDiffEntry.difference) {
+        propertyDiffEntry.info = '(' + currentValue + ')';
+      }
+      return propertyDiffEntry;
+    };
+    ChoroplethMap.prototype._calculateDataSetDifference = function (otherVersionSnippetModel) {
+      var addition, additions, currentData, deletion, deletions, differences, otherData, _i, _j, _len, _len1;
+      currentData = this._getSnippetModel().data('data');
+      otherData = otherVersionSnippetModel.data('data');
+      differences = [];
+      additions = livingmapsDiff.differenceObjects(currentData, otherData);
+      deletions = livingmapsDiff.differenceObjects(otherData, currentData);
+      for (_i = 0, _len = additions.length; _i < _len; _i++) {
+        addition = additions[_i];
+        differences.push({
+          label: '',
+          difference: {
+            type: 'add',
+            content: _.values(addition).join(', ')
+          }
+        });
+      }
+      for (_j = 0, _len1 = deletions.length; _j < _len1; _j++) {
+        deletion = deletions[_j];
+        differences.push({
+          label: '',
+          difference: {
+            type: 'delete',
+            content: _.values(deletion).join(', ')
+          }
+        });
+      }
+      return differences;
+    };
+    ChoroplethMap.prototype._getDifferenceType = function (currentValue, otherValue) {
+      if (!currentValue) {
+        return {
+          type: 'delete',
+          content: otherValue
+        };
+      } else if (!otherValue) {
+        return {
+          type: 'add',
+          content: currentValue
+        };
+      } else if (currentValue !== otherValue) {
+        return {
+          type: 'change',
+          previous: otherValue,
+          after: currentValue
+        };
+      } else {
+        return void 0;
+      }
+    };
+    ChoroplethMap.prototype._deepEquals = function (o1, o2) {
+      return JSON.stringify(o1) === JSON.stringify(o2);
     };
     return ChoroplethMap;
   }();
@@ -16419,12 +16567,14 @@ angular.module('ngProgress', [
   htmlTemplates.addButton = '<div ng-click="insertSnippet($event)" class="add-button">\n  <a href style="font-size: 4em">+</a>\n</div>';
   htmlTemplates.dataModal = '<div class="upfron-modal-full-width-header">\n  <h3>Your Dataset</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div class="gridStyle" ng-grid="gridOptions">\n\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
   htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.diffAddDelEntry = '<div class="upfront-diff" ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}">\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n  {{property.label}} {{property.difference.content}}\n</div>';
+  htmlTemplates.diffChangeEntry = '<div class="upfront-diff change">\n  <span class="entypo-flow-parallel"></span> {{property.label}} changed from {{property.difference.previous}} to {{property.difference.after}}\n</div>';
   htmlTemplates.documentPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    publish if you want\n  </div>\n  <div class="upfront-sidebar-content -js-upfront-sidebar-publish">\n    <button class="upfront-btn upfront-control upfront-btn-primary" type="button">\n      <i class="entypo-upload-cloud"></i>\n      <span>publish</span>\n    </button>\n  </div>\n</div>';
   htmlTemplates.editButton = '<div ng-click="editSnippet(snippet, $event)" class="edit-button entypo-cog" ng-style="buttonStyle">\n</div>';
   htmlTemplates.editor = '<div>\n  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>\n\n    <!-- Autosave messages -->\n    <div class=\'top-message\'\n         ng-show="autosave.state"\n         ng-class="autosave.state"\n         ng-animate="{show: \'message-show\'}">\n      {{ autosave.message }}\n    </div>\n\n    <!-- Sidebar -->\n    <div sidebar ng-if="state.isActive(\'sidebar\')" folded-out="state.sidebar.foldedOut">\n      <div document-panel ng-if="state.isActive(\'documentPanel\')"></div>\n      <div snippet-panel ng-if="state.isActive(\'snippetPanel\')"></div>\n      <div properties-panel snippet="state.propertiesPanel.snippet" ng-if="state.isActive(\'propertiesPanel\')"></div>\n    </div>\n\n    <!-- Selected Text Options -->\n    <div popover ng-if="state.isActive(\'flowtextPopover\')" arrow-distance="14" open-condition="state.flowtextPopover" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">\n      <ng-include src="\'flowtext-options.html\'">\n      </ng-include>\n    </div>\n\n    <!-- Selected Image Popover -->\n    <div popover ng-if="state.isActive(\'imagePopover\')" arrow-distance="14" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">\n      <ng-include src="\'image-input.html\'"></ng-include>\n    </div>\n\n  </div>\n</div>';
   htmlTemplates.flowtextOptions = '<div ng-controller=\'FlowtextOptionsController\'>\n  <div class="flowtext-options upfront-btn-group" ng-hide="editableEventsService.selectionIsOnInputField" class=\'upfront-btn-group\'>\n    <a ng-click=\'toggleBold()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isBold}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-bold"></span>\n    </a>\n\n    <a ng-click=\'toggleItalic()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isItalic}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-italic"></span>\n    </a>\n\n    <a ng-click=\'openLinkInput()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isLinked}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-link"></span>\n    </a>\n\n  </div>\n  <div ng-show="editableEventsService.selectionIsOnInputField">\n    <form class="upfront-control upfront-link-editing" ng-submit="setLink(currentSelectionStyles.link, currentSelectionStyles.isLinkExternal)">\n      <input type="submit" class=\'upfront-btn-mini upfront-link-editing_submit\' value="OK">\n      <input  type="text"\n              id="linkInput"\n              class="upfront-link-editing_link-field"\n              placeholder="www.datablog.io"\n              ld-focus="{{editableEventsService.selectionIsOnInputField}}"\n              ng-model="currentSelectionStyles.link">\n\n      <label class="upfront-link-editing_checkbox">\n        <input type="checkbox"\n              ng-model="currentSelectionStyles.isLinkExternal"> In neuem Fenster \xf6ffnen\n      </label>\n    </form>\n  </div>\n</div>';
   htmlTemplates.historyButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-flow-branch" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n    <div class="history-explorer">\n\n\n      <div class="upfront-timeline">\n        <ol class="upfront-timeline-entries"\n            style="width: 76px; left: 0px;">\n\n          <li role="tab"\n              ng-click="chooseRevision(historyEntry)"\n              class="upfront-timeline-entry active-entry latest-entry"\n              ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n              data-version="{{historyEntry.revisionId}}"\n              data-timestamp="{{historyEntry.lastChanged}}">\n            <a ng-class="{\'selected\': isSelected(historyEntry)}">\n              <span ng-class="{\'arrow arrow-top\': isSelected(historyEntry)}"></span>\n            </a>\n          </li>\n\n        </ol>\n      </div>\n\n      <div class="current-history-map">\n\n      </div>\n    </div>\n\n    <div class="latest-preview">\n      <h2>Current Version</h2>\n      <div class="latest-version-map">\n      </div>\n\n    </div>\n\n\n    <div class="diff-viewer">\n      HERE COMES THE HISTORY MERGE VIEW\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
+  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="width: 76px; left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties">\n              <div ng-show="property.difference">\n                <div ng-if="property.difference.type == \'change\'">\n                  <ng-include src="\'diff-change-entry.html\'"></ng-include>\n                </div>\n                <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                  <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n                </div>\n              </div>\n              <div ng-show="!property.difference">\n                <span class="entypo-cc-nd"></span> {{property.label}} {{property.info}}\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
   htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Properties for {{snippet.template.title}}</span></h3>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
@@ -25690,13 +25840,13 @@ angular.module('ngProgress', [
               revisionId: 3,
               userId: 8,
               changeImpact: 3.2,
-              lastChanged: '2013-11-01 10:11:32'
+              lastChanged: '2013-11-16 22:02:15'
             },
             {
               revisionId: 2,
               userId: 8,
               changeImpact: 1.4,
-              lastChanged: '2013-11-16 22:02:15'
+              lastChanged: '2013-11-01 10:11:32'
             }
           ];
           historyPromise.resolve(history);

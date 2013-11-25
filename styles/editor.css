@@ -4365,7 +4365,7 @@ button.upfront-toolbar-button:hover:after {
 }
 
 .upfront-modal-body {
-  max-height: 400px;
+  max-height: 75%;
   padding: 15px;
   overflow-y: auto;
 }
@@ -4867,28 +4867,38 @@ a.upfront-thumbnail:hover {
   display: none;
 }
 
+.upfront-snippet-history .preview-wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
 .upfront-snippet-history .history-explorer {
   float: left;
   width: 50%;
+  padding-bottom: 500em;
+  margin-bottom: -500em;
+  border: 1px solid #049cdb;
 }
 
 .upfront-snippet-history .history-explorer .current-history-map {
   padding: 10px;
-  margin-top: -5px;
-  border: 1px solid #bbbbbb;
-  border-bottom: none;
 }
 
 .upfront-snippet-history .latest-preview {
   float: right;
   width: 40%;
+  padding-bottom: 500em;
+  margin-bottom: -500em;
 }
 
 .upfront-snippet-history .diff-viewer {
+  padding: 10px 10px;
   clear: both;
+  border: 1px solid #049cdb;
 }
 
 .upfront-timeline {
+  margin-top: 17px;
   color: #bbbbbb;
   border-top: 1px dashed #999999;
 }
@@ -4976,6 +4986,40 @@ a.upfront-thumbnail:hover {
   left: -11px;
   border-top-color: rgba(0, 0, 0, 0.25);
   border-width: 0 11px 11px 11px;
+}
+
+.upfront-timeline-entry .arrow-bottom {
+  bottom: 12px;
+  left: 50%;
+  margin-left: -10px;
+  border-top-color: #049cdb;
+  border-width: 10px 10px 0;
+}
+
+.upfront-timeline-entry .arrow-bottom:after {
+  bottom: -1px;
+  left: -11px;
+  border-top-color: rgba(0, 0, 0, 0.25);
+  border-width: 11px 11px 0;
+}
+
+.upfront-diff {
+  padding: 2px 5px 2px 5px;
+}
+
+.upfront-diff.add {
+  color: #ffffff;
+  background-color: #08be4b;
+}
+
+.upfront-diff.delete {
+  color: #ffffff;
+  background-color: #9d261d;
+}
+
+.upfront-diff.change {
+  color: #ffffff;
+  background-color: #f89406;
 }
 
 .site-header {
