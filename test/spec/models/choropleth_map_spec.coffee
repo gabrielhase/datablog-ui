@@ -54,6 +54,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
+          key: 'projection'
           difference: undefined
           info: "(mercator)"
         )
@@ -65,6 +66,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
+          key: 'projection'
           difference:
             type: 'change'
             previous: 'mercator'
@@ -194,6 +196,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[0]).to.eql
           label: 'value property'
+          key: 'valueProperty'
           difference: undefined
           info: '(value)'
 
@@ -205,6 +208,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[0]).to.eql
           label: 'value property'
+          key: 'valueProperty'
           difference:
             type: 'change'
             previous: 'value'
@@ -215,6 +219,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[1]).to.eql
           label: 'color scheme'
+          key: 'colorScheme'
           difference: undefined
           info: '(YlGn)'
 
@@ -225,6 +230,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[1]).to.eql
           label: 'color scheme'
+          key: 'colorScheme'
           difference:
             type: 'change'
             previous: 'YlGn'
@@ -235,6 +241,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
           label: 'quantize steps'
+          key: 'quantizeSteps'
           difference: undefined
           info: '(3)'
 
@@ -245,6 +252,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
           label: 'quantize steps'
+          key: 'quantizeSteps'
           difference:
             type: 'change'
             previous: 3
