@@ -251,15 +251,19 @@ class ChoroplethMap
     for addition in additions
       differences.push
         label: ''
+        key: 'data'
         difference:
           type: 'add'
           content: _.values(addition).join(', ')
+          unformattedContent: addition
     for deletion in deletions
       differences.push
         label: ''
+        key: 'data'
         difference:
           type: 'delete'
           content: _.values(deletion).join(', ')
+          unformattedContent: deletion
 
     return differences
 

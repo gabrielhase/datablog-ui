@@ -154,9 +154,11 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties[0]).to.eql
           label: ''
+          key: 'data'
           difference:
             type: 'add'
             content: "more weird values, 4, 3'333'333.010101010"
+            unformattedContent: {'Some weird col': 'more weird values', 'an id': 4, 'value': "3'333'333.010101010"}
 
 
       it 'calculates a deletion of a row as a delete diff', ->
@@ -165,9 +167,11 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties[0]).to.eql
           label: ''
+          key: 'data'
           difference:
             type: 'delete'
             content: "who parses json like this?, 2, 2'222'222.00000002"
+            unformattedContent: {'Some weird col': 'who parses json like this?', 'an id': 2, 'value': "2'222'222.00000002"}
 
 
       it 'calculates a changed value in a cell as one add diff and one delete diff', ->
@@ -176,14 +180,18 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties).to.eql([
           label: ''
+          key: 'data'
           difference:
             type: 'add'
             content: "weirdest Value, 3, 42"
+            unformattedContent: {'Some weird col': 'weirdest Value', 'an id': 3, 'value': '42'}
         ,
           label: ''
+          key: 'data'
           difference:
             type: 'delete'
             content: "weirdest Value, 3, 1'111'111.34"
+            unformattedContent: {'Some weird col': 'weirdest Value', 'an id': 3, 'value': "1'111'111.34"}
         ])
 
 
