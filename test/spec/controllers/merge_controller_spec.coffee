@@ -52,6 +52,36 @@ describe 'MergeController', ->
       expect(@snippetModel.data('mappingPropertyOnMap')).to.equal('id')
 
 
+  describe 'Data Section', ->
+
+    beforeEach ->
+      @originalData = []
+      @oneMoreRow = []
+      @addedRow =
+        id: 99
+        alternativeId: 199
+        reverseId: 'String99'
+        value: 99
+        alternativeValue: 199
+      $.extend(true, @originalData, @snippetModel.data('data'))
+      $.extend(true, @oneMoreRow, @snippetModel.data('data'))
+      @oneMoreRow.push(@addedRow)
+
+    describe 'Data Addition', ->
+
+      beforeEach ->
+        @snippetModel.data
+          data: @oneMoreRow
+
+      it 'reverts the addition of a row', ->
+        @mergeController.revertAdd
+          key: 'data'
+          difference:
+            type: 'add'
+            unformattedContent: @addedRow
+        expect(@snippetModel.data('data')).to.eql(@originalData)
+
+
   describe 'Visualization Section', ->
 
     beforeEach ->
