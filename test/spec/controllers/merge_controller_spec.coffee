@@ -13,7 +13,13 @@ describe 'MergeController', ->
     @scope = retrieveService('$rootScope').$new()
     @scope.latestSnippetVersion = @snippetModel
     @scope.historyVersionSnippet = @olderSnippetModel
-    @mergeController = instantiateController('MergeController', $scope: @scope)
+    @mapMediatorService = retrieveService('mapMediatorService')
+    @choroplethMap = new ChoroplethMap
+      id: @snippetModel.id
+      mapMediatorService: @mapMediatorService
+    @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, {})
+    @mergeController = instantiateController('MergeController', $scope: @scope,
+      mapMediatorService: @mapMediatorService)
 
   describe 'Map Section', ->
 
@@ -66,6 +72,14 @@ describe 'MergeController', ->
       expect(@snippetModel.data('colorScheme')).to.equal('YlGn')
 
 
+  describe 'Ordinal Data', ->
+
+    beforeEach ->
+      @snippetModel.data
+        valueProperty: 'reverseId'
+
     # TODO: the display of quantize steps depends on value type
-    it 'does not display the revertChange button for a quantizeStep if the value property is ordinal'
+    it 'does not display the revertChange button for a quantizeStep if the value property is ordinal', ->
+      @scope.$digest()
+      expect(@scope.valueType).to.equal('categorical')
 
