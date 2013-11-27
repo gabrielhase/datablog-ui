@@ -6,6 +6,7 @@ class HistoryModalController
     @$scope.modalState =
       isMerging: false
     @$scope.snippet = @snippet
+    @$scope.merge = (event) => @merge(event)
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
     @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
@@ -44,8 +45,18 @@ class HistoryModalController
 
 
   merge: (event) ->
-    # TODO: put the changed data from @$scope.latestSnippetVersion to @snippet and save
-    # todo merge
+    @snippet.data
+      mapId: @$scope.latestSnippetVersion.data('mapId')
+      map: @$scope.latestSnippetVersion.data('map')
+      lastPositioned: @$scope.latestSnippetVersion.data('lastPositioned')
+      projection: @$scope.latestSnippetVersion.data('projection')
+      data: @$scope.latestSnippetVersion.data('data')
+      mappingPropertyOnMap: @$scope.latestSnippetVersion.data('mappingPropertyOnMap')
+      mappingPropertyOnData: @$scope.latestSnippetVersion.data('mappingPropertyOnData')
+      valueProperty: @$scope.latestSnippetVersion.data('valueProperty')
+      quantizeSteps: @$scope.latestSnippetVersion.data('quantizeSteps')
+      colorScheme: @$scope.latestSnippetVersion.data('colorScheme')
+
     @close(event)
 
 
