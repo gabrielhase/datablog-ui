@@ -196,15 +196,13 @@ describe 'Choropleth directive', ->
         directiveScope.map = biggerSampleMap
         directiveScope.$digest()
 
-      describe '', ->
-
-        it 'removes the rendering for a data point on the map', ->
-          @originalData.splice(1, 1)
-          directiveScope.$digest()
-          paths = directiveElem.find('path')
-          expect($(paths[0]).attr('class')).to.eql('q0-9')
-          expect($(paths[1]).attr('class')).to.be.undefined
-          expect($(paths[2]).attr('class')).to.eql('q8-9')
+      it 'removes the rendering for a data point on the map', ->
+        @originalData.splice(1, 1)
+        directiveScope.$digest()
+        paths = directiveElem.find('path')
+        expect($(paths[0]).attr('class')).to.eql('q0-9')
+        expect($(paths[1]).attr('class')).to.be.undefined
+        expect($(paths[2]).attr('class')).to.eql('q8-9')
 
 
     describe 'for categorical data', ->
