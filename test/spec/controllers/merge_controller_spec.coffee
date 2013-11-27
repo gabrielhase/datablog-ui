@@ -64,15 +64,6 @@ describe 'MergeController', ->
       expect(@snippetModel.data('projection')).to.equal('mercator')
 
 
-    # it 'merges a change in map geometry and projection', ->
-    #   @mergeController.revertChange
-    #     key: 'map'
-    #   @mergeController.revertChange
-    #     key: 'projection'
-    #   @mergeController.merge(@event)
-    #   expect()
-
-
   describe 'Mapping Section', ->
 
     beforeEach ->
