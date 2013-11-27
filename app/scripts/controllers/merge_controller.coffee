@@ -24,6 +24,7 @@ class MergeController
     @_propagateSnippetChange(key)
     property.difference = undefined
     property.info = "(#{newData[property.key]})" unless property.key == 'map'
+    @$scope.modalState.isMerging = true
 
 
   revertDelete: (property) ->
@@ -36,6 +37,7 @@ class MergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
+    @$scope.modalState.isMerging = true
 
 
   revertAdd: (property) ->
@@ -53,6 +55,7 @@ class MergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
+    @$scope.modalState.isMerging = true
 
 
   isColorStepsWithOrdinalData: (property) ->

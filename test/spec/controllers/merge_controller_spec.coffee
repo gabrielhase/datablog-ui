@@ -13,6 +13,8 @@ describe 'MergeController', ->
     @scope = retrieveService('$rootScope').$new()
     @scope.latestSnippetVersion = @snippetModel
     @scope.historyVersionSnippet = @olderSnippetModel
+    @scope.modalState =
+      isMerging: false
     @mapMediatorService = retrieveService('mapMediatorService')
     @choroplethMap = new ChoroplethMap
       id: @snippetModel.id
@@ -20,6 +22,28 @@ describe 'MergeController', ->
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, {})
     @mergeController = instantiateController('MergeController', $scope: @scope,
       mapMediatorService: @mapMediatorService)
+    @event =
+      stopPropagation: ->
+        true
+
+
+  describe 'Merge Status', ->
+
+    beforeEach ->
+      @snippetModel.data
+        projection: 'orthographic'
+        map: smallerSampleMap
+        mappingPropertyOnMap: 'alternativeId'
+        valueProperty: 'alternativeValue'
+        colorScheme: 'Set1'
+
+
+    ['map', 'projection', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'quantizeStep'].forEach (key) ->
+      it "enables the merge status on a change on #{key}", ->
+        @mergeController.revertChange
+          key: key
+        expect(@scope.modalState.isMerging).to.be.true
+
 
   describe 'Map Section', ->
 
@@ -38,6 +62,15 @@ describe 'MergeController', ->
       @mergeController.revertChange
         key: 'projection'
       expect(@snippetModel.data('projection')).to.equal('mercator')
+
+
+    # it 'merges a change in map geometry and projection', ->
+    #   @mergeController.revertChange
+    #     key: 'map'
+    #   @mergeController.revertChange
+    #     key: 'projection'
+    #   @mergeController.merge(@event)
+    #   expect()
 
 
   describe 'Mapping Section', ->
@@ -83,6 +116,7 @@ describe 'MergeController', ->
             type: 'add'
             unformattedContent: @addedRow
         expect(@snippetModel.data('data')).to.eql(@originalData)
+
 
     describe 'Data Deletion', ->
 

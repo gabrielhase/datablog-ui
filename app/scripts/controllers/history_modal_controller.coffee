@@ -3,6 +3,8 @@ class HistoryModalController
 
   constructor: (@$scope, @$modalInstance, @$timeout, @$q, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
+    @$scope.modalState =
+      isMerging: false
     @$scope.snippet = @snippet
     @$scope.close = (event) => @close(event)
     @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
@@ -41,8 +43,13 @@ class HistoryModalController
     delete @$scope.latestSnippetVersion
 
 
-  close: (event) ->
+  merge: (event) ->
     # TODO: put the changed data from @$scope.latestSnippetVersion to @snippet and save
+    # todo merge
+    @close(event)
+
+
+  close: (event) ->
     @removeLatestVersionInstance() if @$scope.latestSnippetVersion
     @removeHistoryVersionInstance() if @$scope.historyVersionSnippet
     @$modalInstance.dismiss('close')
