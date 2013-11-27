@@ -27,7 +27,15 @@ class MergeController
 
 
   revertDelete: (property) ->
-    # todo
+    if property.key == 'data'
+      # always add the data row to the end
+      data = @$scope.latestSnippetVersion.data('data')
+      data.push(property.difference.unformattedContent)
+    else
+      log.error "Don't know how to perform operation revertAdd on #{property.key}"
+
+    @_propagateSnippetChange(property.key)
+    property.difference = undefined
 
 
   revertAdd: (property) ->
@@ -35,10 +43,16 @@ class MergeController
       # NOTE: since keeping track of indexes in the array over several merges
       # would be a pain we look for the index on each action.
       data = @$scope.latestSnippetVersion.data('data')
-      idx = data.indexOf(property.difference.unformattedData)
-      data.splice(idx, 1)
+      idx = -1
+      for entry, entryIdx in data
+        if _.isEqual(entry, property.difference.unformattedContent)
+          idx = entryIdx
+      data.splice(idx, 1) if idx != -1
     else
       log.error "Don't know how to perform operation revertAdd on #{property.key}"
+
+    @_propagateSnippetChange(property.key)
+    property.difference = undefined
 
 
   isColorStepsWithOrdinalData: (property) ->

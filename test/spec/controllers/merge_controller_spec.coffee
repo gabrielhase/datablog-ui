@@ -57,6 +57,7 @@ describe 'MergeController', ->
     beforeEach ->
       @originalData = []
       @oneMoreRow = []
+      @oneLessRow = []
       @addedRow =
         id: 99
         alternativeId: 199
@@ -65,7 +66,9 @@ describe 'MergeController', ->
         alternativeValue: 199
       $.extend(true, @originalData, @snippetModel.data('data'))
       $.extend(true, @oneMoreRow, @snippetModel.data('data'))
+      $.extend(true, @oneLessRow, @snippetModel.data('data'))
       @oneMoreRow.push(@addedRow)
+      @deletedRow = @oneLessRow.pop()
 
     describe 'Data Addition', ->
 
@@ -79,6 +82,20 @@ describe 'MergeController', ->
           difference:
             type: 'add'
             unformattedContent: @addedRow
+        expect(@snippetModel.data('data')).to.eql(@originalData)
+
+    describe 'Data Deletion', ->
+
+      beforeEach ->
+        @snippetModel.data
+          data: @oneLessRow
+
+      it 'reverts the deletion of a row', ->
+        @mergeController.revertDelete
+          key: 'data'
+          difference:
+            type: 'delete'
+            unformattedContent: @deletedRow
         expect(@snippetModel.data('data')).to.eql(@originalData)
 
 
@@ -108,7 +125,6 @@ describe 'MergeController', ->
       @snippetModel.data
         valueProperty: 'reverseId'
 
-    # TODO: the display of quantize steps depends on value type
     it 'does not display the revertChange button for a quantizeStep if the value property is ordinal', ->
       @scope.$digest()
       expect(@scope.valueType).to.equal('categorical')
