@@ -178,6 +178,35 @@ describe 'Choropleth directive', ->
       expect($(paths[1]).attr('data-region')).to.eql('2')
 
 
+    describe 'removing a data point', ->
+
+      beforeEach ->
+        @originalData = [
+          id: 1
+          value: 1
+        ,
+          id: 2
+          value: 2
+        ,
+          id: 3
+          value: 3
+        ]
+
+        directiveScope.data = @originalData
+        directiveScope.map = biggerSampleMap
+        directiveScope.$digest()
+
+      describe '', ->
+
+        it 'removes the rendering for a data point on the map', ->
+          @originalData.splice(1, 1)
+          directiveScope.$digest()
+          paths = directiveElem.find('path')
+          expect($(paths[0]).attr('class')).to.eql('q0-9')
+          expect($(paths[1]).attr('class')).to.be.undefined
+          expect($(paths[2]).attr('class')).to.eql('q8-9')
+
+
     describe 'for categorical data', ->
 
       beforeEach ->
