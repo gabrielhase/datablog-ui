@@ -60,9 +60,7 @@ describe 'Choropleth directive', ->
     doc.document.snippetTree.root.append(@snippetModel)
     @snippetModel.data
       data: sample1DData
-    @choropleth = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choropleth = new ChoroplethMap(@snippetModel.id)
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
     directiveScope.projection = 'albersUsa'
     directiveScope.mapId = @choropleth.id

@@ -15,9 +15,7 @@ describe 'Choropleth form controller', ->
       quantizeSteps: 9
       colorScheme: 'YlGn'
 
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
 
     @ngProgress = mockNgProgress()
     @scope = retrieveService('$rootScope').$new()

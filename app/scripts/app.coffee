@@ -41,6 +41,6 @@ upfront.variables = do () ->
 $(document).ready ->
   $root = $(
     """
-    <ng-include src="'editor.html'"></ng-include>
+    <ng-include class="bla" src="'editor.html'"></ng-include>
     """).appendTo(document.body)
   angular.bootstrap( $root[0], ["ldEditor"] )

@@ -16,9 +16,7 @@ describe 'Choropleth map controller', ->
       colorScheme: 'Set1'
 
     @ngProgress = mockNgProgress()
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @scope =
       mapId: @snippetModel.id
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
