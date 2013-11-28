@@ -34,9 +34,7 @@ class HistoryModalController
   setupLatestVersion: ->
     $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
     @$scope.latestSnippetVersion = @snippet.copy(doc.document.design)
-    @angularTemplateService.insertTemplateInstance @$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap
-      id: @$scope.latestSnippetVersion.id
-      mapMediatorService: @mapMediatorService
+    @angularTemplateService.insertTemplateInstance @$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap(@$scope.latestSnippetVersion.id)
 
 
   removeLatestVersionInstance: ->
@@ -105,9 +103,7 @@ class HistoryModalController
 
       log.error 'The history document has to contain the map' unless @$scope.historyVersionSnippet
 
-      @angularTemplateService.insertTemplateInstance @$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap
-        id: @$scope.historyVersionSnippet.id
-        mapMediatorService: @mapMediatorService
+      @angularTemplateService.insertTemplateInstance @$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap(@$scope.historyVersionSnippet.id)
       historyReady.resolve(@$scope.historyVersionSnippet)
 
     historyReady.promise

@@ -2,6 +2,7 @@ describe 'MergeController', ->
 
   beforeEach ->
     @snippetModel = doc.create('livingmaps.choropleth')
+    doc.document.snippetTree.root.append(@snippetModel)
     @snippetModel.data
       map: biggerSampleMap
       data: sample1DData
@@ -16,9 +17,7 @@ describe 'MergeController', ->
     @scope.modalState =
       isMerging: false
     @mapMediatorService = retrieveService('mapMediatorService')
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, {})
     @mergeController = instantiateController('MergeController', $scope: @scope,
       mapMediatorService: @mapMediatorService)

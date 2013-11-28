@@ -1,9 +1,7 @@
 class ChoroplethMap
 
-  constructor: ({
-    @id
-    @mapMediatorService # TODO: is it possible to setup the angular $injector for models?
-  }) ->
+  constructor: (@id) ->
+    @mapMediatorService = angularHelpers.inject('mapMediatorService')
     @dataPointsWithMissingRegion = []
     @regionsWithMissingDataPoints = []
     @usedDataValues = []

@@ -7,9 +7,7 @@ describe 'ChoroplethMap', ->
     @snippetModel.data
       map: biggerSampleMap
       data: messyData
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
 
 

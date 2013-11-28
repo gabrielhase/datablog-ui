@@ -29,9 +29,7 @@ describe 'HistoryModalController', ->
     @uiStateService = retrieveService('uiStateService')
     @angularTemplateService = retrieveService('angularTemplateService')
     @mapMediatorService = retrieveService('mapMediatorService')
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
     @historyModalController = instantiateController('HistoryModalController',
       $scope: @scope, $modalInstance: @modalInstance, $timeout: @timeout, $q: @q, snippet: @snippetModel,
