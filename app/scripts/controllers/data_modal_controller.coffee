@@ -2,14 +2,9 @@ angular.module('ldEditor').controller 'DataModalController',
 class DataModalController
 
   constructor: (@$scope, @$modalInstance, @mapMediatorService, @highlightedRows, @mapId, @mappedColumn) ->
-    @$scope.close = (event) => @close(event)
-    @$scope.isHighlighted = (property) =>
-      isHighlighted = false
-      for row in @highlightedRows
-        if row.key == property
-          isHighlighted = true
-      isHighlighted
-    @$scope.updateEntity = (row) => @updateEntity(row)
+    @$scope.close = $.proxy(@close, this)
+    @$scope.isHighlighted = $.proxy(@isHighlighted, this)
+    @$scope.updateEntity = $.proxy(@updateEntity, this)
 
     @choroplethMapInstance = @mapMediatorService.getUIModel(@mapId)
     @snippetModel = @mapMediatorService.getSnippetModel(@mapId)
@@ -23,6 +18,14 @@ class DataModalController
 
     @changedRows = []
     @setupGrid()
+
+
+  isHighlighted: (property) ->
+    isHighlighted = false
+    for row in @highlightedRows
+      if row.key == property
+        isHighlighted = true
+    isHighlighted
 
 
   setupGrid: ->

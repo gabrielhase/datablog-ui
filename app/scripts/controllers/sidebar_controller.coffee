@@ -8,7 +8,7 @@ class SidebarController
     @$scope.loadSnippets = => @registerActivePanel('snippetPanel')
     @$scope.loadProperties = => @registerActivePanel('propertiesPanel')
     # API for panels
-    @hideSidebar = (activePanel) => @hide(activePanel)
+    @hideSidebar = $.proxy(@hide, this)
 
 
   registerActivePanel: (panel) ->

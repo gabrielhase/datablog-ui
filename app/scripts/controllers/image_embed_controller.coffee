@@ -5,7 +5,7 @@ class ImageEmbedController
     @image = @uiStateService.state.imagePopover.image
     @imagePathAttr = @uiStateService.state.imagePopover.imagePath
 
-    @$scope.embedImage = (url) => @embedImage(url)
+    @$scope.embedImage = $.proxy(@embedImage, this)
 
 
   embedImage: (url) ->
