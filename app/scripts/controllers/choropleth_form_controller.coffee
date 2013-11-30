@@ -8,7 +8,7 @@ class ChoroplethFormController
     @$scope.setMap = $.proxy(@setMap, this)
     @$scope.setData = $.proxy(@setData, this)
     @$scope.openDataModal = $.proxy(@openDataModal, this)
-    @$scope.hasTooManyCategories = => @$scope.categoryCount > @$scope.maxQuantizeSteps
+    @$scope.hasTooManyCategories = => @$scope.categoryCount > @$scope.maxColorSteps
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
@@ -20,7 +20,7 @@ class ChoroplethFormController
     if @$scope.snippet.model.data('data')
       @initDataPropertySelection()
 
-    @initMaxQuantizeSteps(@$scope.snippet.model.data('colorScheme'))
+    @initMaxColorSteps(@$scope.snippet.model.data('colorScheme'))
 
 
   openDataModal: (highlighedRows) ->
@@ -84,7 +84,7 @@ class ChoroplethFormController
           value: key
 
 
-  initMaxQuantizeSteps: (colorScheme) ->
+  initMaxColorSteps: (colorScheme) ->
     matchingColorScheme = colorBrewerConfig.colorSchemes.filter (cScheme) ->
       cScheme.cssClass == colorScheme
     if matchingColorScheme.length > 0
@@ -92,11 +92,11 @@ class ChoroplethFormController
     else
       steps = 9 # TODO: parameterize the magic number in a config
 
-    @$scope.maxQuantizeSteps = steps
-    @$scope.availableQuantizeSteps = [3..steps]
+    @$scope.maxColorSteps = steps
+    @$scope.availableColorSteps = [3..steps]
 
-    # adjust selected quantize steps if necessary
-    @$scope.quantizeSteps = steps if @$scope.quantizeSteps > steps
+    # adjust selected color steps if necessary
+    @$scope.colorSteps = steps if @$scope.colorSteps > steps
 
 
   initValueType: ->
@@ -135,8 +135,8 @@ class ChoroplethFormController
   initDataPropertySelection: ->
     @setupProperty('mappingPropertyOnData')
     @setupProperty('valueProperty', $.proxy(@initValueType, this))
-    @setupProperty('colorScheme', $.proxy(@initMaxQuantizeSteps, this))
-    @setupProperty('quantizeSteps')
+    @setupProperty('colorScheme', $.proxy(@initMaxColorSteps, this))
+    @setupProperty('colorSteps')
     @$scope.availableColorSchemes = colorBrewerConfig.colorSchemes
     @initDataValueProperties()
     @initDataMappingProperties()

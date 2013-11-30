@@ -3,7 +3,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   # TODO: once we have initialized everything in the form this can go
   defaults =
     projection: 'mercator'
-    quantizeSteps: 9
+    colorSteps: 9
     colorScheme: 'Paired'
     mappingPropertyOnMap: 'id'
     mappingPropertyOnData: 'id'
@@ -28,9 +28,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       resizeMap(scope.svg, bounds)
 
       if data
-        quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps
+        colorSteps = scope.colorSteps || defaults.colorSteps
         allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap)
-        valFn = deduceValueFunction(scope, quantizeSteps, allMappingPropertiesOnMap)
+        valFn = deduceValueFunction(scope, colorSteps, allMappingPropertiesOnMap)
         renderData(scope, valFn)
         renderLegend(scope, valFn)
 
@@ -151,7 +151,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
 
   # either quantize or ordinal depending on type of data
-  deduceValueFunction = (scope, quantizeSteps, allMappingPropertiesOnMap) ->
+  deduceValueFunction = (scope, colorSteps, allMappingPropertiesOnMap) ->
     mapInstance = mapMediatorService.getUIModel(scope.mapId)
     if mapInstance.getValueType() == 'categorical'
       categoryValues = mapInstance.getCategoryValues()
@@ -165,8 +165,8 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       minValue = deduceMinValue(scope.data, scope.valueProperty, allMappingPropertiesOnMap, scope.mappingPropertyOnData)
       valFn = d3.scale.quantize()
         .domain([minValue, maxValue])
-        .range(d3.range(quantizeSteps).map (i) ->
-          "q#{i}-#{quantizeSteps}"
+        .range(d3.range(colorSteps).map (i) ->
+          "q#{i}-#{colorSteps}"
         )
 
     return valFn
@@ -268,7 +268,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       mappingPropertyOnMap: '=mappingPropertyOnMap' # the property on the map that is used to map upon data
       mappingPropertyOnData: '=mappingPropertyOnData' # the property on the data that is used to map upon the map
       valueProperty: '=valueProperty' # the (numerical) data value to visualize
-      quantizeSteps: '=quantizeSteps' # how many quantize steps the visualization will have
+      colorSteps: '=colorSteps' # how many quantize steps the visualization will have
       colorScheme: '=colorScheme' # the color brewer color scheme to use
     }
     replace: true
@@ -368,7 +368,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       )
 
       # TODO: only re-render data here
-      scope.$watch('quantizeSteps', (newVal, oldVal) ->
+      scope.$watch('colorSteps', (newVal, oldVal) ->
         return unless scope.map && scope.data
         if newVal
           renderVisualization(scope)
