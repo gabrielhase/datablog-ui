@@ -11,7 +11,6 @@ class HistoryModalController
     @$scope.chooseRevision = $.proxy(@chooseRevision, this)
     @$scope.isSelected = $.proxy(@isSelected, this)
 
-    @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
     # angular-ui-bootstrap...
@@ -34,6 +33,7 @@ class HistoryModalController
   setupLatestVersion: ->
     $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
     @$scope.latestSnippetVersion = @snippet.copy(doc.document.design)
+    @modelInstance = new ChoroplethMap(@$scope.latestSnippetVersion.id)
     @angularTemplateService.insertTemplateInstance @$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap(@$scope.latestSnippetVersion.id)
 
 
