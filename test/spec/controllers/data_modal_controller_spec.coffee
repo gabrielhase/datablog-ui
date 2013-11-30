@@ -7,6 +7,10 @@ describe 'Data Modal Controller', ->
     @snippetModel.data
       map: biggerSampleMap
       data: $.extend(true, localData, sample1DData) # since we are changing values we need a deep copy
+      projection: 'mercator'
+      colorScheme: 'Paired'
+      colorSteps: 9
+      valueProperty: 'value'
 
     @scope = retrieveService('$rootScope').$new()
     @mapMediatorService = retrieveService('mapMediatorService')

@@ -58,6 +58,12 @@ do ->
       }
     ]
 
+    kickstartProperties:
+      projection: 'mercator'
+      colorScheme: 'Paired'
+      colorSteps: 9
+      valueProperty: 'value'
+
     availableMaps: [
       name: 'Swiss Population Data Map'
       map: 'switzerlandCantons'

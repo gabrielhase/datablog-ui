@@ -65,6 +65,10 @@ describe 'choropleth directive', ->
       data: sample1DData
       mappingPropertyOnMap: 'id'
       mappingPropertyOnData: 'id'
+      projection: 'mercator'
+      colorScheme: 'Paired'
+      colorSteps: 9
+      valueProperty: 'value'
     directiveScope.projection = 'albersUsa'
     directiveScope.mapId = @choropleth.id
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choropleth, directiveScope)

@@ -15,8 +15,11 @@ class ChoroplethMapController
 
   initScope: ->
     for trackedProperty in choroplethMapConfig.trackedProperties
-      if propertyValue = @snippetModel.data(trackedProperty)
+      propertyValue = @snippetModel.data(trackedProperty)
+      if propertyValue
         @$scope[trackedProperty] = propertyValue
+      else if choroplethMapConfig.kickstartProperties[trackedProperty]
+        @$scope[trackedProperty] = choroplethMapConfig.kickstartProperties[trackedProperty]
 
 
   setupSnippetChangeListener: ->
