@@ -7,6 +7,11 @@ describe 'ChoroplethMap', ->
     @snippetModel.data
       map: biggerSampleMap
       data: messyData
+      projection: 'mercator'
+      colorScheme: 'Paired'
+      colorSteps: 9
+      valueProperty: 'value'
+
     @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
 
