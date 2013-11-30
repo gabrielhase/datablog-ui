@@ -6,10 +6,10 @@ class FlowtextOptionsController
     @$scope.editableEventsService = @editableEventsService
     @$scope.currentSelectionStyles = @editableEventsService.currentSelectionStyles
 
-    @$scope.toggleBold = => @toggleBold()
-    @$scope.toggleItalic = => @toggleItalic()
-    @$scope.openLinkInput = => @openLinkInput()
-    @$scope.setLink = (link, target) => @setLink(link, target)
+    @$scope.toggleBold = $.proxy(@toggleBold, this)
+    @$scope.toggleItalic = $.proxy(@toggleItalic, this)
+    @$scope.openLinkInput = $.proxy(@openLinkInput, this)
+    @$scope.setLink = $.proxy(@setLink, this)
 
 
   toggleBold: ->

@@ -10,9 +10,7 @@ describe 'Data Modal Controller', ->
 
     @scope = retrieveService('$rootScope').$new()
     @mapMediatorService = retrieveService('mapMediatorService')
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
     @modalInstance =
       dismiss: ->

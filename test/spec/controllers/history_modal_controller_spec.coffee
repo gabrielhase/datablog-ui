@@ -29,9 +29,7 @@ describe 'HistoryModalController', ->
     @uiStateService = retrieveService('uiStateService')
     @angularTemplateService = retrieveService('angularTemplateService')
     @mapMediatorService = retrieveService('mapMediatorService')
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
     @historyModalController = instantiateController('HistoryModalController',
       $scope: @scope, $modalInstance: @modalInstance, $timeout: @timeout, $q: @q, snippet: @snippetModel,
@@ -78,15 +76,40 @@ describe 'HistoryModalController', ->
 
     it 'creates a snippet copy from the snippet model found by id', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.data('testId')).to.equal('I am the one')
+      expect(@scope.historyVersionSnippet.data('testId')).to.equal('I am the one')
 
 
     it 'creates a snippet copy from the snippet model found by id in the sidebar', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.data('testId')).to.equal('I am the one')
+      expect(@scope.historyVersionSnippet.data('testId')).to.equal('I am the one')
 
 
     it 'assigns a novel id to the snippet copy', ->
       @historyModalController.searchHistorySnippet(@json)
-      expect(@historyModalController.historyVersionSnippet.id).not.to.equal(@snippetModel.id)
+      expect(@scope.historyVersionSnippet.id).not.to.equal(@snippetModel.id)
+
+
+  describe 'Merging changes', ->
+
+    beforeEach ->
+      @scope.latestSnippetVersion = @snippetModel.copy(doc.document.design)
+      @mapMediatorService.set(@scope.latestSnippetVersion.id, @scope.latestSnippetVersion, @choroplethMap, @scope)
+      @event =
+        stopPropagation: ->
+          true
+
+
+    it 'merges a map change into the snippet model on the page', ->
+      @scope.latestSnippetVersion.data
+        map: biggerSampleMap
+      @historyModalController.merge(@event)
+      expect(@snippetModel.data('map')).to.eql(biggerSampleMap)
+
+
+    it 'merges a projection change into the snippet model on the page', ->
+      @scope.latestSnippetVersion.data
+        projection: 'orthographic'
+      @historyModalController.merge(@event)
+      expect(@snippetModel.data('projection')).to.equal('orthographic')
+
 

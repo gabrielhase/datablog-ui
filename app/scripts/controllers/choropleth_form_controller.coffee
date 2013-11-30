@@ -5,9 +5,9 @@ class ChoroplethFormController
     @choroplethInstance = @mapMediatorService.getUIModel(@$scope.snippet.model.id)
     @$scope.choroplethInstance = @choroplethInstance
 
-    @$scope.setMap = (data, error) => @setMap(data, error)
-    @$scope.setData = (data, error) => @setData(data, error)
-    @$scope.openDataModal = (highlighedRows) => @openDataModal(highlighedRows)
+    @$scope.setMap = $.proxy(@setMap, this)
+    @$scope.setData = $.proxy(@setData, this)
+    @$scope.openDataModal = $.proxy(@openDataModal, this)
     @$scope.hasTooManyCategories = => @$scope.categoryCount > @$scope.maxQuantizeSteps
 
     @$scope.projections = choroplethMapConfig.availableProjections

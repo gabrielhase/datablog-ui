@@ -310,12 +310,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           stopProgressBar()
       )
 
+      # NOTE: watches on object equality not reference equality
       scope.$watch('data', (newVal, oldVal) ->
         return unless newVal && scope.map
         if newVal != oldVal # to prevent init redraw
           renderVisualization(scope)
           stopProgressBar()
-      )
+      , true)
 
       scope.$watch('lastPositioned', (newVal, oldVal) ->
         return unless scope?.map
