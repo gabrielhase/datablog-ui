@@ -53,6 +53,8 @@ do ->
         map: 'usCounties'
         data: 'usUnemployment'
         projection: 'albersUsa'
+        mappingPropertyOnMap: 'id'
+        mappingPropertyOnData: 'id'
       }
     ]
 

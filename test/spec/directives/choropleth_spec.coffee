@@ -1,4 +1,4 @@
-describe 'Choropleth directive', ->
+describe 'choropleth directive', ->
 
   directiveElem = null
   directiveScope = null
@@ -58,17 +58,19 @@ describe 'Choropleth directive', ->
     @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel = doc.create('livingmaps.choropleth')
     doc.document.snippetTree.root.append(@snippetModel)
-    @snippetModel.data
-      data: sample1DData
+
     @choropleth = new ChoroplethMap(@snippetModel.id)
     { directiveElem, directiveScope } = retrieveDirective(choroplethMapConfig.directive)
+    setData @snippetModel, directiveScope,
+      data: sample1DData
+      mappingPropertyOnMap: 'id'
+      mappingPropertyOnData: 'id'
     directiveScope.projection = 'albersUsa'
     directiveScope.mapId = @choropleth.id
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choropleth, directiveScope)
 
 
   describe 'rendering a map', ->
-
 
     it 'should render an svg container', ->
       svg = directiveElem.find('svg')
@@ -97,11 +99,13 @@ describe 'Choropleth directive', ->
 
 
     it 'should set the viewBox property on the svg', ->
+      # setData @snippetModel, directiveScope,
+      #   map: sampleMap
       directiveScope.map = sampleMap
       directiveScope.$digest()
       # NOTE: JQuery does not support the viewBox attribute so we need to use
       # the SVG DOM API here
-      viewBox = $('svg')[0].viewBox
+      viewBox = $('.choropleth')[0].viewBox
       expect(viewBox.baseVal.width).to.eql(467.88330078125)
       expect(viewBox.baseVal.height).to.eql(146.29034423828125)
       expect(viewBox.baseVal.x).to.eql(195.8579864501953)
@@ -113,7 +117,7 @@ describe 'Choropleth directive', ->
       directiveScope.$digest()
       directiveScope.map = smallerSampleMap
       directiveScope.$digest()
-      viewBox = $('svg')[0].viewBox
+      viewBox = $('.choropleth')[0].viewBox
       expect(viewBox.baseVal.width).to.eql(100.67922973632813)
       expect(viewBox.baseVal.height).to.eql(117.65719604492188)
       expect(viewBox.baseVal.x).to.eql(195.88800048828125)
@@ -123,14 +127,14 @@ describe 'Choropleth directive', ->
     it 'should lower the height property on dropping into a narrower container', ->
       directiveScope.map = sampleMap
       directiveScope.$digest()
-      expect($('svg').height()).to.eql(312)
+      expect($('.choropleth').height()).to.eql(312)
 
       # simulate drag&drop
       $('body').find(directiveElem).remove()
       $('#narrowContainer').append(directiveElem)
       directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
-      expect($('#narrowContainer svg').height()).to.eql(62)
+      expect($('#narrowContainer .choropleth').height()).to.eql(62)
 
 
     it 'should raise the height property on dropping into a wider container', ->
@@ -138,13 +142,13 @@ describe 'Choropleth directive', ->
       $('#narrowContainer').append(directiveElem)
       directiveScope.map = sampleMap
       directiveScope.$digest()
-      expect($('#narrowContainer svg').height()).to.eql(62)
+      expect($('#narrowContainer .choropleth').height()).to.eql(62)
 
       $('#narrowContainer').find(directiveElem).remove()
       $('#wideContainer').append(directiveElem)
       directiveScope.lastPositioned = (new Date()).getTime()
       directiveScope.$digest()
-      expect($('#wideContainer svg').height()).to.eql(250)
+      expect($('#wideContainer .choropleth').height()).to.eql(250)
 
 
   describe 'visualizing data on a map', ->
@@ -210,6 +214,8 @@ describe 'Choropleth directive', ->
           data: sampleCategoricalData
           map: biggerSampleMap
           valueProperty: 'party'
+          mappingPropertyOnMap: 'id'
+          mappingPropertyOnData: 'id'
 
 
       it 'renders categorical data', ->

@@ -5,8 +5,6 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     projection: 'mercator'
     colorSteps: 9
     colorScheme: 'Paired'
-    mappingPropertyOnMap: 'id'
-    mappingPropertyOnData: 'id'
     valueProperty: 'value'
 
   #    #############################################
@@ -89,6 +87,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     ).tooltip('show')
 
 
+  getMappingProperty = (property) ->
+    if $.isNumeric(property)
+      +property
+    else
+      property
+
+
   renderData = (scope, valFn) ->
     return if typeof scope.data != 'object'
 
@@ -99,14 +104,14 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     usedDataPoints = []
     paths = scope.mapGroup.selectAll('path')
       .attr('data-title', (d) ->
-        mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        mapPropertyId = getMappingProperty(d.properties[scope.mappingPropertyOnMap])
         valueById.get(mapPropertyId)
       )
       .attr('data-region', (d) ->
-        d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        getMappingProperty(d.properties[scope.mappingPropertyOnMap])
       )
       .attr('class', (d) ->
-        mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap]
+        mapPropertyId = getMappingProperty(d.properties[scope.mappingPropertyOnMap])
         val = valueById.get(mapPropertyId)
         if val
           mapInstance.usedDataValues.push(val) if mapInstance.usedDataValues.indexOf(val) == -1
@@ -127,7 +132,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   getDataMap = (scope, mapInstance) ->
     valueById = d3.map()
     for d in scope.data
-      dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData]
+      dataPropertyId = getMappingProperty(d[scope.mappingPropertyOnData])
       if mapInstance.getValueType() == 'categorical'
         val = d[scope.valueProperty] || d[defaults.valueProperty]
       else
@@ -138,14 +143,14 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
   deduceMinValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     minValue = d3.min data, (d) ->
-      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      propertyOnData = d[mappingPropertyOnData]
       if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
         +d[valueProperty] || +d[defaults.valueProperty]
 
 
   deduceMaxValue = (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) ->
     d3.max data, (d) ->
-      propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData]
+      propertyOnData = d[mappingPropertyOnData]
       if allMappingPropertiesOnMap.indexOf(propertyOnData) != -1
         +d[valueProperty] || +d[defaults.valueProperty]
 
@@ -236,14 +241,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #    #############################################
 
   # gets all mapped property values that are actually on the map
-  # Either gets all from the set mappingProperty or gets all from the default
-  # no mixing of default and set property!
   deduceAllAvailableMappingOnMap = (map, mappingPropertyOnMap) ->
     map.features.map (mapEntry) ->
-      if mappingPropertyOnMap
-        mapEntry.properties[mappingPropertyOnMap]
-      else
-        mapEntry.properties[defaults.mappingPropertyOnMap]
+      mapEntry.properties[mappingPropertyOnMap]
 
 
   # Stop progress bar with a timeout to prevent running conditions
@@ -287,6 +287,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         .append('svg')
           .attr('width', '100%')
           .attr('height', '0px')
+          .attr('class', 'choropleth')
 
       scope.mapGroup = scope.svg.append('g')
         .attr('class', 'map')
