@@ -59,7 +59,7 @@ class MergeController
 
 
   isColorStepsWithOrdinalData: (property) ->
-    property.key == 'quantizeSteps' && @$scope.valueType == 'categorical'
+    property.key == 'colorSteps' && @$scope.valueType == 'categorical'
 
 
   # NOTE: we need to fire the change event manually since the latestVersionSnippet

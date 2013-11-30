@@ -12,7 +12,7 @@ describe 'Choropleth map controller', ->
       mappingPropertyOnMap: 'someProp'
       mappingPropertyOnData: 'someProp'
       valueProperty: 'someVal'
-      quantizeSteps: 9
+      colorSteps: 9
       colorScheme: 'Set1'
 
     @ngProgress = mockNgProgress()
@@ -136,11 +136,11 @@ describe 'Choropleth map controller', ->
       expect(@scope.valueProperty).to.eql(newValueProperty)
 
 
-    it 'changes the quantize steps attribute on a quantizeSteps change', ->
-      newQuantizeSteps = 12
+    it 'changes the color steps attribute on a colorSteps change', ->
+      newColorSteps = 12
       @snippetModel.data
-        quantizeSteps: newQuantizeSteps
-      expect(@scope.quantizeSteps).to.eql(newQuantizeSteps)
+        colorSteps: newColorSteps
+      expect(@scope.colorSteps).to.eql(newColorSteps)
 
 
     it 'changes the color scheme attribute on a colorScheme change', ->

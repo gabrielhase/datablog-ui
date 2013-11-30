@@ -314,8 +314,8 @@ describe 'Choropleth directive', ->
         expect(entries.length).to.eql(9)
 
 
-      it 'renders a different number of legend rects when changing the quantize steps', ->
-        directiveScope.quantizeSteps = 3
+      it 'renders a different number of legend rects when changing the color steps', ->
+        directiveScope.colorSteps = 3
         directiveScope.$digest()
         entries = directiveElem.find('li.key')
         expect(entries.length).to.eql(3)
@@ -330,8 +330,8 @@ describe 'Choropleth directive', ->
         expect($(entries[8]).text()).to.eql('6.6 – 7')
 
 
-      it 'changes the extent of each legend entry when changing the quantize steps', ->
-        directiveScope.quantizeSteps = 4
+      it 'changes the extent of each legend entry when changing the color steps', ->
+        directiveScope.colorSteps = 4
         directiveScope.$digest()
         entries = directiveElem.find('li.key')
         expect($(entries[0]).text()).to.eql('3 – 4')
@@ -397,16 +397,16 @@ describe 'Choropleth directive', ->
         directiveScope.mappingPropertyOnMap = 'id'
         directiveScope.mappingPropertyOnData = 'id'
 
-      it 'assigns different classes when increasing the number of quantize steps', ->
-        directiveScope.quantizeSteps = 12
+      it 'assigns different classes when increasing the number of color steps', ->
+        directiveScope.colorSteps = 12
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q0-12')
         expect($(paths[1]).attr('class')).to.eql('q11-12')
 
 
-      it 'assigns different classes when decreasing the number of quantize steps', ->
-        directiveScope.quantizeSteps = 5
+      it 'assigns different classes when decreasing the number of color steps', ->
+        directiveScope.colorSteps = 5
         directiveScope.$digest()
         paths = directiveElem.find('path')
         expect($(paths[0]).attr('class')).to.eql('q0-5')

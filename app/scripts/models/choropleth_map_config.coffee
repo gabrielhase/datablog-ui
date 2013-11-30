@@ -12,7 +12,7 @@ do ->
                     mapping-property-on-map="mappingPropertyOnMap"
                     mapping-property-on-data="mappingPropertyOnData"
                     value-property="valueProperty"
-                    quantize-steps="quantizeSteps"
+                    color-steps="colorSteps"
                     color-scheme="colorScheme">
         </choropleth>
       </div>
@@ -27,7 +27,7 @@ do ->
                   mapping-property-on-map="mappingPropertyOnMap"
                   mapping-property-on-data="mappingPropertyOnData"
                   value-property="valueProperty"
-                  quantize-steps="quantizeSteps"
+                  color-steps="colorSteps"
                   color-scheme="colorScheme">
       </choropleth>
     """
@@ -41,7 +41,7 @@ do ->
       'mappingPropertyOnMap',
       'mappingPropertyOnData',
       'valueProperty',
-      'quantizeSteps',
+      'colorSteps',
       'colorScheme'
     ]
 

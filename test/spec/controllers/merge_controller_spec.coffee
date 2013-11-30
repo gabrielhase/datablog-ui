@@ -37,7 +37,7 @@ describe 'MergeController', ->
         colorScheme: 'Set1'
 
 
-    ['map', 'projection', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'quantizeStep'].forEach (key) ->
+    ['map', 'projection', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'colorSteps'].forEach (key) ->
       it "enables the merge status on a change on #{key}", ->
         @mergeController.revertChange
           key: key
@@ -149,7 +149,7 @@ describe 'MergeController', ->
       @snippetModel.data
         valueProperty: 'reverseId'
 
-    it 'does not display the revertChange button for a quantizeStep if the value property is ordinal', ->
+    it 'does not display the revertChange button for a colorSteps if the value property is ordinal', ->
       @scope.$digest()
       expect(@scope.valueType).to.equal('categorical')
 

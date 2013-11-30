@@ -10,7 +10,7 @@ describe 'HistoryModalController', ->
       mappingPropertyOnMap: 'someProp'
       mappingPropertyOnData: 'someProp'
       valueProperty: 'value'
-      quantizeSteps: 9
+      colorSteps: 9
       colorScheme: 'YlGn'
     $q = retrieveService('$q')
     openPromise = $q.defer()

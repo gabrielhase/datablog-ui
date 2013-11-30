@@ -88,7 +88,7 @@ htmlTemplates.choroplethSidebarForm = """
 
           <div ng-show="!isCategorical">
             <label>Nr. of different colors</label>
-            <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">
+            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">
             </select>
             <!-- TODO: Slider probably doesn't work since it needs click events on the document which are not propagated from within the sidebar -->
             <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->
