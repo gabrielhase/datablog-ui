@@ -165,12 +165,10 @@ class ChoroplethMap
 
 
   _determineValueType: (val) ->
-    tryNumeric = +val
-
-    if _.isNaN(tryNumeric)
-      'categorical'
-    else
+    if $.isNumeric(val)
       'numerical'
+    else
+      'categorical'
 
 
   # finds the difference in keys between literal current and literal last
