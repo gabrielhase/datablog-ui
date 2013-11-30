@@ -6,10 +6,10 @@ class HistoryModalController
     @$scope.modalState =
       isMerging: false
     @$scope.snippet = @snippet
-    @$scope.merge = (event) => @merge(event)
-    @$scope.close = (event) => @close(event)
-    @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
-    @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
+    @$scope.merge = $.proxy(@merge, this)
+    @$scope.close = $.proxy(@close, this)
+    @$scope.chooseRevision = $.proxy(@chooseRevision, this)
+    @$scope.isSelected = $.proxy(@isSelected, this)
 
     @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of

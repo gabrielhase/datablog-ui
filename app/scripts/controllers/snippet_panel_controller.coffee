@@ -2,10 +2,10 @@ angular.module('ldEditor').controller 'SnippetPanelController',
 class SnippetPanelController
 
   constructor: (@$scope, @editorService, snippetInsertService) ->
+    @$scope.selectSnippet = $.proxy(@selectSnippet, this)
     @$scope.snippetInsertService = snippetInsertService
     @$scope.groups = @initGroups()
     @$scope.snippets = @initSnippets()
-    @$scope.selectSnippet = ($event, groupId, $index, snippet) => @selectSnippet($event, groupId, $index, snippet)
 
 
   initSnippets: () ->

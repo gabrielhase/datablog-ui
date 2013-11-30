@@ -1,4 +1,4 @@
-describe 'Choropleth form controller', ->
+describe 'ChoroplethFormController', ->
 
   beforeEach ->
     @mapMediatorService = retrieveService('mapMediatorService')

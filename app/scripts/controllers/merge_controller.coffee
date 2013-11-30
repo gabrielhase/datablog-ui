@@ -2,10 +2,10 @@ angular.module('ldEditor').controller 'MergeController',
 class MergeController
 
   constructor: (@$scope, @mapMediatorService) ->
-    @$scope.revertChange = (property) => @revertChange(property)
-    @$scope.revertAdd = (property) => @revertAdd(property)
-    @$scope.revertDelete = (property) => @revertDelete(property)
-    @$scope.isColorStepsWithOrdinalData = (property) => @isColorStepsWithOrdinalData(property)
+    @$scope.revertChange = $.proxy(@revertChange, this)
+    @$scope.revertAdd = $.proxy(@revertAdd, this)
+    @$scope.revertDelete = $.proxy(@revertDelete, this)
+    @$scope.isColorStepsWithOrdinalData = $.proxy(@isColorStepsWithOrdinalData, this)
     @modelInstance = @mapMediatorService.getUIModel(@$scope.latestSnippetVersion.id)
     @initValueType()
     @$scope.$watch "latestSnippetVersion.data('valueProperty')", (newVal) =>
