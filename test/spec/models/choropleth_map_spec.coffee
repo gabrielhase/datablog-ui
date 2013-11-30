@@ -7,9 +7,7 @@ describe 'ChoroplethMap', ->
     @snippetModel.data
       map: biggerSampleMap
       data: messyData
-    @choroplethMap = new ChoroplethMap
-      id: @snippetModel.id
-      mapMediatorService: @mapMediatorService
+    @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
 
 
@@ -36,6 +34,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[0]).to.eql(
           label: 'regions'
+          key: 'map'
         )
 
 
@@ -45,6 +44,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[0]).to.eql(
           label: 'regions'
+          key: 'map'
           difference:
             type: 'blobChange'
         )
@@ -54,6 +54,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
+          key: 'projection'
           difference: undefined
           info: "(mercator)"
         )
@@ -65,6 +66,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[0].properties[1]).to.eql(
           label: 'projection'
+          key: 'projection'
           difference:
             type: 'change'
             previous: 'mercator'
@@ -78,6 +80,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[1].properties[0]).to.eql(
           label: 'mapping'
+          key: 'mappingPropertyOnMap'
           difference: undefined
           info: 'on property id'
         )
@@ -89,6 +92,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[1].properties[0]).to.eql
           label: 'mapping'
+          key: 'mappingPropertyOnMap'
           difference:
             type: 'change'
             previous: 'id'
@@ -148,9 +152,11 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties[0]).to.eql
           label: ''
+          key: 'data'
           difference:
             type: 'add'
             content: "more weird values, 4, 3'333'333.010101010"
+            unformattedContent: {'Some weird col': 'more weird values', 'an id': 4, 'value': "3'333'333.010101010"}
 
 
       it 'calculates a deletion of a row as a delete diff', ->
@@ -159,9 +165,11 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties[0]).to.eql
           label: ''
+          key: 'data'
           difference:
             type: 'delete'
             content: "who parses json like this?, 2, 2'222'222.00000002"
+            unformattedContent: {'Some weird col': 'who parses json like this?', 'an id': 2, 'value': "2'222'222.00000002"}
 
 
       it 'calculates a changed value in a cell as one add diff and one delete diff', ->
@@ -170,14 +178,18 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[2].properties).to.eql([
           label: ''
+          key: 'data'
           difference:
             type: 'add'
             content: "weirdest Value, 3, 42"
+            unformattedContent: {'Some weird col': 'weirdest Value', 'an id': 3, 'value': '42'}
         ,
           label: ''
+          key: 'data'
           difference:
             type: 'delete'
             content: "weirdest Value, 3, 1'111'111.34"
+            unformattedContent: {'Some weird col': 'weirdest Value', 'an id': 3, 'value': "1'111'111.34"}
         ])
 
 
@@ -194,6 +206,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[0]).to.eql
           label: 'value property'
+          key: 'valueProperty'
           difference: undefined
           info: '(value)'
 
@@ -205,6 +218,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[0]).to.eql
           label: 'value property'
+          key: 'valueProperty'
           difference:
             type: 'change'
             previous: 'value'
@@ -215,6 +229,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[1]).to.eql
           label: 'color scheme'
+          key: 'colorScheme'
           difference: undefined
           info: '(YlGn)'
 
@@ -225,6 +240,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[1]).to.eql
           label: 'color scheme'
+          key: 'colorScheme'
           difference:
             type: 'change'
             previous: 'YlGn'
@@ -235,6 +251,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
           label: 'quantize steps'
+          key: 'quantizeSteps'
           difference: undefined
           info: '(3)'
 
@@ -245,6 +262,7 @@ describe 'ChoroplethMap', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
           label: 'quantize steps'
+          key: 'quantizeSteps'
           difference:
             type: 'change'
             previous: 3

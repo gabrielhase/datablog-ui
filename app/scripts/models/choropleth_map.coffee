@@ -1,9 +1,7 @@
 class ChoroplethMap
 
-  constructor: ({
-    @id
-    @mapMediatorService # TODO: is it possible to setup the angular $injector for models?
-  }) ->
+  constructor: (@id) ->
+    @mapMediatorService = angularHelpers.inject('mapMediatorService')
     @dataPointsWithMissingRegion = []
     @regionsWithMissingDataPoints = []
     @usedDataValues = []
@@ -167,12 +165,10 @@ class ChoroplethMap
 
 
   _determineValueType: (val) ->
-    tryNumeric = +val
-
-    if _.isNaN(tryNumeric)
-      'categorical'
-    else
+    if $.isNumeric(val)
       'numerical'
+    else
+      'categorical'
 
 
   # finds the difference in keys between literal current and literal last
@@ -207,6 +203,7 @@ class ChoroplethMap
     otherRegions = otherMap?.features.map (feature) -> feature.geometry
     mapDiffEntry =
       label: 'regions'
+      key: 'map'
     if !@_deepEquals(currentRegions, otherRegions)
       mapDiffEntry.difference =
         type: 'blobChange'
@@ -219,6 +216,7 @@ class ChoroplethMap
     otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap')
     propertyDiffEntry =
       label: 'mapping'
+      key: 'mappingPropertyOnMap'
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
     unless propertyDiffEntry.difference
       propertyDiffEntry.info = "on property #{currentValue}"
@@ -231,6 +229,7 @@ class ChoroplethMap
     otherValue = otherVersionSnippetModel.data(property)
     propertyDiffEntry =
       label: livingmapsWords.wordize(property)
+      key: property
     propertyDiffEntry.difference = @_getDifferenceType(currentValue, otherValue)
     unless propertyDiffEntry.difference
       propertyDiffEntry.info = "(#{currentValue})"
@@ -248,15 +247,19 @@ class ChoroplethMap
     for addition in additions
       differences.push
         label: ''
+        key: 'data'
         difference:
           type: 'add'
           content: _.values(addition).join(', ')
+          unformattedContent: addition
     for deletion in deletions
       differences.push
         label: ''
+        key: 'data'
         difference:
           type: 'delete'
           content: _.values(deletion).join(', ')
+          unformattedContent: deletion
 
     return differences
 

@@ -2,8 +2,8 @@ angular.module('ldEditor').controller 'PropertiesPanelController',
 class PropertiesPanelController
 
   constructor: (@$scope, @angularTemplateService) ->
-    @$scope.deleteSnippet = (snippet) => @deleteSnippet(snippet)
-    @$scope.isDeletable = (snippet) => @isDeletable(snippet)
+    @$scope.deleteSnippet = $.proxy(@deleteSnippet, this)
+    @$scope.isDeletable = $.proxy(@isDeletable, this)
 
 
   deleteSnippet: (snippet) ->

@@ -21,10 +21,8 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
           ))
         when 'd3-choropleth'
           @loadTemplate($(node), $.proxy(@insertTemplateInstance, this,
-            snippetModel, $(node), new ChoroplethMap
-              id: snippetModel.id
-              mapMediatorService: mapMediatorService
-            ))
+            snippetModel, $(node), new ChoroplethMap(snippetModel.id)
+          ))
         else
           alert("unknown template value #{$(node).data('is')}")
 

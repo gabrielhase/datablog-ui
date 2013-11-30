@@ -2,7 +2,7 @@
 angular.module('ldEditor').controller 'EditorController',
 class EditorController
 
-  constructor: (@$scope, @dialogService, @uiStateService, @snippetInsertService, @editableEventsService) ->
+  constructor: (@$scope, @dialogService, @uiStateService, @snippetInsertService, @editableEventsService, @$injector) ->
     # editor watches for ui state changes
     @$scope.state = @uiStateService.state
 

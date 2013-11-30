@@ -2,7 +2,16 @@ htmlTemplates.historyModal = """
 <div class="upfron-modal-full-width-header">
   <h3>History for {{snippet.template.title}}</h3>
   <div class="right-content upfront-control">
-    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>
+    <button ng-hide="modalState.isMerging"
+            class="upfront-btn upfront-btn-info"
+            ng-click="close($event)">Close table view</button>
+    <button ng-show="modalState.isMerging"
+            class="upfront-btn upfront-btn-danger"
+            ng-click="close($event)">Cancel Merging</button>
+    &nbsp;
+    <button ng-show="modalState.isMerging"
+            class="upfront-btn upfront-btn-large upfront-btn-success"
+            ng-click="merge($event)">Merge changes</button>
   </div>
 </div>
 <div class="upfront-modal-body" style="height: 100%">
@@ -50,17 +59,12 @@ htmlTemplates.historyModal = """
         <li ng-repeat="section in versionDifference">
           <h3>{{section.sectionTitle}}</h3>
           <ul class="upfront-list">
-            <li ng-repeat="property in section.properties">
-              <div ng-show="property.difference">
-                <div ng-if="property.difference.type == 'change'">
-                  <ng-include src="'diff-change-entry.html'"></ng-include>
-                </div>
-                <div ng-if="property.difference.type == 'add' || property.difference.type == 'delete'">
-                  <ng-include src="'diff-add-del-entry.html'"></ng-include>
-                </div>
+            <li ng-repeat="property in section.properties" ng-show="property.difference">
+              <div ng-if="property.difference.type == 'change' || property.difference.type == 'blobChange'">
+                <ng-include src="'diff-change-entry.html'"></ng-include>
               </div>
-              <div ng-show="!property.difference">
-                <span class="entypo-cc-nd"></span> {{property.label}} {{property.info}}
+              <div ng-if="property.difference.type == 'add' || property.difference.type == 'delete'">
+                <ng-include src="'diff-add-del-entry.html'"></ng-include>
               </div>
             </li>
           </ul>
@@ -70,6 +74,8 @@ htmlTemplates.historyModal = """
   </div>
 </div>
 <div class="upfront-modal-footer upfront-control">
-  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>
+  <button ng-hide="modalState.isMerging"
+            class="upfront-btn upfront-btn-info"
+            ng-click="close($event)">Close table view</button>
 </div>
 """

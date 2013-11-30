@@ -3,12 +3,14 @@ class HistoryModalController
 
   constructor: (@$scope, @$modalInstance, @$timeout, @$q, @snippet, @documentService,
     @editorService, @uiStateService, @angularTemplateService, @mapMediatorService) ->
+    @$scope.modalState =
+      isMerging: false
     @$scope.snippet = @snippet
-    @$scope.close = (event) => @close(event)
-    @$scope.chooseRevision = (historyRevision) => @chooseRevision(historyRevision)
-    @$scope.isSelected = (historyRevision) => @isSelected(historyRevision)
+    @$scope.merge = $.proxy(@merge, this)
+    @$scope.close = $.proxy(@close, this)
+    @$scope.chooseRevision = $.proxy(@chooseRevision, this)
+    @$scope.isSelected = $.proxy(@isSelected, this)
 
-    @modelInstance = @mapMediatorService.getUIModel(@snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
     # angular-ui-bootstrap...
@@ -30,21 +32,35 @@ class HistoryModalController
 
   setupLatestVersion: ->
     $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map')
-    @latestVersionSnippet = @snippet.copy(doc.document.design)
-    @angularTemplateService.insertTemplateInstance @latestVersionSnippet, $previewRoot, new ChoroplethMap
-      id: @latestVersionSnippet.id
-      mapMediatorService: @mapMediatorService
+    @$scope.latestSnippetVersion = @snippet.copy(doc.document.design)
+    @modelInstance = new ChoroplethMap(@$scope.latestSnippetVersion.id)
+    @angularTemplateService.insertTemplateInstance @$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap(@$scope.latestSnippetVersion.id)
 
 
   removeLatestVersionInstance: ->
-    @angularTemplateService.removeAngularTemplate(@latestVersionSnippet)
-    delete @latestVersionSnippet
+    @angularTemplateService.removeAngularTemplate(@$scope.latestSnippetVersion)
+    delete @$scope.latestSnippetVersion
+
+
+  merge: (event) ->
+    @snippet.data
+      mapId: @$scope.latestSnippetVersion.data('mapId')
+      map: @$scope.latestSnippetVersion.data('map')
+      lastPositioned: @$scope.latestSnippetVersion.data('lastPositioned')
+      projection: @$scope.latestSnippetVersion.data('projection')
+      data: @$scope.latestSnippetVersion.data('data')
+      mappingPropertyOnMap: @$scope.latestSnippetVersion.data('mappingPropertyOnMap')
+      mappingPropertyOnData: @$scope.latestSnippetVersion.data('mappingPropertyOnData')
+      valueProperty: @$scope.latestSnippetVersion.data('valueProperty')
+      quantizeSteps: @$scope.latestSnippetVersion.data('quantizeSteps')
+      colorScheme: @$scope.latestSnippetVersion.data('colorScheme')
+
+    @close(event)
 
 
   close: (event) ->
-    # TODO: put the changed data from @latestVersionSnippet to @snippet and save
-    @removeLatestVersionInstance() if @latestVersionSnippet
-    @removeHistoryVersionInstance() if @historyVersionSnippet
+    @removeLatestVersionInstance() if @$scope.latestSnippetVersion
+    @removeHistoryVersionInstance() if @$scope.historyVersionSnippet
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost
 
@@ -85,18 +101,16 @@ class HistoryModalController
         for snippetJson in documentRevision.data.content
           @searchHistorySnippet(snippetJson)
 
-      log.error 'The history document has to contain the map' unless @historyVersionSnippet
+      log.error 'The history document has to contain the map' unless @$scope.historyVersionSnippet
 
-      @angularTemplateService.insertTemplateInstance @historyVersionSnippet, $previewRoot, new ChoroplethMap
-        id: @historyVersionSnippet.id
-        mapMediatorService: @mapMediatorService
-      historyReady.resolve(@historyVersionSnippet)
+      @angularTemplateService.insertTemplateInstance @$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap(@$scope.historyVersionSnippet.id)
+      historyReady.resolve(@$scope.historyVersionSnippet)
 
     historyReady.promise
 
   # takes array of snippets or containers and looks for the snippet in the snippet tree
   # that has the same id.
-  # Assigns this snippet to @historyVersionSnippet
+  # Assigns this snippet to @$scope.historyVersionSnippet
   searchHistorySnippet: (snippetJson) ->
     if snippetJson.hasOwnProperty('containers')
       for container of snippetJson.containers
@@ -109,9 +123,9 @@ class HistoryModalController
         # NOTE: here we change the id in order not to conflict with the version on the page
         snippetJson.id = "#{snippetJson.id}-101"
         # TODO: make a bit of a safer key function
-        @historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design)
+        @$scope.historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design)
 
 
   removeHistoryVersionInstance: ->
-    @angularTemplateService.removeAngularTemplate(@historyVersionSnippet)
-    delete @historyVersionSnippet
+    @angularTemplateService.removeAngularTemplate(@$scope.historyVersionSnippet)
+    delete @$scope.historyVersionSnippet

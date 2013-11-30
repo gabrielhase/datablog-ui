@@ -150,10 +150,7 @@ describe 'angularTemplateService', ->
 
 
     it 'inserts a d3-choropleth snippet', ->
-      service.insertTemplateInstance(@snippetModel, @$directiveRoot, new ChoroplethMap
-        id: @snippetModel.id
-        mapMediatorService: @mapMediatorService
-      )
+      service.insertTemplateInstance @snippetModel, @$directiveRoot, new ChoroplethMap(@snippetModel.id)
       controller = @$directiveRoot.find('div').attr('ng-controller')
       cssClass = @$directiveRoot.find('div').attr('class')
       expect(controller).to.eql('ChoroplethMapController')
