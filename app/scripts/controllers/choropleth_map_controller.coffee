@@ -8,9 +8,18 @@ class ChoroplethMapController
     @snippetModel.data
       lastPositioned: (new Date()).getTime()
 
+    @setupKickstarters()
     @setupSnippetChangeListener()
     @$timeout => # the timeout makes sure that the choropleth property listeners are already setup
       @initScope()
+
+
+  setupKickstarters: ->
+    for property, propertyValue of choroplethMapConfig.kickstartProperties
+      unless @snippetModel.data(property)
+        kickstartProperty = {}
+        kickstartProperty["#{property}"] = propertyValue
+        @snippetModel.data(kickstartProperty)
 
 
   initScope: ->
@@ -18,8 +27,6 @@ class ChoroplethMapController
       propertyValue = @snippetModel.data(trackedProperty)
       if propertyValue
         @$scope[trackedProperty] = propertyValue
-      else if choroplethMapConfig.kickstartProperties[trackedProperty]
-        @$scope[trackedProperty] = choroplethMapConfig.kickstartProperties[trackedProperty]
 
 
   setupSnippetChangeListener: ->

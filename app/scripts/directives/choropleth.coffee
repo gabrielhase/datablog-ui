@@ -7,23 +7,24 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   renderVisualization = (scope) ->
     if scope.map
       path = deducePathProjection(scope.projection)
-      renderMap(scope, path)
+      if path
+        renderMap(scope, path)
 
-      map = scope.map
-      data = scope.data
-      valueProperty = scope.valueProperty
-      mappingPropertyOnMap = scope.mappingPropertyOnMap
-      mappingPropertyOnData = scope.mappingPropertyOnData
+        map = scope.map
+        data = scope.data
+        valueProperty = scope.valueProperty
+        mappingPropertyOnMap = scope.mappingPropertyOnMap
+        mappingPropertyOnData = scope.mappingPropertyOnData
 
-      bounds =  path.bounds(scope.map)
-      resizeMap(scope.svg, bounds)
+        bounds =  path.bounds(scope.map)
+        resizeMap(scope.svg, bounds)
 
-      if data
-        colorSteps = scope.colorSteps
-        allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap)
-        valFn = deduceValueFunction(scope, colorSteps, allMappingPropertiesOnMap)
-        renderData(scope, valFn)
-        renderLegend(scope, valFn)
+        if data
+          colorSteps = scope.colorSteps
+          allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap)
+          valFn = deduceValueFunction(scope, colorSteps, allMappingPropertiesOnMap)
+          renderData(scope, valFn)
+          renderLegend(scope, valFn)
 
 
   #    #############################################
