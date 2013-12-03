@@ -60,7 +60,6 @@ do ->
 
     kickstartProperties:
       projection: 'mercator'
-      colorScheme: 'Paired'
       colorSteps: 9
       valueProperty: 'value'
 
