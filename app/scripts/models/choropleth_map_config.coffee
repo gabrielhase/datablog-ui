@@ -60,8 +60,6 @@ do ->
 
     kickstartProperties:
       projection: 'mercator'
-      colorSteps: 9
-      valueProperty: 'value'
 
     availableMaps: [
       name: 'Swiss Population Data Map'

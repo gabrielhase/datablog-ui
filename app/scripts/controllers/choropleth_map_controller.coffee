@@ -2,7 +2,7 @@ angular.module('ldEditor').controller 'ChoroplethMapController',
 class ChoroplethMapController
 
   constructor: (@$scope, @ngProgress, @mapMediatorService, @$timeout) ->
-    @colorSchemeCallback = $.Callbacks('memory')
+    @dataWasSet = $.Callbacks('memory once')
 
     @choroplethMapInstance = @mapMediatorService.getUIModel(@$scope.mapId)
     @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
@@ -22,17 +22,34 @@ class ChoroplethMapController
         kickstartProperty = {}
         kickstartProperty["#{property}"] = propertyValue
         @snippetModel.data(kickstartProperty)
-    @initColorSchemeCallback()
+    @initValuePropertyCallback()
 
 
-  initColorSchemeCallback: ->
-    @colorSchemeCallback.add =>
-      if @choroplethMapInstance.getValueType() == 'numerical'
+  # init value to the first numeric property or the last property if none are
+  # numeric.
+  initValuePropertyCallback: ->
+    @dataWasSet.add =>
+      unless @snippetModel.data('valueProperty')
+        for key, value of @snippetModel.data('data')[0]
+          if $.isNumeric(value)
+            @snippetModel.data
+              valueProperty: key
+            @initColorScheme() # once the value property is triggered, trigger the color scheme
+            return
         @snippetModel.data
-          colorScheme: 'YlGn'
+          valueProperty: key
       else
-        @snippetModel.data
-          colorScheme: 'Paired'
+        @initColorScheme()
+
+
+  initColorScheme: ->
+    if @choroplethMapInstance.getValueType() == 'numerical'
+      @snippetModel.data
+        colorScheme: 'YlGn'
+        colorSteps: 9
+    else
+      @snippetModel.data
+        colorScheme: 'Paired'
 
 
   initScope: ->
@@ -63,8 +80,8 @@ class ChoroplethMapController
 
   handleKickstartCallbacks: (changedProperty) ->
     if changedProperty == 'data'
-      @colorSchemeCallback.fire()
+      @dataWasSet.fire()
     # once the user has set the color scheme manually the callbacks should never trigger
-    @colorSchemeCallback.disable() if changedProperty == 'colorScheme'
+    @dataWasSet.disable() if changedProperty == 'valueProperty'
 
 
