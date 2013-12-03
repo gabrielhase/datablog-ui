@@ -1,4 +1,4 @@
-describe 'Choropleth map controller', ->
+describe 'ChoroplethMapController', ->
 
   beforeEach ->
     @mapMediatorService = retrieveService('mapMediatorService')
@@ -6,23 +6,46 @@ describe 'Choropleth map controller', ->
     doc.document.snippetTree.root.append(@snippetModel)
     @snippetModel.data
       map: sampleMap
-      projection: 'mercator'
       mapName: 'aGreatName'
-      data: sample1DData
-      mappingPropertyOnMap: 'someProp'
-      mappingPropertyOnData: 'someProp'
-      valueProperty: 'someVal'
-      colorSteps: 9
-      colorScheme: 'Set1'
 
     @ngProgress = mockNgProgress()
     @choroplethMap = new ChoroplethMap(@snippetModel.id)
-    @scope =
-      mapId: @snippetModel.id
+    @scope = retrieveService('$rootScope').$new()
+    @scope.mapId = @snippetModel.id
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap, @scope)
 
     @choroplethController = instantiateController('ChoroplethMapController',
       $scope: @scope, ngProgress: @ngProgress)
+
+
+  describe 'kickstarter initializations', ->
+
+    it 'initializes the projection to "mercator"', ->
+      expect(@snippetModel.data('projection')).to.equal('mercator')
+
+
+    it 'initializes the color scheme to "Paired" for ordinal data', ->
+      @snippetModel.data
+        data: sampleCategoricalData
+        mappingPropertyOnMap: 'id'
+        mappingPropertyOnData: 'id'
+      @scope.$digest()
+      expect(@snippetModel.data('colorScheme')).to.equal('Paired')
+
+
+    it 'initializes the color scheme to "YlGn" for numerical data', ->
+      @snippetModel.data
+        data: sample1DData
+        mappingPropertyOnData: 'id'
+        mappingPropertyOnMap: 'id'
+      @scope.$digest()
+      expect(@snippetModel.data('colorScheme')).to.equal('YlGn')
+
+
+    it 'initializes the color steps to 9 for numerical data'
+
+
+    it 'initializes the value property to the first numerical column in the data'
 
 
   # this represents all calls that actually are performed by the choropleth_form_controller

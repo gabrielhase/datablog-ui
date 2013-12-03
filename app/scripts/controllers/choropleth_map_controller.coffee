@@ -2,6 +2,8 @@ angular.module('ldEditor').controller 'ChoroplethMapController',
 class ChoroplethMapController
 
   constructor: (@$scope, @ngProgress, @mapMediatorService, @$timeout) ->
+    @colorSchemeCallback = $.Callbacks('memory')
+
     @choroplethMapInstance = @mapMediatorService.getUIModel(@$scope.mapId)
     @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
 
@@ -20,6 +22,17 @@ class ChoroplethMapController
         kickstartProperty = {}
         kickstartProperty["#{property}"] = propertyValue
         @snippetModel.data(kickstartProperty)
+    @initColorSchemeCallback()
+
+
+  initColorSchemeCallback: ->
+    @colorSchemeCallback.add =>
+      if @choroplethMapInstance.getValueType() == 'numerical'
+        @snippetModel.data
+          colorScheme: 'YlGn'
+      else
+        @snippetModel.data
+          colorScheme: 'Paired'
 
 
   initScope: ->
@@ -27,6 +40,7 @@ class ChoroplethMapController
       propertyValue = @snippetModel.data(trackedProperty)
       if propertyValue
         @$scope[trackedProperty] = propertyValue
+        @handleKickstartCallbacks(trackedProperty)
 
 
   setupSnippetChangeListener: ->
@@ -44,4 +58,13 @@ class ChoroplethMapController
             @ngProgress.start()
             @ngProgress.set(10)
           @$scope[trackedProperty] = newVal
+          @handleKickstartCallbacks(trackedProperty)
+
+
+  handleKickstartCallbacks: (changedProperty) ->
+    if changedProperty == 'data'
+      @colorSchemeCallback.fire()
+    # once the user has set the color scheme manually the callbacks should never trigger
+    @colorSchemeCallback.disable() if changedProperty == 'colorScheme'
+
 
