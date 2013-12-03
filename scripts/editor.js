@@ -13591,7 +13591,18 @@ angular.module('ngProgress', [
   'ngProgress.provider'
 ]);
 (function () {
-  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, Map, MapController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, htmlTemplates, log, __slice = [].slice;
+  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, Map, MapController, MergeController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, htmlTemplates, log, __slice = [].slice;
+  this.angularHelpers = function () {
+    var injector;
+    injector = null;
+    return {
+      inject: function (injectableName) {
+        var injectable;
+        injector || (injector = angular.element('.-js-editor-root').controller().$injector);
+        return injectable = injector.get(injectableName);
+      }
+    };
+  }();
   this.livingmapsDiff = function () {
     return {
       differenceObjects: function (arr1, arr2) {
@@ -13720,7 +13731,7 @@ angular.module('ngProgress', [
   }();
   $(document).ready(function () {
     var $root;
-    $root = $('<ng-include src="\'editor.html\'"></ng-include>').appendTo(document.body);
+    $root = $('<ng-include class="bla" src="\'editor.html\'"></ng-include>').appendTo(document.body);
     return angular.bootstrap($root[0], ['ldEditor']);
   });
   angular.module('ldEditor').controller('AuthController', AuthController = function () {
@@ -13828,17 +13839,11 @@ angular.module('ngProgress', [
       this.dataSanitizationService = dataSanitizationService;
       this.choroplethInstance = this.mapMediatorService.getUIModel(this.$scope.snippet.model.id);
       this.$scope.choroplethInstance = this.choroplethInstance;
-      this.$scope.setMap = function (data, error) {
-        return _this.setMap(data, error);
-      };
-      this.$scope.setData = function (data, error) {
-        return _this.setData(data, error);
-      };
-      this.$scope.openDataModal = function (highlighedRows) {
-        return _this.openDataModal(highlighedRows);
-      };
+      this.$scope.setMap = $.proxy(this.setMap, this);
+      this.$scope.setData = $.proxy(this.setData, this);
+      this.$scope.openDataModal = $.proxy(this.openDataModal, this);
       this.$scope.hasTooManyCategories = function () {
-        return _this.$scope.categoryCount > _this.$scope.maxQuantizeSteps;
+        return _this.$scope.categoryCount > _this.$scope.maxColorSteps;
       };
       this.$scope.projections = choroplethMapConfig.availableProjections;
       this.setupProperty('projection');
@@ -13849,7 +13854,7 @@ angular.module('ngProgress', [
       if (this.$scope.snippet.model.data('data')) {
         this.initDataPropertySelection();
       }
-      this.initMaxQuantizeSteps(this.$scope.snippet.model.data('colorScheme'));
+      this.initMaxColorSteps(this.$scope.snippet.model.data('colorScheme'));
     }
     ChoroplethFormController.prototype.openDataModal = function (highlighedRows) {
       var modalInstance;
@@ -13925,7 +13930,7 @@ angular.module('ngProgress', [
         return _results;
       }
     };
-    ChoroplethFormController.prototype.initMaxQuantizeSteps = function (colorScheme) {
+    ChoroplethFormController.prototype.initMaxColorSteps = function (colorScheme) {
       var matchingColorScheme, steps, _i, _results;
       matchingColorScheme = colorBrewerConfig.colorSchemes.filter(function (cScheme) {
         return cScheme.cssClass === colorScheme;
@@ -13935,16 +13940,16 @@ angular.module('ngProgress', [
       } else {
         steps = 9;
       }
-      this.$scope.maxQuantizeSteps = steps;
-      this.$scope.availableQuantizeSteps = function () {
+      this.$scope.maxColorSteps = steps;
+      this.$scope.availableColorSteps = function () {
         _results = [];
         for (var _i = 3; 3 <= steps ? _i <= steps : _i >= steps; 3 <= steps ? _i++ : _i--) {
           _results.push(_i);
         }
         return _results;
       }.apply(this);
-      if (this.$scope.quantizeSteps > steps) {
-        return this.$scope.quantizeSteps = steps;
+      if (this.$scope.colorSteps > steps) {
+        return this.$scope.colorSteps = steps;
       }
     };
     ChoroplethFormController.prototype.initValueType = function () {
@@ -13996,8 +14001,8 @@ angular.module('ngProgress', [
     ChoroplethFormController.prototype.initDataPropertySelection = function () {
       this.setupProperty('mappingPropertyOnData');
       this.setupProperty('valueProperty', $.proxy(this.initValueType, this));
-      this.setupProperty('colorScheme', $.proxy(this.initMaxQuantizeSteps, this));
-      this.setupProperty('quantizeSteps');
+      this.setupProperty('colorScheme', $.proxy(this.initMaxColorSteps, this));
+      this.setupProperty('colorSteps');
       this.$scope.availableColorSchemes = colorBrewerConfig.colorSchemes;
       this.initDataValueProperties();
       this.initDataMappingProperties();
@@ -14047,18 +14052,36 @@ angular.module('ngProgress', [
       this.choroplethMapInstance = this.mapMediatorService.getUIModel(this.$scope.mapId);
       this.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
       this.snippetModel.data({ lastPositioned: new Date().getTime() });
+      this.setupKickstarters();
       this.setupSnippetChangeListener();
       this.$timeout(function () {
         return _this.initScope();
       });
     }
+    ChoroplethMapController.prototype.setupKickstarters = function () {
+      var kickstartProperty, property, propertyValue, _ref, _results;
+      _ref = choroplethMapConfig.kickstartProperties;
+      _results = [];
+      for (property in _ref) {
+        propertyValue = _ref[property];
+        if (!this.snippetModel.data(property)) {
+          kickstartProperty = {};
+          kickstartProperty['' + property] = propertyValue;
+          _results.push(this.snippetModel.data(kickstartProperty));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
     ChoroplethMapController.prototype.initScope = function () {
       var propertyValue, trackedProperty, _i, _len, _ref, _results;
       _ref = choroplethMapConfig.trackedProperties;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         trackedProperty = _ref[_i];
-        if (propertyValue = this.snippetModel.data(trackedProperty)) {
+        propertyValue = this.snippetModel.data(trackedProperty);
+        if (propertyValue) {
           _results.push(this.$scope[trackedProperty] = propertyValue);
         } else {
           _results.push(void 0);
@@ -14101,31 +14124,16 @@ angular.module('ngProgress', [
   }());
   angular.module('ldEditor').controller('DataModalController', DataModalController = function () {
     function DataModalController($scope, $modalInstance, mapMediatorService, highlightedRows, mapId, mappedColumn) {
-      var entry, index, keyMapping, sanitizedData, _i, _len, _ref, _ref1, _this = this;
+      var entry, index, keyMapping, sanitizedData, _i, _len, _ref, _ref1;
       this.$scope = $scope;
       this.$modalInstance = $modalInstance;
       this.mapMediatorService = mapMediatorService;
       this.highlightedRows = highlightedRows;
       this.mapId = mapId;
       this.mappedColumn = mappedColumn;
-      this.$scope.close = function (event) {
-        return _this.close(event);
-      };
-      this.$scope.isHighlighted = function (property) {
-        var isHighlighted, row, _i, _len, _ref;
-        isHighlighted = false;
-        _ref = _this.highlightedRows;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          row = _ref[_i];
-          if (row.key === property) {
-            isHighlighted = true;
-          }
-        }
-        return isHighlighted;
-      };
-      this.$scope.updateEntity = function (row) {
-        return _this.updateEntity(row);
-      };
+      this.$scope.close = $.proxy(this.close, this);
+      this.$scope.isHighlighted = $.proxy(this.isHighlighted, this);
+      this.$scope.updateEntity = $.proxy(this.updateEntity, this);
       this.choroplethMapInstance = this.mapMediatorService.getUIModel(this.mapId);
       this.snippetModel = this.mapMediatorService.getSnippetModel(this.mapId);
       _ref = this.choroplethMapInstance.getDataSanitizedForNgGrid(), sanitizedData = _ref.sanitizedData, keyMapping = _ref.keyMapping;
@@ -14139,6 +14147,18 @@ angular.module('ngProgress', [
       this.changedRows = [];
       this.setupGrid();
     }
+    DataModalController.prototype.isHighlighted = function (property) {
+      var isHighlighted, row, _i, _len, _ref;
+      isHighlighted = false;
+      _ref = this.highlightedRows;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        row = _ref[_i];
+        if (row.key === property) {
+          isHighlighted = true;
+        }
+      }
+      return isHighlighted;
+    };
     DataModalController.prototype.setupGrid = function () {
       var cellEditableTemplate, colDefs, key, value, _ref;
       cellEditableTemplate = '<input ng-class="\'colt\' + col.index" ng-input="COL_FIELD" ng-model="COL_FIELD" ng-blur="updateEntity(row.entity)"/>';
@@ -14198,12 +14218,13 @@ angular.module('ngProgress', [
     return DocumentPanelController;
   }());
   angular.module('ldEditor').controller('EditorController', EditorController = function () {
-    function EditorController($scope, dialogService, uiStateService, snippetInsertService, editableEventsService) {
+    function EditorController($scope, dialogService, uiStateService, snippetInsertService, editableEventsService, $injector) {
       this.$scope = $scope;
       this.dialogService = dialogService;
       this.uiStateService = uiStateService;
       this.snippetInsertService = snippetInsertService;
       this.editableEventsService = editableEventsService;
+      this.$injector = $injector;
       this.$scope.state = this.uiStateService.state;
       this.$scope.textPopoverBoundingBox = this.editableEventsService.currentTextSelectionPos;
       this.watchInsertMode();
@@ -14224,24 +14245,15 @@ angular.module('ngProgress', [
   }());
   angular.module('ldEditor').controller('FlowtextOptionsController', FlowtextOptionsController = function () {
     function FlowtextOptionsController($scope, uiStateService, editableEventsService) {
-      var _this = this;
       this.$scope = $scope;
       this.uiStateService = uiStateService;
       this.editableEventsService = editableEventsService;
       this.$scope.editableEventsService = this.editableEventsService;
       this.$scope.currentSelectionStyles = this.editableEventsService.currentSelectionStyles;
-      this.$scope.toggleBold = function () {
-        return _this.toggleBold();
-      };
-      this.$scope.toggleItalic = function () {
-        return _this.toggleItalic();
-      };
-      this.$scope.openLinkInput = function () {
-        return _this.openLinkInput();
-      };
-      this.$scope.setLink = function (link, target) {
-        return _this.setLink(link, target);
-      };
+      this.$scope.toggleBold = $.proxy(this.toggleBold, this);
+      this.$scope.toggleItalic = $.proxy(this.toggleItalic, this);
+      this.$scope.openLinkInput = $.proxy(this.openLinkInput, this);
+      this.$scope.setLink = $.proxy(this.setLink, this);
     }
     FlowtextOptionsController.prototype.toggleBold = function () {
       return this.editableEventsService.toggleCurrentSelectionBold();
@@ -14273,17 +14285,12 @@ angular.module('ngProgress', [
       this.uiStateService = uiStateService;
       this.angularTemplateService = angularTemplateService;
       this.mapMediatorService = mapMediatorService;
+      this.$scope.modalState = { isMerging: false };
       this.$scope.snippet = this.snippet;
-      this.$scope.close = function (event) {
-        return _this.close(event);
-      };
-      this.$scope.chooseRevision = function (historyRevision) {
-        return _this.chooseRevision(historyRevision);
-      };
-      this.$scope.isSelected = function (historyRevision) {
-        return _this.isSelected(historyRevision);
-      };
-      this.modelInstance = this.mapMediatorService.getUIModel(this.snippet.id);
+      this.$scope.merge = $.proxy(this.merge, this);
+      this.$scope.close = $.proxy(this.close, this);
+      this.$scope.chooseRevision = $.proxy(this.chooseRevision, this);
+      this.$scope.isSelected = $.proxy(this.isSelected, this);
       this.$modalInstance.opened.then(function () {
         return _this.$timeout(function () {
           return _this.setupModalContent();
@@ -14306,21 +14313,34 @@ angular.module('ngProgress', [
     HistoryModalController.prototype.setupLatestVersion = function () {
       var $previewRoot;
       $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map');
-      this.latestVersionSnippet = this.snippet.copy(doc.document.design);
-      return this.angularTemplateService.insertTemplateInstance(this.latestVersionSnippet, $previewRoot, new ChoroplethMap({
-        id: this.latestVersionSnippet.id,
-        mapMediatorService: this.mapMediatorService
-      }));
+      this.$scope.latestSnippetVersion = this.snippet.copy(doc.document.design);
+      this.modelInstance = new ChoroplethMap(this.$scope.latestSnippetVersion.id);
+      return this.angularTemplateService.insertTemplateInstance(this.$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap(this.$scope.latestSnippetVersion.id));
     };
     HistoryModalController.prototype.removeLatestVersionInstance = function () {
-      this.angularTemplateService.removeAngularTemplate(this.latestVersionSnippet);
-      return delete this.latestVersionSnippet;
+      this.angularTemplateService.removeAngularTemplate(this.$scope.latestSnippetVersion);
+      return delete this.$scope.latestSnippetVersion;
+    };
+    HistoryModalController.prototype.merge = function (event) {
+      this.snippet.data({
+        mapId: this.$scope.latestSnippetVersion.data('mapId'),
+        map: this.$scope.latestSnippetVersion.data('map'),
+        lastPositioned: this.$scope.latestSnippetVersion.data('lastPositioned'),
+        projection: this.$scope.latestSnippetVersion.data('projection'),
+        data: this.$scope.latestSnippetVersion.data('data'),
+        mappingPropertyOnMap: this.$scope.latestSnippetVersion.data('mappingPropertyOnMap'),
+        mappingPropertyOnData: this.$scope.latestSnippetVersion.data('mappingPropertyOnData'),
+        valueProperty: this.$scope.latestSnippetVersion.data('valueProperty'),
+        colorSteps: this.$scope.latestSnippetVersion.data('colorSteps'),
+        colorScheme: this.$scope.latestSnippetVersion.data('colorScheme')
+      });
+      return this.close(event);
     };
     HistoryModalController.prototype.close = function (event) {
-      if (this.latestVersionSnippet) {
+      if (this.$scope.latestSnippetVersion) {
         this.removeLatestVersionInstance();
       }
-      if (this.historyVersionSnippet) {
+      if (this.$scope.historyVersionSnippet) {
         this.removeHistoryVersionInstance();
       }
       this.$modalInstance.dismiss('close');
@@ -14362,14 +14382,11 @@ angular.module('ngProgress', [
             _this.searchHistorySnippet(snippetJson);
           }
         }
-        if (!_this.historyVersionSnippet) {
+        if (!_this.$scope.historyVersionSnippet) {
           log.error('The history document has to contain the map');
         }
-        _this.angularTemplateService.insertTemplateInstance(_this.historyVersionSnippet, $previewRoot, new ChoroplethMap({
-          id: _this.historyVersionSnippet.id,
-          mapMediatorService: _this.mapMediatorService
-        }));
-        return historyReady.resolve(_this.historyVersionSnippet);
+        _this.angularTemplateService.insertTemplateInstance(_this.$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap(_this.$scope.historyVersionSnippet.id));
+        return historyReady.resolve(_this.$scope.historyVersionSnippet);
       });
       return historyReady.promise;
     };
@@ -14393,26 +14410,23 @@ angular.module('ngProgress', [
       } else {
         if (snippetJson.id === this.snippet.id) {
           snippetJson.id = '' + snippetJson.id + '-101';
-          return this.historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design);
+          return this.$scope.historyVersionSnippet = doc.snippetFromJson(snippetJson, doc.document.design);
         }
       }
     };
     HistoryModalController.prototype.removeHistoryVersionInstance = function () {
-      this.angularTemplateService.removeAngularTemplate(this.historyVersionSnippet);
-      return delete this.historyVersionSnippet;
+      this.angularTemplateService.removeAngularTemplate(this.$scope.historyVersionSnippet);
+      return delete this.$scope.historyVersionSnippet;
     };
     return HistoryModalController;
   }());
   angular.module('ldEditor').controller('ImageEmbedController', ImageEmbedController = function () {
     function ImageEmbedController($scope, uiStateService) {
-      var _this = this;
       this.$scope = $scope;
       this.uiStateService = uiStateService;
       this.image = this.uiStateService.state.imagePopover.image;
       this.imagePathAttr = this.uiStateService.state.imagePopover.imagePath;
-      this.$scope.embedImage = function (url) {
-        return _this.embedImage(url);
-      };
+      this.$scope.embedImage = $.proxy(this.embedImage, this);
     }
     ImageEmbedController.prototype.embedImage = function (url) {
       this.image.model.set(this.imagePathAttr, url);
@@ -14457,14 +14471,83 @@ angular.module('ngProgress', [
     };
     return MapController;
   }());
-  angular.module('ldEditor').controller('PopoverController', PopoverController = function () {
-    function PopoverController($scope, uiStateService) {
+  angular.module('ldEditor').controller('MergeController', MergeController = function () {
+    function MergeController($scope, mapMediatorService) {
       var _this = this;
       this.$scope = $scope;
+      this.mapMediatorService = mapMediatorService;
+      this.$scope.revertChange = $.proxy(this.revertChange, this);
+      this.$scope.revertAdd = $.proxy(this.revertAdd, this);
+      this.$scope.revertDelete = $.proxy(this.revertDelete, this);
+      this.$scope.isColorStepsWithOrdinalData = $.proxy(this.isColorStepsWithOrdinalData, this);
+      this.modelInstance = this.mapMediatorService.getUIModel(this.$scope.latestSnippetVersion.id);
+      this.initValueType();
+      this.$scope.$watch('latestSnippetVersion.data(\'valueProperty\')', function (newVal) {
+        return _this.initValueType();
+      });
+    }
+    MergeController.prototype.initValueType = function () {
+      return this.$scope.valueType = this.modelInstance.getValueType();
+    };
+    MergeController.prototype.revertChange = function (property) {
+      var key, newData;
+      key = property.key;
+      newData = {};
+      newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
+      this.$scope.latestSnippetVersion.data(newData);
+      this._propagateSnippetChange(key);
+      property.difference = void 0;
+      if (property.key !== 'map') {
+        property.info = '(' + newData[property.key] + ')';
+      }
+      return this.$scope.modalState.isMerging = true;
+    };
+    MergeController.prototype.revertDelete = function (property) {
+      var data;
+      if (property.key === 'data') {
+        data = this.$scope.latestSnippetVersion.data('data');
+        data.push(property.difference.unformattedContent);
+      } else {
+        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    MergeController.prototype.revertAdd = function (property) {
+      var data, entry, entryIdx, idx, _i, _len;
+      if (property.key === 'data') {
+        data = this.$scope.latestSnippetVersion.data('data');
+        idx = -1;
+        for (entryIdx = _i = 0, _len = data.length; _i < _len; entryIdx = ++_i) {
+          entry = data[entryIdx];
+          if (_.isEqual(entry, property.difference.unformattedContent)) {
+            idx = entryIdx;
+          }
+        }
+        if (idx !== -1) {
+          data.splice(idx, 1);
+        }
+      } else {
+        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    MergeController.prototype.isColorStepsWithOrdinalData = function (property) {
+      return property.key === 'colorSteps' && this.$scope.valueType === 'categorical';
+    };
+    MergeController.prototype._propagateSnippetChange = function (changedProperty) {
+      return doc.document.snippetTree.snippetDataChanged.fire(this.$scope.latestSnippetVersion, [changedProperty]);
+    };
+    return MergeController;
+  }());
+  angular.module('ldEditor').controller('PopoverController', PopoverController = function () {
+    function PopoverController($scope, uiStateService) {
+      this.$scope = $scope;
       this.uiStateService = uiStateService;
-      this.$scope.close = function ($event, target) {
-        return _this.close($event, target);
-      };
+      this.$scope.close = $.proxy(this.close, this);
     }
     PopoverController.prototype.close = function ($event, target) {
       $event.stopPropagation();
@@ -14474,15 +14557,10 @@ angular.module('ngProgress', [
   }());
   angular.module('ldEditor').controller('PropertiesPanelController', PropertiesPanelController = function () {
     function PropertiesPanelController($scope, angularTemplateService) {
-      var _this = this;
       this.$scope = $scope;
       this.angularTemplateService = angularTemplateService;
-      this.$scope.deleteSnippet = function (snippet) {
-        return _this.deleteSnippet(snippet);
-      };
-      this.$scope.isDeletable = function (snippet) {
-        return _this.isDeletable(snippet);
-      };
+      this.$scope.deleteSnippet = $.proxy(this.deleteSnippet, this);
+      this.$scope.isDeletable = $.proxy(this.isDeletable, this);
     }
     PropertiesPanelController.prototype.deleteSnippet = function (snippet) {
       if (this.angularTemplateService.isAngularTemplate(snippet.model)) {
@@ -14513,9 +14591,7 @@ angular.module('ngProgress', [
       this.$scope.loadProperties = function () {
         return _this.registerActivePanel('propertiesPanel');
       };
-      this.hideSidebar = function (activePanel) {
-        return _this.hide(activePanel);
-      };
+      this.hideSidebar = $.proxy(this.hide, this);
     }
     SidebarController.prototype.registerActivePanel = function (panel) {
       if (this.uiStateService.state.isActive(panel)) {
@@ -14537,15 +14613,12 @@ angular.module('ngProgress', [
   }());
   angular.module('ldEditor').controller('SnippetPanelController', SnippetPanelController = function () {
     function SnippetPanelController($scope, editorService, snippetInsertService) {
-      var _this = this;
       this.$scope = $scope;
       this.editorService = editorService;
+      this.$scope.selectSnippet = $.proxy(this.selectSnippet, this);
       this.$scope.snippetInsertService = snippetInsertService;
       this.$scope.groups = this.initGroups();
       this.$scope.snippets = this.initSnippets();
-      this.$scope.selectSnippet = function ($event, groupId, $index, snippet) {
-        return _this.selectSnippet($event, groupId, $index, snippet);
-      };
     }
     SnippetPanelController.prototype.initSnippets = function () {
       var design, name, template, _ref, _results;
@@ -14615,33 +14688,27 @@ angular.module('ngProgress', [
     'ngProgress',
     'mapMediatorService',
     function ($timeout, ngProgress, mapMediatorService) {
-      var deduceAllAvailableMappingOnMap, deduceMaxValue, deduceMinValue, deducePathProjection, deduceValueFunction, defaults, filterDataForCategoricalLegend, genericLegendRender, getDataMap, removeExistingMap, renderData, renderLegend, renderMap, renderVisualization, resizeMap, stopProgressBar, tooltipShow;
-      defaults = {
-        projection: 'mercator',
-        quantizeSteps: 9,
-        colorScheme: 'Paired',
-        mappingPropertyOnMap: 'id',
-        mappingPropertyOnData: 'id',
-        valueProperty: 'value'
-      };
+      var deduceAllAvailableMappingOnMap, deduceMaxValue, deduceMinValue, deducePathProjection, deduceValueFunction, filterDataForCategoricalLegend, genericLegendRender, getDataMap, getMappingProperty, removeExistingMap, renderData, renderLegend, renderMap, renderVisualization, resizeMap, stopProgressBar, tooltipShow;
       renderVisualization = function (scope) {
-        var allMappingPropertiesOnMap, bounds, data, map, mappingPropertyOnData, mappingPropertyOnMap, path, quantizeSteps, valFn, valueProperty;
+        var allMappingPropertiesOnMap, bounds, colorSteps, data, map, mappingPropertyOnData, mappingPropertyOnMap, path, valFn, valueProperty;
         if (scope.map) {
           path = deducePathProjection(scope.projection);
-          renderMap(scope, path);
-          map = scope.map;
-          data = scope.data;
-          valueProperty = scope.valueProperty;
-          mappingPropertyOnMap = scope.mappingPropertyOnMap;
-          mappingPropertyOnData = scope.mappingPropertyOnData;
-          bounds = path.bounds(scope.map);
-          resizeMap(scope.svg, bounds);
-          if (data) {
-            quantizeSteps = scope.quantizeSteps || defaults.quantizeSteps;
-            allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap);
-            valFn = deduceValueFunction(scope, quantizeSteps, allMappingPropertiesOnMap);
-            renderData(scope, valFn);
-            return renderLegend(scope, valFn);
+          if (path) {
+            renderMap(scope, path);
+            map = scope.map;
+            data = scope.data;
+            valueProperty = scope.valueProperty;
+            mappingPropertyOnMap = scope.mappingPropertyOnMap;
+            mappingPropertyOnData = scope.mappingPropertyOnData;
+            bounds = path.bounds(scope.map);
+            resizeMap(scope.svg, bounds);
+            if (data) {
+              colorSteps = scope.colorSteps;
+              allMappingPropertiesOnMap = deduceAllAvailableMappingOnMap(scope.map, scope.mappingPropertyOnMap);
+              valFn = deduceValueFunction(scope, colorSteps, allMappingPropertiesOnMap);
+              renderData(scope, valFn);
+              return renderLegend(scope, valFn);
+            }
           }
         }
       };
@@ -14665,13 +14732,11 @@ angular.module('ngProgress', [
         return svg.attr('height', ratio * svgHeight);
       };
       deducePathProjection = function (projection) {
-        var path;
         if (projection) {
-          path = d3.geo.path().projection(eval('d3.geo.' + projection + '()'));
+          return d3.geo.path().projection(eval('d3.geo.' + projection + '()'));
         } else {
-          path = d3.geo.path().projection(eval('d3.geo.' + defaults.projection + '()'));
+          return void 0;
         }
-        return path;
       };
       tooltipShow = function (d, i) {
         return $(this).tooltip({
@@ -14679,6 +14744,13 @@ angular.module('ngProgress', [
           placement: 'auto',
           container: $(this).parents('.doc-section')
         }).attr('data-original-title', '' + $(this).attr('data-region') + ': ' + $(this).attr('data-title')).tooltip('show');
+      };
+      getMappingProperty = function (property) {
+        if ($.isNumeric(property)) {
+          return +property;
+        } else {
+          return property;
+        }
       };
       renderData = function (scope, valFn) {
         var entry, mapInstance, paths, usedDataPoints, valueById, _i, _len, _ref, _results;
@@ -14691,13 +14763,13 @@ angular.module('ngProgress', [
         usedDataPoints = [];
         paths = scope.mapGroup.selectAll('path').attr('data-title', function (d) {
           var mapPropertyId;
-          mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap];
+          mapPropertyId = getMappingProperty(d.properties[scope.mappingPropertyOnMap]);
           return valueById.get(mapPropertyId);
         }).attr('data-region', function (d) {
-          return d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap];
+          return getMappingProperty(d.properties[scope.mappingPropertyOnMap]);
         }).attr('class', function (d) {
           var mapPropertyId, val;
-          mapPropertyId = d.properties[scope.mappingPropertyOnMap] || +d.properties[defaults.mappingPropertyOnMap];
+          mapPropertyId = getMappingProperty(d.properties[scope.mappingPropertyOnMap]);
           val = valueById.get(mapPropertyId);
           if (val) {
             if (mapInstance.usedDataValues.indexOf(val) === -1) {
@@ -14728,11 +14800,11 @@ angular.module('ngProgress', [
         _ref = scope.data;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           d = _ref[_i];
-          dataPropertyId = d[scope.mappingPropertyOnData] || +d[defaults.mappingPropertyOnData];
+          dataPropertyId = getMappingProperty(d[scope.mappingPropertyOnData]);
           if (mapInstance.getValueType() === 'categorical') {
-            val = d[scope.valueProperty] || d[defaults.valueProperty];
+            val = d[scope.valueProperty];
           } else {
-            val = +d[scope.valueProperty] || +d[defaults.valueProperty];
+            val = +d[scope.valueProperty];
           }
           valueById.set(dataPropertyId, val);
         }
@@ -14742,22 +14814,22 @@ angular.module('ngProgress', [
         var minValue;
         return minValue = d3.min(data, function (d) {
           var propertyOnData;
-          propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData];
+          propertyOnData = d[mappingPropertyOnData];
           if (allMappingPropertiesOnMap.indexOf(propertyOnData) !== -1) {
-            return +d[valueProperty] || +d[defaults.valueProperty];
+            return +d[valueProperty];
           }
         });
       };
       deduceMaxValue = function (data, valueProperty, allMappingPropertiesOnMap, mappingPropertyOnData) {
         return d3.max(data, function (d) {
           var propertyOnData;
-          propertyOnData = d[mappingPropertyOnData] || d[defaults.mappingPropertyOnData];
+          propertyOnData = d[mappingPropertyOnData];
           if (allMappingPropertiesOnMap.indexOf(propertyOnData) !== -1) {
-            return +d[valueProperty] || +d[defaults.valueProperty];
+            return +d[valueProperty];
           }
         });
       };
-      deduceValueFunction = function (scope, quantizeSteps, allMappingPropertiesOnMap) {
+      deduceValueFunction = function (scope, colorSteps, allMappingPropertiesOnMap) {
         var categoryValues, mapInstance, maxValue, minValue, valFn;
         mapInstance = mapMediatorService.getUIModel(scope.mapId);
         if (mapInstance.getValueType() === 'categorical') {
@@ -14771,8 +14843,8 @@ angular.module('ngProgress', [
           valFn = d3.scale.quantize().domain([
             minValue,
             maxValue
-          ]).range(d3.range(quantizeSteps).map(function (i) {
-            return 'q' + i + '-' + quantizeSteps;
+          ]).range(d3.range(colorSteps).map(function (i) {
+            return 'q' + i + '-' + colorSteps;
           }));
         }
         return valFn;
@@ -14826,11 +14898,7 @@ angular.module('ngProgress', [
       };
       deduceAllAvailableMappingOnMap = function (map, mappingPropertyOnMap) {
         return map.features.map(function (mapEntry) {
-          if (mappingPropertyOnMap) {
-            return mapEntry.properties[mappingPropertyOnMap];
-          } else {
-            return mapEntry.properties[defaults.mappingPropertyOnMap];
-          }
+          return mapEntry.properties[mappingPropertyOnMap];
         });
       };
       stopProgressBar = function () {
@@ -14849,15 +14917,15 @@ angular.module('ngProgress', [
           mappingPropertyOnMap: '=mappingPropertyOnMap',
           mappingPropertyOnData: '=mappingPropertyOnData',
           valueProperty: '=valueProperty',
-          quantizeSteps: '=quantizeSteps',
+          colorSteps: '=colorSteps',
           colorScheme: '=colorScheme'
         },
         replace: true,
         template: '<div style=\'position:relative\' class=\'choropleth-map\'></div>',
         link: function (scope, element, attrs) {
-          d3.select(element[0]).attr('class', scope.colorScheme || defaults.colorScheme);
+          d3.select(element[0]).attr('class', scope.colorScheme);
           scope.legend = d3.select(element[0]).append('ul').attr('class', 'list-inline');
-          scope.svg = d3.select(element[0]).append('svg').attr('width', '100%').attr('height', '0px');
+          scope.svg = d3.select(element[0]).append('svg').attr('width', '100%').attr('height', '0px').attr('class', 'choropleth');
           scope.mapGroup = scope.svg.append('g').attr('class', 'map');
           $(element).append('<img class="placeholder-image" src="http://placehold.it/' + $(element).width() + 'x200}/F55CB7/ffffff&text=select%20this%20snippet%20and%20choose%20a%20map%20in%20the%20sidebar" />');
           scope.$watch('map', function (newVal, oldVal) {
@@ -14883,7 +14951,7 @@ angular.module('ngProgress', [
               renderVisualization(scope);
               return stopProgressBar();
             }
-          });
+          }, true);
           scope.$watch('lastPositioned', function (newVal, oldVal) {
             if (!(scope != null ? scope.map : void 0)) {
               return;
@@ -14929,7 +14997,7 @@ angular.module('ngProgress', [
               return d3.select(element[0]).attr('class', newVal);
             }
           });
-          return scope.$watch('quantizeSteps', function (newVal, oldVal) {
+          return scope.$watch('colorSteps', function (newVal, oldVal) {
             if (!(scope.map && scope.data)) {
               return;
             }
@@ -15282,8 +15350,9 @@ angular.module('ngProgress', [
     };
   });
   ChoroplethMap = function () {
-    function ChoroplethMap(_arg) {
-      this.id = _arg.id, this.mapMediatorService = _arg.mapMediatorService;
+    function ChoroplethMap(id) {
+      this.id = id;
+      this.mapMediatorService = angularHelpers.inject('mapMediatorService');
       this.dataPointsWithMissingRegion = [];
       this.regionsWithMissingDataPoints = [];
       this.usedDataValues = [];
@@ -15456,7 +15525,7 @@ angular.module('ngProgress', [
       });
       versionDifferences[3].properties.push(this._calculatePropertyDifference('valueProperty', otherVersion));
       versionDifferences[3].properties.push(this._calculatePropertyDifference('colorScheme', otherVersion));
-      versionDifferences[3].properties.push(this._calculatePropertyDifference('quantizeSteps', otherVersion));
+      versionDifferences[3].properties.push(this._calculatePropertyDifference('colorSteps', otherVersion));
       return versionDifferences;
     };
     ChoroplethMap.prototype.shouldRenderLoadingBar = function (property) {
@@ -15478,12 +15547,10 @@ angular.module('ngProgress', [
       }
     };
     ChoroplethMap.prototype._determineValueType = function (val) {
-      var tryNumeric;
-      tryNumeric = +val;
-      if (_.isNaN(tryNumeric)) {
-        return 'categorical';
-      } else {
+      if ($.isNumeric(val)) {
         return 'numerical';
+      } else {
+        return 'categorical';
       }
     };
     ChoroplethMap.prototype._findMissingProperties = function (currentPropertySet, lastPropertySet) {
@@ -15530,7 +15597,10 @@ angular.module('ngProgress', [
       otherRegions = otherMap != null ? otherMap.features.map(function (feature) {
         return feature.geometry;
       }) : void 0;
-      mapDiffEntry = { label: 'regions' };
+      mapDiffEntry = {
+        label: 'regions',
+        key: 'map'
+      };
       if (!this._deepEquals(currentRegions, otherRegions)) {
         mapDiffEntry.difference = { type: 'blobChange' };
       }
@@ -15540,7 +15610,10 @@ angular.module('ngProgress', [
       var currentValue, otherValue, propertyDiffEntry;
       currentValue = this._getSnippetModel().data('mappingPropertyOnMap');
       otherValue = otherVersionSnippetModel.data('mappingPropertyOnMap');
-      propertyDiffEntry = { label: 'mapping' };
+      propertyDiffEntry = {
+        label: 'mapping',
+        key: 'mappingPropertyOnMap'
+      };
       propertyDiffEntry.difference = this._getDifferenceType(currentValue, otherValue);
       if (!propertyDiffEntry.difference) {
         propertyDiffEntry.info = 'on property ' + currentValue;
@@ -15551,7 +15624,10 @@ angular.module('ngProgress', [
       var currentValue, otherValue, propertyDiffEntry;
       currentValue = this._getSnippetModel().data(property);
       otherValue = otherVersionSnippetModel.data(property);
-      propertyDiffEntry = { label: livingmapsWords.wordize(property) };
+      propertyDiffEntry = {
+        label: livingmapsWords.wordize(property),
+        key: property
+      };
       propertyDiffEntry.difference = this._getDifferenceType(currentValue, otherValue);
       if (!propertyDiffEntry.difference) {
         propertyDiffEntry.info = '(' + currentValue + ')';
@@ -15569,9 +15645,11 @@ angular.module('ngProgress', [
         addition = additions[_i];
         differences.push({
           label: '',
+          key: 'data',
           difference: {
             type: 'add',
-            content: _.values(addition).join(', ')
+            content: _.values(addition).join(', '),
+            unformattedContent: addition
           }
         });
       }
@@ -15579,9 +15657,11 @@ angular.module('ngProgress', [
         deletion = deletions[_j];
         differences.push({
           label: '',
+          key: 'data',
           difference: {
             type: 'delete',
-            content: _.values(deletion).join(', ')
+            content: _.values(deletion).join(', '),
+            unformattedContent: deletion
           }
         });
       }
@@ -15615,8 +15695,8 @@ angular.module('ngProgress', [
   }();
   (function () {
     return this.choroplethMapConfig = {
-      template: '<div ng-controller="ChoroplethMapController">\n  <choropleth map-id="mapId"\n              map="map"\n              last-positioned="lastPositioned"\n              projection="projection"\n              data="data"\n              mapping-property-on-map="mappingPropertyOnMap"\n              mapping-property-on-data="mappingPropertyOnData"\n              value-property="valueProperty"\n              quantize-steps="quantizeSteps"\n              color-scheme="colorScheme">\n  </choropleth>\n</div>',
-      directive: '<choropleth map-id="mapId"\n            map="map"\n            last-positioned="lastPositioned"\n            projection="projection"\n            data="data"\n            mapping-property-on-map="mappingPropertyOnMap"\n            mapping-property-on-data="mappingPropertyOnData"\n            value-property="valueProperty"\n            quantize-steps="quantizeSteps"\n            color-scheme="colorScheme">\n</choropleth>',
+      template: '<div ng-controller="ChoroplethMapController">\n  <choropleth map-id="mapId"\n              map="map"\n              last-positioned="lastPositioned"\n              projection="projection"\n              data="data"\n              mapping-property-on-map="mappingPropertyOnMap"\n              mapping-property-on-data="mappingPropertyOnData"\n              value-property="valueProperty"\n              color-steps="colorSteps"\n              color-scheme="colorScheme">\n  </choropleth>\n</div>',
+      directive: '<choropleth map-id="mapId"\n            map="map"\n            last-positioned="lastPositioned"\n            projection="projection"\n            data="data"\n            mapping-property-on-map="mappingPropertyOnMap"\n            mapping-property-on-data="mappingPropertyOnData"\n            value-property="valueProperty"\n            color-steps="colorSteps"\n            color-scheme="colorScheme">\n</choropleth>',
       trackedProperties: [
         'map',
         'data',
@@ -15625,7 +15705,7 @@ angular.module('ngProgress', [
         'mappingPropertyOnMap',
         'mappingPropertyOnData',
         'valueProperty',
-        'quantizeSteps',
+        'colorSteps',
         'colorScheme'
       ],
       dataMappingThreshold: 0.5,
@@ -15633,8 +15713,16 @@ angular.module('ngProgress', [
           name: 'livingmaps.unemploymentChoropleth',
           map: 'usCounties',
           data: 'usUnemployment',
-          projection: 'albersUsa'
+          projection: 'albersUsa',
+          mappingPropertyOnMap: 'id',
+          mappingPropertyOnData: 'id'
         }],
+      kickstartProperties: {
+        projection: 'mercator',
+        colorScheme: 'Paired',
+        colorSteps: 9,
+        valueProperty: 'value'
+      },
       availableMaps: [
         {
           name: 'Swiss Population Data Map',
@@ -15850,10 +15938,7 @@ angular.module('ngProgress', [
               }))));
               break;
             case 'd3-choropleth':
-              _results.push(this.loadTemplate($(node), $.proxy(this.insertTemplateInstance, this, snippetModel, $(node), new ChoroplethMap({
-                id: snippetModel.id,
-                mapMediatorService: mapMediatorService
-              }))));
+              _results.push(this.loadTemplate($(node), $.proxy(this.insertTemplateInstance, this, snippetModel, $(node), new ChoroplethMap(snippetModel.id))));
               break;
             default:
               _results.push(alert('unknown template value ' + $(node).data('is')));
@@ -16357,7 +16442,9 @@ angular.module('ngProgress', [
                     mapName: 'usCounties',
                     data: data,
                     dataIdentifier: 'usUnemployment',
-                    projection: prefilledMap.projection
+                    projection: prefilledMap.projection,
+                    mappingPropertyOnMap: prefilledMap.mappingPropertyOnMap,
+                    mappingPropertyOnData: prefilledMap.mappingPropertyOnData
                   });
                 });
               }));
@@ -16566,15 +16653,15 @@ angular.module('ngProgress', [
   });
   htmlTemplates.addButton = '<div ng-click="insertSnippet($event)" class="add-button">\n  <a href style="font-size: 4em">+</a>\n</div>';
   htmlTemplates.dataModal = '<div class="upfron-modal-full-width-header">\n  <h3>Your Dataset</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div class="gridStyle" ng-grid="gridOptions">\n\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
-  htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="quantizeSteps" ng-options="option for option in availableQuantizeSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
-  htmlTemplates.diffAddDelEntry = '<div class="upfront-diff" ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}">\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n  {{property.label}} {{property.difference.content}}\n</div>';
-  htmlTemplates.diffChangeEntry = '<div class="upfront-diff change">\n  <span class="entypo-flow-parallel"></span> {{property.label}} changed from {{property.difference.previous}} to {{property.difference.after}}\n</div>';
+  htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.diffAddDelEntry = '<div  class="upfront-diff upfront-control"\n      ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}"\n      ng-controller="MergeController">\n\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n\n  {{property.label}} {{property.difference.content}}\n\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertAdd(property)"\n                ng-show="property.difference.type == \'add\'">\n                remove\n        </button>\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n              ng-click="revertDelete(property)"\n              ng-show="property.difference.type == \'delete\'">\n              bring back\n      </button>\n\n</div>';
+  htmlTemplates.diffChangeEntry = '<div class="upfront-diff change upfront-control" ng-controller="MergeController">\n  <span class="entypo-flow-parallel"></span>\n    {{property.label}} changed <span ng-show="!property.difference.type == \'blobChange\'">from {{property.difference.previous}} to {{property.difference.after}}</span>\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertChange(property)"\n                ng-hide="isColorStepsWithOrdinalData(property)">\n                revert to previous value\n        </button>\n</div>';
   htmlTemplates.documentPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    publish if you want\n  </div>\n  <div class="upfront-sidebar-content -js-upfront-sidebar-publish">\n    <button class="upfront-btn upfront-control upfront-btn-primary" type="button">\n      <i class="entypo-upload-cloud"></i>\n      <span>publish</span>\n    </button>\n  </div>\n</div>';
   htmlTemplates.editButton = '<div ng-click="editSnippet(snippet, $event)" class="edit-button entypo-cog" ng-style="buttonStyle">\n</div>';
   htmlTemplates.editor = '<div>\n  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>\n\n    <!-- Autosave messages -->\n    <div class=\'top-message\'\n         ng-show="autosave.state"\n         ng-class="autosave.state"\n         ng-animate="{show: \'message-show\'}">\n      {{ autosave.message }}\n    </div>\n\n    <!-- Sidebar -->\n    <div sidebar ng-if="state.isActive(\'sidebar\')" folded-out="state.sidebar.foldedOut">\n      <div document-panel ng-if="state.isActive(\'documentPanel\')"></div>\n      <div snippet-panel ng-if="state.isActive(\'snippetPanel\')"></div>\n      <div properties-panel snippet="state.propertiesPanel.snippet" ng-if="state.isActive(\'propertiesPanel\')"></div>\n    </div>\n\n    <!-- Selected Text Options -->\n    <div popover ng-if="state.isActive(\'flowtextPopover\')" arrow-distance="14" open-condition="state.flowtextPopover" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">\n      <ng-include src="\'flowtext-options.html\'">\n      </ng-include>\n    </div>\n\n    <!-- Selected Image Popover -->\n    <div popover ng-if="state.isActive(\'imagePopover\')" arrow-distance="14" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">\n      <ng-include src="\'image-input.html\'"></ng-include>\n    </div>\n\n  </div>\n</div>';
   htmlTemplates.flowtextOptions = '<div ng-controller=\'FlowtextOptionsController\'>\n  <div class="flowtext-options upfront-btn-group" ng-hide="editableEventsService.selectionIsOnInputField" class=\'upfront-btn-group\'>\n    <a ng-click=\'toggleBold()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isBold}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-bold"></span>\n    </a>\n\n    <a ng-click=\'toggleItalic()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isItalic}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-italic"></span>\n    </a>\n\n    <a ng-click=\'openLinkInput()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isLinked}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-link"></span>\n    </a>\n\n  </div>\n  <div ng-show="editableEventsService.selectionIsOnInputField">\n    <form class="upfront-control upfront-link-editing" ng-submit="setLink(currentSelectionStyles.link, currentSelectionStyles.isLinkExternal)">\n      <input type="submit" class=\'upfront-btn-mini upfront-link-editing_submit\' value="OK">\n      <input  type="text"\n              id="linkInput"\n              class="upfront-link-editing_link-field"\n              placeholder="www.datablog.io"\n              ld-focus="{{editableEventsService.selectionIsOnInputField}}"\n              ng-model="currentSelectionStyles.link">\n\n      <label class="upfront-link-editing_checkbox">\n        <input type="checkbox"\n              ng-model="currentSelectionStyles.isLinkExternal"> In neuem Fenster \xf6ffnen\n      </label>\n    </form>\n  </div>\n</div>';
   htmlTemplates.historyButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-flow-branch" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="width: 76px; left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties">\n              <div ng-show="property.difference">\n                <div ng-if="property.difference.type == \'change\'">\n                  <ng-include src="\'diff-change-entry.html\'"></ng-include>\n                </div>\n                <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                  <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n                </div>\n              </div>\n              <div ng-show="!property.difference">\n                <span class="entypo-cc-nd"></span> {{property.label}} {{property.info}}\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
+  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="width: 76px; left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties" ng-show="property.difference">\n              <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n                <ng-include src="\'diff-change-entry.html\'"></ng-include>\n              </div>\n              <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
   htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Properties for {{snippet.template.title}}</span></h3>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
