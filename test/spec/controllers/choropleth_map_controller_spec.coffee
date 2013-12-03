@@ -29,6 +29,7 @@ describe 'ChoroplethMapController', ->
         data: sampleCategoricalData
         mappingPropertyOnMap: 'id'
         mappingPropertyOnData: 'id'
+        valueProperty: 'party'
       @scope.$digest()
       expect(@snippetModel.data('colorScheme')).to.equal('Paired')
 
@@ -38,14 +39,23 @@ describe 'ChoroplethMapController', ->
         data: sample1DData
         mappingPropertyOnData: 'id'
         mappingPropertyOnMap: 'id'
-      @scope.$digest()
       expect(@snippetModel.data('colorScheme')).to.equal('YlGn')
 
 
-    it 'initializes the color steps to 9 for numerical data'
+    it 'initializes the color steps to 9 for numerical data', ->
+      @snippetModel.data
+        data: sample1DData
+        mappingPropertyOnData: 'id'
+        mappingPropertyOnMap: 'id'
+      expect(@snippetModel.data('colorSteps')).to.equal(9)
 
 
-    it 'initializes the value property to the first numerical column in the data'
+    it 'initializes the value property to the first numerical column in the data', ->
+      @snippetModel.data
+        data: sample1DData
+        mappingPropertyOnData: 'id'
+        mappingPropertyOnMap: 'id'
+      expect(@snippetModel.data('valueProperty')).to.equal('id')
 
 
   # this represents all calls that actually are performed by the choropleth_form_controller
