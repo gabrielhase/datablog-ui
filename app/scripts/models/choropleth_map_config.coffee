@@ -96,29 +96,9 @@ do ->
     ]
 
     availableProjections: [
-      name: 'USA (only US maps)'
-      value: 'albersUsa'
-    ,
+      # CONFORMAL
       name: 'Mercator'
       value: 'mercator'
-    ,
-      name: 'Orthographical'
-      value: 'orthographic'
-    ,
-      name: 'Plate carrée'
-      value: 'equirectangular'
-    ,
-      name: 'van der Grinten'
-      value: 'vanDerGrinten'
-    ,
-      name: 'Robinson'
-      value: 'robinson'
-    ,
-      name: 'Hammer'
-      value: 'hammer'
-    ,
-      name: 'Baker'
-      value: 'baker'
     ,
       name: 'Conic Conformal'
       value: 'conicConformal'
@@ -126,12 +106,35 @@ do ->
       name: 'Cylindrical Stereographic'
       value: 'cylindricalStereographic'
     ,
-      name: 'Eckert'
-      value: 'eckert1'
+      # EQUAL AREA
+      name: 'USA (only US maps)'
+      value: 'albersUsa'
     ,
-      name: 'Hill'
-      value: 'hill'
+      name: 'Conic Equal Area'
+      value: 'conicEqualArea'
     ,
-      name: 'Winkel'
+      name: 'Mollweide'
+      value: 'mollweide'
+    ,
+      # AZIMUTHAL
+      name: 'Orthographical'
+      value: 'orthographic'
+    ,
+      # EQUAL DISTANCE
+      name: 'Plate carrée'
+      value: 'equirectangular'
+    ,
+      # EQUAL SHORTEST DISTANCE
+      name: 'Gnomonic'
+      value: 'gnomonic'
+    ,
+      # COMPROMISE PROJECTIONS
+      name: 'Robinson'
+      value: 'robinson'
+    ,
+      name: 'Winkel triple'
       value: 'winkel3'
+    ,
+      name: 'van der Grinten'
+      value: 'vanDerGrinten'
     ]
