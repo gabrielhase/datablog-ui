@@ -60,7 +60,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
   deducePathProjection = (projection) ->
     if projection
-      d3.geo.path().projection(eval("d3.geo.#{projection}()"))
+      d3Projection = eval("d3.geo.#{projection}()")
+      if projection == 'robinson'
+        d3Projection = d3Projection.rotate([8, 0])
+      d3.geo.path().projection(d3Projection)
     else
       undefined
 

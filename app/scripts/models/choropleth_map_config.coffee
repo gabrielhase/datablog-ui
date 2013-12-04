@@ -59,7 +59,7 @@ do ->
     ]
 
     kickstartProperties:
-      projection: 'mercator'
+      projection: 'robinson'
 
     availableMaps: [
       name: 'Swiss Population Data Map'
@@ -107,4 +107,31 @@ do ->
     ,
       name: 'Plate carrée'
       value: 'equirectangular'
+    ,
+      name: 'van der Grinten'
+      value: 'vanDerGrinten'
+    ,
+      name: 'Robinson'
+      value: 'robinson'
+    ,
+      name: 'Hammer'
+      value: 'hammer'
+    ,
+      name: 'Baker'
+      value: 'baker'
+    ,
+      name: 'Conic Conformal'
+      value: 'conicConformal'
+    ,
+      name: 'Cylindrical Stereographic'
+      value: 'cylindricalStereographic'
+    ,
+      name: 'Eckert'
+      value: 'eckert1'
+    ,
+      name: 'Hill'
+      value: 'hill'
+    ,
+      name: 'Winkel'
+      value: 'winkel3'
     ]
