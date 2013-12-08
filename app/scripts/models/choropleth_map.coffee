@@ -68,17 +68,16 @@ class ChoroplethMap
     map = @_getSnippetModel().data('map')
     mappingPropertyOnMap = @_getSnippetModel().data('mappingPropertyOnMap')
     colMatchCount = {}
-
-    for row in data
-      rowAppliedToMap = false
+    for row, idx in data
+      rowKeysApplied = []
       map?.features?.forEach (feature) ->
-        return if rowAppliedToMap # only track application to the map once
         mappingValueOnMap = feature?.properties[mappingPropertyOnMap]
         for key, value of row
+          continue if rowKeysApplied.indexOf(key) != -1
           if value == mappingValueOnMap
             colMatchCount[key] ||= 0
             colMatchCount[key] += 1
-            rowAppliedToMap = true
+            rowKeysApplied.push(key)
 
     dataColumnsForMapping = []
     for key, value of colMatchCount
