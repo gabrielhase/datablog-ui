@@ -25,6 +25,7 @@ angular.module('ldEditor').factory 'uiStateService', ->
       active: false
     'propertiesPanel':
       active: false
+      snippet: null
     # mode for inserting snippets, affects whole editor
     'insertMode':
       active: false
@@ -98,3 +99,13 @@ angular.module('ldEditor').factory 'uiStateService', ->
   set: (name, state) ->
     @setter[name].call(@, state)
 
+
+  # Workaround: Currently the engine does not trigger an event on snippet deletion.
+  # So we have to blur the selection on snippet deletion and sidebar interaction.
+  blurCurrentSnippet: ->
+    doc.document.page.focus.blur()
+
+
+  deactivatePopovers: ->
+    @set('flowtextPopover')
+    @set('imagePopover')

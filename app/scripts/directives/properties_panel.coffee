@@ -98,6 +98,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
         insertScope = scope.$new()
         formElementScopes.push(insertScope)
         $compile(htmlTemplates.choroplethSidebarForm)(insertScope, (form, childScope) ->
+          childScope.htmlElement = form
           $(".visual-form-placeholder").append(form)
         )
 

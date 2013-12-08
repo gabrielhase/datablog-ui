@@ -21,7 +21,7 @@ describe 'ChoroplethMapController', ->
   describe 'kickstarter initializations', ->
 
     it 'initializes the projection to "mercator"', ->
-      expect(@snippetModel.data('projection')).to.equal('mercator')
+      expect(@snippetModel.data('projection')).to.equal('robinson')
 
 
     it 'initializes the color scheme to "Paired" for ordinal data', ->
@@ -39,7 +39,7 @@ describe 'ChoroplethMapController', ->
         data: sample1DData
         mappingPropertyOnData: 'id'
         mappingPropertyOnMap: 'id'
-      expect(@snippetModel.data('colorScheme')).to.equal('YlGn')
+      expect(@snippetModel.data('colorScheme')).to.equal('OrRd')
 
 
     it 'initializes the color steps to 9 for numerical data', ->
