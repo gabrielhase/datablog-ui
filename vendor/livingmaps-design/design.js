@@ -49,7 +49,7 @@
     {
       "id": "choropleth",
       "title": "choropleth",
-      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://s3.amazonaws.com/datablog-assets/color_brewer.css\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
+      "html": "<div data-template=\"\"><h3 doc-editable=\"title\" doc-optional=\"\">Title</h3><div data-is=\"d3-choropleth\" data-dependency=\"d3\" data-dependency-resources=\"http://d3js.org/d3.v3.min.js;https://s3.amazonaws.com/datablog-assets/color_brewer.css;https://s3.amazonaws.com/datablog-assets/d3.geo.projection.min.js\"><p>Couldn't load d3.js dependency. Maybe the service is down?</p></div><p class=\"source\" doc-editable=\"source\" doc-optional=\"\">Quelle</p></div>"
     },
     {
       "id": "map",

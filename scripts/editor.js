@@ -14049,6 +14049,7 @@ angular.module('ngProgress', [
       this.ngProgress = ngProgress;
       this.mapMediatorService = mapMediatorService;
       this.$timeout = $timeout;
+      this.dataWasSet = $.Callbacks('memory once');
       this.choroplethMapInstance = this.mapMediatorService.getUIModel(this.$scope.mapId);
       this.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
       this.snippetModel.data({ lastPositioned: new Date().getTime() });
@@ -14059,20 +14060,47 @@ angular.module('ngProgress', [
       });
     }
     ChoroplethMapController.prototype.setupKickstarters = function () {
-      var kickstartProperty, property, propertyValue, _ref, _results;
+      var kickstartProperty, property, propertyValue, _ref;
       _ref = choroplethMapConfig.kickstartProperties;
-      _results = [];
       for (property in _ref) {
         propertyValue = _ref[property];
         if (!this.snippetModel.data(property)) {
           kickstartProperty = {};
           kickstartProperty['' + property] = propertyValue;
-          _results.push(this.snippetModel.data(kickstartProperty));
-        } else {
-          _results.push(void 0);
+          this.snippetModel.data(kickstartProperty);
         }
       }
-      return _results;
+      return this.initValuePropertyCallback();
+    };
+    ChoroplethMapController.prototype.initValuePropertyCallback = function () {
+      var _this = this;
+      return this.dataWasSet.add(function () {
+        var key, value, _ref;
+        if (!_this.snippetModel.data('valueProperty')) {
+          _ref = _this.snippetModel.data('data')[0];
+          for (key in _ref) {
+            value = _ref[key];
+            if ($.isNumeric(value)) {
+              _this.snippetModel.data({ valueProperty: key });
+              _this.initColorScheme();
+              return;
+            }
+          }
+          return _this.snippetModel.data({ valueProperty: key });
+        } else {
+          return _this.initColorScheme();
+        }
+      });
+    };
+    ChoroplethMapController.prototype.initColorScheme = function () {
+      if (this.choroplethMapInstance.getValueType() === 'numerical') {
+        return this.snippetModel.data({
+          colorScheme: 'OrRd',
+          colorSteps: 9
+        });
+      } else {
+        return this.snippetModel.data({ colorScheme: 'Paired' });
+      }
     };
     ChoroplethMapController.prototype.initScope = function () {
       var propertyValue, trackedProperty, _i, _len, _ref, _results;
@@ -14082,7 +14110,8 @@ angular.module('ngProgress', [
         trackedProperty = _ref[_i];
         propertyValue = this.snippetModel.data(trackedProperty);
         if (propertyValue) {
-          _results.push(this.$scope[trackedProperty] = propertyValue);
+          this.$scope[trackedProperty] = propertyValue;
+          _results.push(this.handleKickstartCallbacks(trackedProperty));
         } else {
           _results.push(void 0);
         }
@@ -14110,7 +14139,8 @@ angular.module('ngProgress', [
               this.ngProgress.start();
               this.ngProgress.set(10);
             }
-            _results.push(this.$scope[trackedProperty] = newVal);
+            this.$scope[trackedProperty] = newVal;
+            _results.push(this.handleKickstartCallbacks(trackedProperty));
           } else {
             _results.push(void 0);
           }
@@ -14119,6 +14149,14 @@ angular.module('ngProgress', [
         }
       }
       return _results;
+    };
+    ChoroplethMapController.prototype.handleKickstartCallbacks = function (changedProperty) {
+      if (changedProperty === 'data') {
+        this.dataWasSet.fire();
+      }
+      if (changedProperty === 'valueProperty') {
+        return this.dataWasSet.disable();
+      }
     };
     return ChoroplethMapController;
   }());
@@ -14556,13 +14594,15 @@ angular.module('ngProgress', [
     return PopoverController;
   }());
   angular.module('ldEditor').controller('PropertiesPanelController', PropertiesPanelController = function () {
-    function PropertiesPanelController($scope, angularTemplateService) {
+    function PropertiesPanelController($scope, angularTemplateService, uiStateService) {
       this.$scope = $scope;
       this.angularTemplateService = angularTemplateService;
+      this.uiStateService = uiStateService;
       this.$scope.deleteSnippet = $.proxy(this.deleteSnippet, this);
       this.$scope.isDeletable = $.proxy(this.isDeletable, this);
     }
     PropertiesPanelController.prototype.deleteSnippet = function (snippet) {
+      this.uiStateService.blurCurrentSnippet();
       if (this.angularTemplateService.isAngularTemplate(snippet.model)) {
         this.angularTemplateService.removeAngularTemplate(snippet.model);
       }
@@ -14596,11 +14636,13 @@ angular.module('ngProgress', [
     SidebarController.prototype.registerActivePanel = function (panel) {
       if (this.uiStateService.state.isActive(panel)) {
         if (this.uiStateService.state.sidebar.foldedOut) {
+          this.uiStateService.blurCurrentSnippet();
           return this.hide(panel);
         } else {
           return this.uiStateService.set('sidebar', { foldedOut: true });
         }
       } else {
+        this.uiStateService.blurCurrentSnippet();
         this.uiStateService.set(panel, {});
         return this.uiStateService.set('sidebar', { foldedOut: true });
       }
@@ -14732,8 +14774,16 @@ angular.module('ngProgress', [
         return svg.attr('height', ratio * svgHeight);
       };
       deducePathProjection = function (projection) {
+        var d3Projection;
         if (projection) {
-          return d3.geo.path().projection(eval('d3.geo.' + projection + '()'));
+          d3Projection = eval('d3.geo.' + projection + '()');
+          if (projection === 'robinson') {
+            d3Projection = d3Projection.rotate([
+              8,
+              0
+            ]);
+          }
+          return d3.geo.path().projection(d3Projection);
         } else {
           return void 0;
         }
@@ -15274,6 +15324,7 @@ angular.module('ngProgress', [
             insertScope = scope.$new();
             formElementScopes.push(insertScope);
             return $compile(htmlTemplates.choroplethSidebarForm)(insertScope, function (form, childScope) {
+              childScope.htmlElement = form;
               return $('.visual-form-placeholder').append(form);
             });
           };
@@ -15717,12 +15768,7 @@ angular.module('ngProgress', [
           mappingPropertyOnMap: 'id',
           mappingPropertyOnData: 'id'
         }],
-      kickstartProperties: {
-        projection: 'mercator',
-        colorScheme: 'Paired',
-        colorSteps: 9,
-        valueProperty: 'value'
-      },
+      kickstartProperties: { projection: 'robinson' },
       availableMaps: [
         {
           name: 'Swiss Population Data Map',
@@ -15766,12 +15812,28 @@ angular.module('ngProgress', [
       ],
       availableProjections: [
         {
+          name: 'Mercator',
+          value: 'mercator'
+        },
+        {
+          name: 'Conic Conformal',
+          value: 'conicConformal'
+        },
+        {
+          name: 'Cylindrical Stereographic',
+          value: 'cylindricalStereographic'
+        },
+        {
           name: 'USA (only US maps)',
           value: 'albersUsa'
         },
         {
-          name: 'Mercator',
-          value: 'mercator'
+          name: 'Conic Equal Area',
+          value: 'conicEqualArea'
+        },
+        {
+          name: 'Mollweide',
+          value: 'mollweide'
         },
         {
           name: 'Orthographical',
@@ -15780,6 +15842,22 @@ angular.module('ngProgress', [
         {
           name: 'Plate carr\xe9e',
           value: 'equirectangular'
+        },
+        {
+          name: 'Gnomonic',
+          value: 'gnomonic'
+        },
+        {
+          name: 'Robinson',
+          value: 'robinson'
+        },
+        {
+          name: 'Winkel triple',
+          value: 'winkel3'
+        },
+        {
+          name: 'van der Grinten',
+          value: 'vanDerGrinten'
         }
       ]
     };
@@ -15788,29 +15866,59 @@ angular.module('ngProgress', [
     return this.colorBrewerConfig = {
       colorSchemes: [
         {
-          name: 'YlGn',
+          name: 'Red Sequential',
+          cssClass: 'OrRd',
+          steps: 9
+        },
+        {
+          name: 'Green Sequential',
           cssClass: 'YlGn',
           steps: 9
         },
         {
-          name: 'YlGnBu',
-          cssClass: 'YlGnBu',
+          name: 'Blue Sequential',
+          cssClass: 'PuBu',
           steps: 9
         },
         {
-          name: 'GnBu',
-          cssClass: 'GnBu',
+          name: 'Pink Sequential',
+          cssClass: 'RdPu',
           steps: 9
         },
         {
-          name: 'Paired',
-          cssClass: 'Paired',
+          name: 'Grey Sequential',
+          cssClass: 'Greys',
+          steps: 9
+        },
+        {
+          name: 'Red-Blue Diverging',
+          cssClass: 'RdYlBu',
+          steps: 11
+        },
+        {
+          name: 'Pink-Green Diverging',
+          cssClass: 'PiYG',
+          steps: 11
+        },
+        {
+          name: 'Brown-Violet Diverging',
+          cssClass: 'PuOr',
+          steps: 11
+        },
+        {
+          name: 'Light Colors',
+          cssClass: 'Set3',
           steps: 12
         },
         {
-          name: 'Set1',
-          cssClass: 'Set1',
-          steps: 3
+          name: 'Pastel Colors',
+          cssClass: 'Pastel1',
+          steps: 9
+        },
+        {
+          name: 'Dark Colors',
+          cssClass: 'Paired',
+          steps: 12
         }
       ]
     };
@@ -16281,7 +16389,11 @@ angular.module('ngProgress', [
               snippetInlineOptionsService.removeHistoryButton();
             }
             currentSelection = void 0;
-            return $rootScope.$apply(uiStateService.set('propertiesPanel', false), uiStateService.set('flowtextPopover', false));
+            uiStateService.deactivatePopovers();
+            return uiStateService.set('propertiesPanel', {
+              active: false,
+              snippet: void 0
+            });
           });
           doc.snippetAdded(function (snippet) {
             if (prefillChoroplethService.isPrefilledChoropleth(snippet)) {
@@ -16573,7 +16685,10 @@ angular.module('ngProgress', [
         },
         'documentPanel': { active: false },
         'snippetPanel': { active: false },
-        'propertiesPanel': { active: false },
+        'propertiesPanel': {
+          active: false,
+          snippet: null
+        },
         'insertMode': { active: false },
         isActive: function (uiElementState) {
           return this[uiElementState].active !== false;
@@ -16648,6 +16763,13 @@ angular.module('ngProgress', [
       },
       set: function (name, state) {
         return this.setter[name].call(this, state);
+      },
+      blurCurrentSnippet: function () {
+        return doc.document.page.focus.blur();
+      },
+      deactivatePopovers: function () {
+        this.set('flowtextPopover');
+        return this.set('imagePopover');
       }
     };
   });
@@ -16664,8 +16786,8 @@ angular.module('ngProgress', [
   htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="width: 76px; left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties" ng-show="property.difference">\n              <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n                <ng-include src="\'diff-change-entry.html\'"></ng-include>\n              </div>\n              <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
-  htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Properties for {{snippet.template.title}}</span></h3>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
-  htmlTemplates.sidebar = '<div class="upfront-sidebar"\n  ng-class="{\'upfront-sidebar-hidden\': !foldedOut}">\n  <div class="upfront-sidebar-nav">\n    <span class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"\n      data-nav="document"\n      ng-click="loadDocument()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'documentPanel\')}"></span>\n    <span class="upfront-sidebar-nav-elem upfront-sidebar-nav-second"\n      data-nav="snippets" style="font-weight:700;"\n      ng-click="loadSnippets()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'snippetPanel\')}">+</span>\n    <span class="entypo-cog upfront-sidebar-nav-elem upfront-sidebar-nav-third"\n       data-nav="properties"\n       ng-click="loadProperties()"\n       ng-class="{\'active\': uiStateService.state.isActive(\'propertiesPanel\')}"></span>\n  </div>\n\n  <div class="upfront-sidebar-header">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span></span></h3>\n  </div>\n\n  <div class="upfront-sidebar-body" ng-transclude>\n  </div>\n</div>';
+  htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>\n      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>\n      <span ng-hide="snippet">Select an element on the page</span>\n    </h3>\n  </div>\n  <div ng-show="snippet">\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.sidebar = '<div class="upfront-sidebar"\n  ng-class="{\'upfront-sidebar-hidden\': !foldedOut}">\n  <div class="upfront-sidebar-nav">\n    <span class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"\n      data-nav="document"\n      ng-click="loadDocument()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'documentPanel\')}"></span>\n    <span class="upfront-sidebar-nav-elem upfront-sidebar-nav-second"\n      data-nav="snippets" style="font-weight:700;"\n      ng-click="loadSnippets()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'snippetPanel\')}">+</span>\n    <span class="entypo-cog upfront-sidebar-nav-elem upfront-sidebar-nav-third"\n       data-nav="properties"\n       ng-click="loadProperties()"\n       ng-show="uiStateService.state.propertiesPanel.snippet"\n       ng-class="{\'active\': uiStateService.state.isActive(\'propertiesPanel\')}"></span>\n  </div>\n\n  <div class="upfront-sidebar-header">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span></span></h3>\n  </div>\n\n  <div class="upfront-sidebar-body" ng-transclude>\n  </div>\n</div>';
   htmlTemplates.snippetPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Insert Snippets</span></h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    Drag & Drop or click list items\n  </div>\n  <div class="upfront-snippet-wrapper">\n    <ul class="upfront-snippet-list" ng-repeat="group in groups">\n      <li class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>{{ group.title }}</li>\n      <li ng-repeat="snippet in group.templates" class="upfront-snippet-item" ng-class="{selected: group.id + \'.\' + $index==snippetInsertService.selectedSnippet}">\n        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, group.id, $index, snippet)">{{ snippet.title }}</a>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.backdrop = '<div class="modal-backdrop fade" ng-class="{in: animate}" ng-style="{\'z-index\': 1040 + index*10}" ng-click="close($event)">\n</div>';
   htmlTemplates.window = '<div class="{{ windowClass }}" ng-style="{\'z-index\': 1050 + index*10}" ng-transclude>\n</div>';
