@@ -14,11 +14,13 @@ class SidebarController
   registerActivePanel: (panel) ->
     if @uiStateService.state.isActive(panel) # toggle
       if @uiStateService.state.sidebar.foldedOut
+        @uiStateService.blurCurrentSnippet()
         @hide(panel)
       else
         @uiStateService.set 'sidebar',
           foldedOut: true
     else
+      @uiStateService.blurCurrentSnippet()
       @uiStateService.set(panel, {})
       @uiStateService.set 'sidebar',
         foldedOut: true
