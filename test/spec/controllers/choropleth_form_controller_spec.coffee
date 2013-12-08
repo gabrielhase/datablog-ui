@@ -206,7 +206,10 @@ describe 'ChoroplethFormController', ->
         mappingPropertyOnMap: 'id'
       @choroplethController = instantiateController('ChoroplethFormController',
         $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
-
+      colorBrewerConfig.colorSchemes.push
+        name: 'Test'
+        cssClass: 'test'
+        steps: 3
 
     describe 'on projection', ->
 
@@ -278,7 +281,7 @@ describe 'ChoroplethFormController', ->
 
 
       it 'returns hasTooManyCategories true when there are too many categories', ->
-        @scope.colorScheme = 'Set1'
+        @scope.colorScheme = 'test'
         @scope.valueProperty = 'categoricalUnique'
         @scope.$digest()
         expect(@scope.hasTooManyCategories()).to.be.true
@@ -314,7 +317,7 @@ describe 'ChoroplethFormController', ->
 
 
       it 'returns hasTooManyCategories true when there are too little color steps', ->
-        @scope.colorScheme = 'Set1'
+        @scope.colorScheme = 'test'
         @scope.$digest()
         expect(@scope.hasTooManyCategories()).to.be.true
 
