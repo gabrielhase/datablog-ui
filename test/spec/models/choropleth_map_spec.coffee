@@ -7,6 +7,11 @@ describe 'ChoroplethMap', ->
     @snippetModel.data
       map: biggerSampleMap
       data: messyData
+      projection: 'mercator'
+      colorScheme: 'Paired'
+      colorSteps: 9
+      valueProperty: 'value'
+
     @choroplethMap = new ChoroplethMap(@snippetModel.id)
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
 
@@ -24,7 +29,7 @@ describe 'ChoroplethMap', ->
         mappingPropertyOnData: 'id'
         valueProperty: 'value'
         colorScheme: 'YlGn'
-        quantizeSteps: 3
+        colorSteps: 3
       @oldSnippetModel = {}
       $.extend(true, @oldSnippetModel, @snippetModel)
 
@@ -250,19 +255,19 @@ describe 'ChoroplethMap', ->
       it 'recognizes an unchanged number of color steps', ->
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
-          label: 'quantize steps'
-          key: 'quantizeSteps'
+          label: 'color steps'
+          key: 'colorSteps'
           difference: undefined
           info: '(3)'
 
 
       it 'calculates the difference between two color steps as a change', ->
         @snippetModel.data
-          quantizeSteps: 4
+          colorSteps: 4
         diff = @choroplethMap.calculateDifference(@oldSnippetModel)
         expect(diff[3].properties[2]).to.eql
-          label: 'quantize steps'
-          key: 'quantizeSteps'
+          label: 'color steps'
+          key: 'colorSteps'
           difference:
             type: 'change'
             previous: 3

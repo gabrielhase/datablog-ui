@@ -141,7 +141,7 @@ class ChoroplethMap
       properties: []
     versionDifferences[3].properties.push(@_calculatePropertyDifference('valueProperty', otherVersion))
     versionDifferences[3].properties.push(@_calculatePropertyDifference('colorScheme', otherVersion))
-    versionDifferences[3].properties.push(@_calculatePropertyDifference('quantizeSteps', otherVersion))
+    versionDifferences[3].properties.push(@_calculatePropertyDifference('colorSteps', otherVersion))
 
     versionDifferences
 

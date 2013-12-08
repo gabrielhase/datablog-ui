@@ -12,7 +12,7 @@ do ->
                     mapping-property-on-map="mappingPropertyOnMap"
                     mapping-property-on-data="mappingPropertyOnData"
                     value-property="valueProperty"
-                    quantize-steps="quantizeSteps"
+                    color-steps="colorSteps"
                     color-scheme="colorScheme">
         </choropleth>
       </div>
@@ -27,7 +27,7 @@ do ->
                   mapping-property-on-map="mappingPropertyOnMap"
                   mapping-property-on-data="mappingPropertyOnData"
                   value-property="valueProperty"
-                  quantize-steps="quantizeSteps"
+                  color-steps="colorSteps"
                   color-scheme="colorScheme">
       </choropleth>
     """
@@ -41,7 +41,7 @@ do ->
       'mappingPropertyOnMap',
       'mappingPropertyOnData',
       'valueProperty',
-      'quantizeSteps',
+      'colorSteps',
       'colorScheme'
     ]
 
@@ -53,8 +53,13 @@ do ->
         map: 'usCounties'
         data: 'usUnemployment'
         projection: 'albersUsa'
+        mappingPropertyOnMap: 'id'
+        mappingPropertyOnData: 'id'
       }
     ]
+
+    kickstartProperties:
+      projection: 'robinson'
 
     availableMaps: [
       name: 'Swiss Population Data Map'
@@ -91,15 +96,45 @@ do ->
     ]
 
     availableProjections: [
-      name: 'USA (only US maps)'
-      value: 'albersUsa'
-    ,
+      # CONFORMAL
       name: 'Mercator'
       value: 'mercator'
     ,
+      name: 'Conic Conformal'
+      value: 'conicConformal'
+    ,
+      name: 'Cylindrical Stereographic'
+      value: 'cylindricalStereographic'
+    ,
+      # EQUAL AREA
+      name: 'USA (only US maps)'
+      value: 'albersUsa'
+    ,
+      name: 'Conic Equal Area'
+      value: 'conicEqualArea'
+    ,
+      name: 'Mollweide'
+      value: 'mollweide'
+    ,
+      # AZIMUTHAL
       name: 'Orthographical'
       value: 'orthographic'
     ,
+      # EQUAL DISTANCE
       name: 'Plate carrée'
       value: 'equirectangular'
+    ,
+      # EQUAL SHORTEST DISTANCE
+      name: 'Gnomonic'
+      value: 'gnomonic'
+    ,
+      # COMPROMISE PROJECTIONS
+      name: 'Robinson'
+      value: 'robinson'
+    ,
+      name: 'Winkel triple'
+      value: 'winkel3'
+    ,
+      name: 'van der Grinten'
+      value: 'vanDerGrinten'
     ]
