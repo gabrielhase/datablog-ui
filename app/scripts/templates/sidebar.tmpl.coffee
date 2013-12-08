@@ -13,6 +13,7 @@ htmlTemplates.sidebar = """
     <span class="entypo-cog upfront-sidebar-nav-elem upfront-sidebar-nav-third"
        data-nav="properties"
        ng-click="loadProperties()"
+       ng-show="uiStateService.state.propertiesPanel.snippet"
        ng-class="{'active': uiStateService.state.isActive('propertiesPanel')}"></span>
   </div>
 

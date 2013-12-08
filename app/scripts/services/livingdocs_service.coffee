@@ -37,10 +37,10 @@ angular.module('ldEditor').factory 'livingdocsService',
         if snippet.template.identifier == 'livingmaps.choropleth'
           snippetInlineOptionsService.removeHistoryButton()
         currentSelection = undefined # set the current selection in the scope
-        $rootScope.$apply(
-          uiStateService.set('propertiesPanel', false)
-          uiStateService.set('flowtextPopover', false)
-        )
+        uiStateService.deactivatePopovers()
+        uiStateService.set 'propertiesPanel',
+          active: false
+          snippet: undefined
 
       doc.snippetAdded (snippet) ->
         prefillChoroplethService.prefill(snippet) if prefillChoroplethService.isPrefilledChoropleth(snippet)

@@ -3,9 +3,12 @@ htmlTemplates.propertiesPanel = """
   <div class="upfront-sidebar-header" style="display: block;"
     ng-click="hideSidebar()">
     <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>
-    <h3><span>Properties for {{snippet.template.title}}</span></h3>
+    <h3>
+      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>
+      <span ng-hide="snippet">Select an element on the page</span>
+    </h3>
   </div>
-  <div>
+  <div ng-show="snippet">
     <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>
     <div class="visual-form-placeholder">
     </div>

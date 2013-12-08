@@ -140,7 +140,7 @@ describe 'MergeController', ->
     it 'reverts a change in color scheme', ->
       @mergeController.revertChange
         key: 'colorScheme'
-      expect(@snippetModel.data('colorScheme')).to.equal('YlGn')
+      expect(@snippetModel.data('colorScheme')).to.equal('OrRd')
 
 
   describe 'Ordinal Data', ->
