@@ -52,7 +52,7 @@ class HistoryModalController
       mappingPropertyOnMap: @$scope.latestSnippetVersion.data('mappingPropertyOnMap')
       mappingPropertyOnData: @$scope.latestSnippetVersion.data('mappingPropertyOnData')
       valueProperty: @$scope.latestSnippetVersion.data('valueProperty')
-      quantizeSteps: @$scope.latestSnippetVersion.data('quantizeSteps')
+      colorSteps: @$scope.latestSnippetVersion.data('colorSteps')
       colorScheme: @$scope.latestSnippetVersion.data('colorScheme')
 
     @close(event)

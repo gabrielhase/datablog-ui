@@ -16,3 +16,5 @@ angular.module('ldEditor').service 'prefillChoroplethService', (dataService) ->
               data: data
               dataIdentifier: 'usUnemployment'
               projection: prefilledMap.projection
+              mappingPropertyOnMap: prefilledMap.mappingPropertyOnMap
+              mappingPropertyOnData: prefilledMap.mappingPropertyOnData

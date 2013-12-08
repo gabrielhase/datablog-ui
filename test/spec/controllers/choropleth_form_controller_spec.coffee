@@ -12,7 +12,7 @@ describe 'ChoroplethFormController', ->
       mappingPropertyOnMap: 'someProp'
       mappingPropertyOnData: 'someProp'
       valueProperty: 'value'
-      quantizeSteps: 9
+      colorSteps: 9
       colorScheme: 'YlGn'
 
     @choroplethMap = new ChoroplethMap(@snippetModel.id)
@@ -52,7 +52,7 @@ describe 'ChoroplethFormController', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      ['mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
+      ['mappingPropertyOnData', 'valueProperty', 'colorSteps', 'colorScheme'].forEach (key) ->
         it "does not initialize #{key}", ->
           expect(@scope[key]).to.be.undefined
 
@@ -69,7 +69,7 @@ describe 'ChoroplethFormController', ->
           $scope: @scope, $http: {}, ngProgress: @ngProgress, dataService: {})
 
 
-      ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty', 'quantizeSteps', 'colorScheme'].forEach (key) ->
+      ['projection', 'mapName', 'mappingPropertyOnMap', 'mappingPropertyOnData', 'valueProperty', 'colorSteps', 'colorScheme'].forEach (key) ->
           it "initializes #{key}", ->
             expect(@scope[key]).to.eql(@snippetModel.data(key))
 
@@ -133,8 +133,8 @@ describe 'ChoroplethFormController', ->
           expect(@scope.availableColorSchemes).to.eql(colorBrewerConfig.colorSchemes)
 
 
-        it 'initializes max quantize step according to color scheme', ->
-          expect(@scope.maxQuantizeSteps).to.eql(9)
+        it 'initializes max color step according to color scheme', ->
+          expect(@scope.maxColorSteps).to.eql(9)
 
 
   describe 'mapping property on data', ->
@@ -297,20 +297,20 @@ describe 'ChoroplethFormController', ->
         expect(@scope.snippet.model.data('colorScheme')).to.eql('Paired')
 
 
-      it 'changes the max quantize steps according to color scheme', ->
+      it 'changes the max color steps according to color scheme', ->
         @scope.colorScheme = 'Paired'
         @scope.$digest()
-        expect(@scope.maxQuantizeSteps).to.eql(12)
+        expect(@scope.maxColorSteps).to.eql(12)
 
 
-      it 'resets the quantize steps to max value of color scheme if necessary', ->
+      it 'resets the color steps to max value of color scheme if necessary', ->
         # make it high
         @scope.colorScheme = 'Paired'
-        @scope.quantizeSteps = 12
+        @scope.colorSteps = 12
         @scope.$digest()
         @scope.colorScheme = 'YlGn'
         @scope.$digest()
-        expect(@scope.quantizeSteps).to.eql(9)
+        expect(@scope.colorSteps).to.eql(9)
 
 
       it 'returns hasTooManyCategories true when there are too little color steps', ->
@@ -319,10 +319,10 @@ describe 'ChoroplethFormController', ->
         expect(@scope.hasTooManyCategories()).to.be.true
 
 
-    describe 'on quantize steps on data', ->
+    describe 'on color steps on data', ->
 
-      it 'changes the quantize steps on snippet', ->
-        @scope.quantizeSteps = 5
+      it 'changes the color steps on snippet', ->
+        @scope.colorSteps = 5
         @scope.$digest()
-        expect(@scope.snippet.model.data('quantizeSteps')).to.eql(5)
+        expect(@scope.snippet.model.data('colorSteps')).to.eql(5)
 
