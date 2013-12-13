@@ -265,6 +265,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       valueProperty: '=valueProperty' # the (numerical) data value to visualize
       colorSteps: '=colorSteps' # how many quantize steps the visualization will have
       colorScheme: '=colorScheme' # the color brewer color scheme to use
+      hideLegend: '=hideLegend' # if set to true adds a class to hide the legend
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
@@ -359,8 +360,9 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       scope.$watch('colorScheme', (newVal, oldVal) ->
         return unless scope.map && scope.data
         if newVal
-          d3.select(element[0])
-            .attr('class', newVal)
+          $el = $(element[0])
+          $el.removeClass(oldVal)
+          $el.addClass(newVal)
       )
 
       # TODO: only re-render data here
@@ -369,6 +371,15 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         if newVal
           renderVisualization(scope)
           stopProgressBar()
+      )
+
+      scope.$watch('hideLegend', (newVal, oldVal) ->
+        return unless scope.map && scope.data
+        $el = $(element[0])
+        if newVal
+          $el.addClass('hide-legend')
+        else
+          $el.removeClass('hide-legend')
       )
 
   }

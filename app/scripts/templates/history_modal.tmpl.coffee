@@ -40,7 +40,7 @@ htmlTemplates.historyModal = """
           </ol>
         </div>
 
-        <div class="current-history-map">
+        <div class="current-history-map hide-legend">
 
         </div>
       </div>
@@ -48,7 +48,7 @@ htmlTemplates.historyModal = """
       <div class="latest-preview">
 
         <h2>Current Version</h2>
-        <div class="latest-version-map">
+        <div class="latest-version-map hide-legend">
         </div>
       </div>
     </div>

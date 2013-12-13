@@ -2266,6 +2266,7 @@ path {
 
 li.key {
   width: 10%;
+  min-width: 70px;
   padding-right: 0;
   padding-left: 0;
   font-size: .75em;
@@ -2285,6 +2286,10 @@ li.key {
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
+}
+
+.hide-legend .list-inline {
+  display: none;
 }
 
 /* Repsonsive Maps */
