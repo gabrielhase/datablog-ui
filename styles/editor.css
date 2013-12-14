@@ -1172,8 +1172,8 @@ input[type="submit"].upfront-btn::-moz-focus-inner {
 
 @font-face {
   font-family: 'entypo';
-  font-style: 'normal';
-  font-weight: 'normal';
+  font-style: normal;
+  font-weight: normal;
   src: url('http://weloveiconfonts.com/api/fonts/entypo/entypo.eot');
   src: url('http://weloveiconfonts.com/api/fonts/entypo/entypo.eot?#iefix') format('eot'), url('http://weloveiconfonts.com/api/fonts/entypo/entypo.woff') format('woff'), url('http://weloveiconfonts.com/api/fonts/entypo/entypo.ttf') format('truetype'), url('http://weloveiconfonts.com/api/fonts/entypo/entypo.svg#entypo') format('svg');
 }
@@ -2316,8 +2316,8 @@ input[type="submit"].upfront-btn::-moz-focus-inner {
 
 @font-face {
   font-family: 'FontAwesome';
-  font-style: 'normal';
-  font-weight: 'normal';
+  font-style: normal;
+  font-weight: normal;
   src: url('http://weloveiconfonts.com/api/fonts/fontawesome/fontawesome-webfont.eot');
   src: url('http://weloveiconfonts.com/api/fonts/fontawesome/fontawesome-webfont.eot?#iefix') format('eot'), url('http://weloveiconfonts.com/api/fonts/fontawesome/fontawesome-webfont.woff') format('woff'), url('http://weloveiconfonts.com/api/fonts/fontawesome/fontawesome-webfont.ttf') format('truetype'), url('http://weloveiconfonts.com/api/fonts/fontawesome/fontawesome-webfont.svg#FontAwesomeRegular') format('svg');
 }
@@ -4863,10 +4863,6 @@ a.upfront-thumbnail:hover {
   font-size: 0.7em;
 }
 
-.upfront-snippet-history .list-inline {
-  display: none;
-}
-
 .upfront-snippet-history .preview-wrapper {
   width: 100%;
   overflow: hidden;
@@ -5066,6 +5062,24 @@ a.upfront-thumbnail:hover {
 .doc-section {
   position: relative;
   margin-top: 320px;
+}
+
+@media (max-width: 650px) {
+  .site-header {
+    height: 320px;
+  }
+  .doc-section {
+    margin-top: 380px;
+  }
+}
+
+@media (max-width: 450px) {
+  .site-header {
+    height: 460px;
+  }
+  .doc-section {
+    margin-top: 520px;
+  }
 }
 
 [data-doc-container]:empty {
