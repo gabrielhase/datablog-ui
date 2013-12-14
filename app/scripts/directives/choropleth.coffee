@@ -73,6 +73,22 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #    #############################################
 
 
+  setupMouseEvents = (scope, paths) ->
+    paths.on 'mouseover', () ->
+      tooltipShow.apply(this, arguments)
+      if scope.synchronousHighlight
+        region = $(this).data('region')
+        $matchingRegions = $("*[data-region='#{region}']")
+        for region in $matchingRegions
+          addHighlight.apply(region, arguments)
+    paths.on 'mouseout', () ->
+      if scope.synchronousHighlight
+        region = $(this).data('region')
+        $matchingRegions = $("*[data-region='#{region}']")
+        for region in $matchingRegions
+          removeHighlight.apply(region, arguments)
+
+
   addHighlight = (d, i) ->
     existingClasses = $(this).attr('class')
     $(this).attr('class', "#{existingClasses} highlight")
@@ -128,18 +144,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
         valFn(val)
       )
-
-    paths.on 'mouseover', () ->
-      tooltipShow.apply(this, arguments)
-      if scope.synchronousHighlight
-        addHighlight.apply(this, arguments)
-    paths.on 'mouseout', () ->
-      if scope.synchronousHighlight
-        removeHighlight.apply(this, arguments)
-
-    for entry in valueById.entries()
-      if usedDataPoints.indexOf(entry.key) == -1
-        mapInstance.dataPointsWithMissingRegion.push(entry)
+      setupMouseEvents(scope, paths)
+      for entry in valueById.entries()
+        if usedDataPoints.indexOf(entry.key) == -1
+          mapInstance.dataPointsWithMissingRegion.push(entry)
 
 
   # returns a map with the key as the mapped property and the value as the visualization value
