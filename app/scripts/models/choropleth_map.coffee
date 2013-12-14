@@ -152,6 +152,7 @@ class ChoroplethMap
     if @_getSnippetModel().data('map')
       switch property
         when 'colorScheme' then return false
+        when 'hideLegend' then return false
         else
           return true
     else if prefilledMapNames.indexOf(@_getSnippetModel().identifier) != -1
