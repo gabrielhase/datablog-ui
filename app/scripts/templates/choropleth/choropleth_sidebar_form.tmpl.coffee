@@ -54,7 +54,7 @@ htmlTemplates.choroplethSidebarForm = """
 
         <div ng-show="mappingPropertyOnMap">
           <label>Data File (.csv, comma-separated)</label>
-          <input csv-upload callback="setData(data, error)" type="file" name="data"></input>
+          <input csv-upload callback="setData(data, error)" type="file" accept=".csv" name="data"></input>
           <div ng-show="snippet.model.data('data')">
             Your Data File:
             <a class="upfront-btn upfront-btn-mini upfront-btn-success"
