@@ -96,7 +96,13 @@ htmlTemplates.choroplethSidebarForm = """
 
         </div>
 
-      </fieldset
+      </fieldset>
+      <fieldset>
+        <legend>legend</legend>
+        <label>
+          <input type="checkbox" ng-model="hideLegend" /> Hide legend
+        </label>
+      </fieldset>
 
     </form>
   </div>

@@ -70,7 +70,7 @@ class ChoroplethMapController
     for trackedProperty in choroplethMapConfig.trackedProperties
       if changedProperties.indexOf(trackedProperty) != -1
         newVal = @snippetModel.data(trackedProperty)
-        if newVal
+        if typeof(newVal) != 'undefined'
           if @ngProgress.status() == 0 && @choroplethMapInstance.shouldRenderLoadingBar(trackedProperty)
             @ngProgress.start()
             @ngProgress.set(10)

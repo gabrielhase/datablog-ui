@@ -12,6 +12,7 @@ class ChoroplethFormController
 
     @$scope.projections = choroplethMapConfig.availableProjections
     @setupProperty('projection')
+    @setupProperty('hideLegend')
     @setupPredefinedMaps()
 
     if @$scope.snippet.model.data('map')
