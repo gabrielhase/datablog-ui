@@ -72,13 +72,26 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #      Data Visualization
   #    #############################################
 
+
+  addHighlight = (d, i) ->
+    existingClasses = $(this).attr('class')
+    $(this).attr('class', "#{existingClasses} highlight")
+
+
+  # NOTE: JQuery add/removeClass does not work on svg paths
+  removeHighlight = (d, i) ->
+    classes = $(this).attr('class')
+    classes = classes.replace('highlight', '')
+    $(this).attr('class', "#{classes}")
+
+
   tooltipShow = (d, i) ->
     $(this).tooltip(
-      title: "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
+      title: "#{$(this).attr('data-region')}: #{$(this).attr('data-title')}"
       placement: 'auto'
       container: $(this).parents('.doc-section')
     ).attr('data-original-title',
-            "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
+            "#{$(this).attr('data-region')}: #{$(this).attr('data-title')}"
     ).tooltip('show')
 
 
@@ -116,7 +129,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         valFn(val)
       )
 
-    paths.on('mouseover', tooltipShow)
+    paths.on 'mouseover', () ->
+      tooltipShow.apply(this, arguments)
+      addHighlight.apply(this, arguments)
+    paths.on('mouseout', removeHighlight)
 
     for entry in valueById.entries()
       if usedDataPoints.indexOf(entry.key) == -1
