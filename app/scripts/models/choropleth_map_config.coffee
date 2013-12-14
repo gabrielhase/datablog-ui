@@ -14,7 +14,8 @@ do ->
                     value-property="valueProperty"
                     color-steps="colorSteps"
                     color-scheme="colorScheme"
-                    hide-legend="hideLegend">
+                    hide-legend="hideLegend"
+                    synchronous-highlight="synchronousHighlight">
         </choropleth>
       </div>
     """
@@ -30,7 +31,8 @@ do ->
                   value-property="valueProperty"
                   color-steps="colorSteps"
                   color-scheme="colorScheme"
-                  hide-legend="hideLegend">
+                  hide-legend="hideLegend"
+                  synchronous-highlight="synchronousHighlight">
       </choropleth>
     """
 
@@ -45,7 +47,8 @@ do ->
       'valueProperty',
       'colorSteps',
       'colorScheme',
-      'hideLegend'
+      'hideLegend',
+      'synchronousHighlight'
     ]
 
     dataMappingThreshold: 0.5
