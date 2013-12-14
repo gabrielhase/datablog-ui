@@ -12,7 +12,6 @@ angular.module('ldEditor').directive 'csvUpload', ->
       reader.onload = (aFile) =>
         try
           rows = d3.csv.parse(aFile.target.result)
-          #json = JSON.parse(aFile.target.result)
         catch e
           scope.callback
             data: null
