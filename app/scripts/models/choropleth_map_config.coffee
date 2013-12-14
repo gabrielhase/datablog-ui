@@ -13,7 +13,8 @@ do ->
                     mapping-property-on-data="mappingPropertyOnData"
                     value-property="valueProperty"
                     color-steps="colorSteps"
-                    color-scheme="colorScheme">
+                    color-scheme="colorScheme"
+                    hide-legend="hideLegend">
         </choropleth>
       </div>
     """
@@ -28,7 +29,8 @@ do ->
                   mapping-property-on-data="mappingPropertyOnData"
                   value-property="valueProperty"
                   color-steps="colorSteps"
-                  color-scheme="colorScheme">
+                  color-scheme="colorScheme"
+                  hide-legend="hideLegend">
       </choropleth>
     """
 
@@ -42,7 +44,8 @@ do ->
       'mappingPropertyOnData',
       'valueProperty',
       'colorSteps',
-      'colorScheme'
+      'colorScheme',
+      'hideLegend'
     ]
 
     dataMappingThreshold: 0.5
