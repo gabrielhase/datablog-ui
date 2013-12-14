@@ -113,6 +113,7 @@ class HistoryModalController
 
     historyReady.promise
 
+
   # takes array of snippets or containers and looks for the snippet in the snippet tree
   # that has the same id.
   # Assigns this snippet to @$scope.historyVersionSnippet
