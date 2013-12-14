@@ -72,13 +72,42 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #      Data Visualization
   #    #############################################
 
+
+  setupMouseEvents = (scope, paths) ->
+    paths.on 'mouseover', () ->
+      tooltipShow.apply(this, arguments)
+      if scope.synchronousHighlight
+        region = $(this).data('region')
+        $matchingRegions = $("*[data-region='#{region}']")
+        for region in $matchingRegions
+          addHighlight.apply(region, arguments)
+    paths.on 'mouseout', () ->
+      if scope.synchronousHighlight
+        region = $(this).data('region')
+        $matchingRegions = $("*[data-region='#{region}']")
+        for region in $matchingRegions
+          removeHighlight.apply(region, arguments)
+
+
+  addHighlight = (d, i) ->
+    existingClasses = $(this).attr('class')
+    $(this).attr('class', "#{existingClasses} highlight")
+
+
+  # NOTE: JQuery add/removeClass does not work on svg paths
+  removeHighlight = (d, i) ->
+    classes = $(this).attr('class')
+    classes = classes.replace('highlight', '')
+    $(this).attr('class', "#{classes}")
+
+
   tooltipShow = (d, i) ->
     $(this).tooltip(
-      title: "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
+      title: "#{$(this).attr('data-region')}: #{$(this).attr('data-title')}"
       placement: 'auto'
       container: $(this).parents('.doc-section')
     ).attr('data-original-title',
-            "#{$(@).attr('data-region')}: #{$(@).attr('data-title')}"
+            "#{$(this).attr('data-region')}: #{$(this).attr('data-title')}"
     ).tooltip('show')
 
 
@@ -115,12 +144,10 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
           mapInstance.regionsWithMissingDataPoints.push(mapPropertyId)
         valFn(val)
       )
-
-    paths.on('mouseover', tooltipShow)
-
-    for entry in valueById.entries()
-      if usedDataPoints.indexOf(entry.key) == -1
-        mapInstance.dataPointsWithMissingRegion.push(entry)
+      setupMouseEvents(scope, paths)
+      for entry in valueById.entries()
+        if usedDataPoints.indexOf(entry.key) == -1
+          mapInstance.dataPointsWithMissingRegion.push(entry)
 
 
   # returns a map with the key as the mapped property and the value as the visualization value
@@ -266,6 +293,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       colorSteps: '=colorSteps' # how many quantize steps the visualization will have
       colorScheme: '=colorScheme' # the color brewer color scheme to use
       hideLegend: '=hideLegend' # if set to true adds a class to hide the legend
+      synchronousHighlight: '=synchronousHighlight' # if set to true then matching regions are highlighted synchronously
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
