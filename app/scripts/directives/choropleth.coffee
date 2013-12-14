@@ -131,8 +131,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
 
     paths.on 'mouseover', () ->
       tooltipShow.apply(this, arguments)
-      addHighlight.apply(this, arguments)
-    paths.on('mouseout', removeHighlight)
+      if scope.synchronousHighlight
+        addHighlight.apply(this, arguments)
+    paths.on 'mouseout', () ->
+      if scope.synchronousHighlight
+        removeHighlight.apply(this, arguments)
 
     for entry in valueById.entries()
       if usedDataPoints.indexOf(entry.key) == -1
@@ -282,6 +285,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
       colorSteps: '=colorSteps' # how many quantize steps the visualization will have
       colorScheme: '=colorScheme' # the color brewer color scheme to use
       hideLegend: '=hideLegend' # if set to true adds a class to hide the legend
+      synchronousHighlight: '=synchronousHighlight' # if set to true then matching regions are highlighted synchronously
     }
     replace: true
     template: "<div style='position:relative' class='choropleth-map'></div>"
