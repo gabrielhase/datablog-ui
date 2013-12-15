@@ -221,9 +221,13 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         d.key
       )
     else
+      isBelowZero = _.max(valFn.domain()) < 1
       genericLegendRender(scope, valFn.range, (d) ->
         extent = valFn.invertExtent(d)
-        "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+        if isBelowZero
+          "#{extent[0].toFixed(3)} - #{extent[1].toFixed(3)}"
+        else
+          "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
       , (d) ->
         d
       )
