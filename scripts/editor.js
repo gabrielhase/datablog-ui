@@ -13896,7 +13896,7 @@ angular.module('ngProgress', [
             if (newVal.data) {
               return _this.dataService.get(newVal.data).then(function (data) {
                 var dataValues;
-                dataValues = d3.csv.parse(data);
+                dataValues = _this.dataSanitizationService.sanitizeCSV(d3.csv.parse(data));
                 _this.$scope.snippet.model.data({
                   data: dataValues,
                   mappingPropertyOnMap: newVal.mappingPropertyOnMap,
@@ -14733,7 +14733,7 @@ angular.module('ngProgress', [
     'ngProgress',
     'mapMediatorService',
     function ($timeout, ngProgress, mapMediatorService) {
-      var addHighlight, deduceAllAvailableMappingOnMap, deduceMaxValue, deduceMinValue, deducePathProjection, deduceValueFunction, filterDataForCategoricalLegend, genericLegendRender, getDataMap, getMappingProperty, removeExistingMap, removeHighlight, renderData, renderLegend, renderMap, renderVisualization, resizeMap, setupMouseEvents, stopProgressBar, tooltipShow;
+      var addHighlight, deduceAllAvailableMappingOnMap, deduceMaxValue, deduceMinValue, deducePathProjection, deduceValueFunction, filterDataForCategoricalLegend, genericLegendRender, getAverageMeanDistance, getDataMap, getMappingProperty, removeExistingMap, removeHighlight, renderData, renderLegend, renderMap, renderVisualization, resizeMap, setupMouseEvents, stopProgressBar, tooltipShow;
       renderVisualization = function (scope) {
         var allMappingPropertiesOnMap, bounds, colorSteps, data, map, mappingPropertyOnData, mappingPropertyOnMap, path, valFn, valueProperty;
         if (scope.map) {
@@ -14943,7 +14943,7 @@ angular.module('ngProgress', [
         return valFn;
       };
       renderLegend = function (scope, valFn) {
-        var isCategorical, mapInstance;
+        var averageMeanDist, isBelowZero, isCategorical, mapInstance;
         scope.legend.selectAll('li.key').data([]).exit().remove();
         mapInstance = mapMediatorService.getUIModel(scope.mapId);
         isCategorical = mapInstance.getValueType() === 'categorical';
@@ -14954,10 +14954,18 @@ angular.module('ngProgress', [
             return d.key;
           });
         } else {
+          isBelowZero = _.max(valFn.domain()) < 1;
+          averageMeanDist = getAverageMeanDistance(valFn.domain());
           return genericLegendRender(scope, valFn.range, function (d) {
             var extent;
             extent = valFn.invertExtent(d);
-            return '' + Math.round(10 * extent[0]) / 10 + ' \u2013 ' + Math.round(10 * extent[1]) / 10;
+            if (isBelowZero) {
+              return '' + extent[0].toFixed(3) + ' - ' + extent[1].toFixed(3);
+            } else if (averageMeanDist >= 1000) {
+              return '' + (Math.round(extent[0]) / 1000).toFixed(1) + 'k - ' + (Math.round(extent[1]) / 1000).toFixed(1) + 'k';
+            } else {
+              return '' + Math.round(10 * extent[0]) / 10 + ' \u2013 ' + Math.round(10 * extent[1]) / 10;
+            }
           }, function (d) {
             return d;
           });
@@ -14998,6 +15006,13 @@ angular.module('ngProgress', [
         return $timeout(function () {
           return ngProgress.complete();
         }, 1000);
+      };
+      getAverageMeanDistance = function (values) {
+        var median;
+        median = d3.mean(values);
+        return d3.mean(_.map(values, function (val) {
+          return Math.abs(val - median);
+        }));
       };
       return {
         restrict: 'EA',
@@ -15842,6 +15857,15 @@ angular.module('ngProgress', [
           mappingPropertyOnMap: 'NAME_1',
           mappingPropertyOnData: 'Canton',
           valueProperty: 'Residents'
+        },
+        {
+          name: 'German Election Map',
+          map: 'germanyElectionDistricts',
+          projection: 'mollweide',
+          mappingPropertyOnMap: 'WKR_NR',
+          data: 'germanyElectionData',
+          mappingPropertyOnData: 'Nr',
+          valueProperty: 'Waehler'
         },
         {
           name: 'Austria',
@@ -26034,11 +26058,17 @@ angular.module('ngProgress', [
           case 'swissPopulationData':
             this.getData('data/population-swiss-cantons.csv', data);
             break;
+          case 'germanyElectionData':
+            this.getData('data/germany-election-2013.csv', data);
+            break;
           case 'austriaBundeslaender':
             this.getMap('data/austria-bundeslaender.geojson', data);
             break;
           case 'germanyBundeslaender':
             this.getMap('data/germany-bundeslaender.geojson', data);
+            break;
+          case 'germanyElectionDistricts':
+            this.getMap('data/germany-wahlkreise.geojson', data);
             break;
           case 'switzerlandCantons':
             this.getMap('data/switzerland-cantons.geojson', data);
