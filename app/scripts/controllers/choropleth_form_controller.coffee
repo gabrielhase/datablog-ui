@@ -60,7 +60,7 @@ class ChoroplethFormController
           @initMapPropertySelection()
           if newVal.data
             @dataService.get(newVal.data).then (data) =>
-              dataValues = d3.csv.parse(data)
+              dataValues = @dataSanitizationService.sanitizeCSV(d3.csv.parse(data))
               @$scope.snippet.model.data
                 data: dataValues
                 mappingPropertyOnMap: newVal.mappingPropertyOnMap
