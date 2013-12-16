@@ -76,6 +76,14 @@ do ->
       mappingPropertyOnData: 'Canton'
       valueProperty: 'Residents'
     ,
+      name: 'German Election Map'
+      map: 'germanyElectionDistricts'
+      projection: 'mollweide'
+      mappingPropertyOnMap: 'WKR_NR'
+      data: 'germanyElectionData'
+      mappingPropertyOnData: 'Nr'
+      valueProperty: 'Waehler'
+    ,
       name: 'Austria'
       map: 'austriaBundeslaender'
       projection: 'mercator'
