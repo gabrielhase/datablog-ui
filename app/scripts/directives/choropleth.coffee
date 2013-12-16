@@ -203,6 +203,7 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
   #      Legend Rendering
   #    #############################################
 
+
   renderLegend = (scope, valFn) ->
     # reset current legend
     scope.legend.selectAll('li.key')
@@ -221,9 +222,16 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
         d.key
       )
     else
+      isBelowZero = _.max(valFn.domain()) < 1
+      averageMeanDist = getAverageMeanDistance(valFn.domain())
       genericLegendRender(scope, valFn.range, (d) ->
         extent = valFn.invertExtent(d)
-        "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
+        if isBelowZero
+          "#{extent[0].toFixed(3)} - #{extent[1].toFixed(3)}"
+        else if averageMeanDist >= 1000
+          "#{(Math.round(extent[0])/1000).toFixed(1)}k - #{(Math.round(extent[1])/1000).toFixed(1)}k"
+        else
+          "#{Math.round(10*extent[0])/10} – #{Math.round(10*extent[1])/10}"
       , (d) ->
         d
       )
@@ -273,6 +281,11 @@ angular.module('ldEditor').directive 'choropleth', ($timeout, ngProgress, mapMed
     $timeout ->
       ngProgress.complete()
     , 1000
+
+
+  getAverageMeanDistance = (values) ->
+    median = d3.mean(values)
+    d3.mean(_.map values, (val) -> Math.abs(val - median))
 
 
   #    #############################################
