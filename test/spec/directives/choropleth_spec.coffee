@@ -348,7 +348,7 @@ describe 'choropleth directive', ->
         expect($(entries[3]).text()).to.eql('6 – 7')
 
 
-      describe.only 'for different value ranges', ->
+      describe 'for different value ranges', ->
 
 
         it 'renders a collection of numbers below 0 with a precision of 3 after the comma', ->
@@ -360,7 +360,13 @@ describe 'choropleth directive', ->
           expect($(entries[8]).text()).to.eql('0.028 - 0.030')
 
 
-        it 'renders a collection of values with an average difference to one another above thousand leaving 3 places with k appended'
+        it 'renders a collection of values with an average difference to one another above thousand leaving 3 places with k appended', ->
+          for entry, idx in directiveScope.data
+            entry.value = (idx + 1) * 1000
+          directiveScope.$digest()
+          entries = directiveElem.find('li.key')
+          expect($(entries[0]).text()).to.eql('1.0k - 1.2k')
+          expect($(entries[8]).text()).to.eql('2.8k - 3.0k')
 
 
     describe ' and changing the data properties', ->
