@@ -6,40 +6,40 @@ class WebMapFormController
     @$scope.availableZoomLevels = [1..16]
 
     @watchZoom()
-    @$scope.setLng = $.proxy(@setLng, this)
-    @$scope.setLat = $.proxy(@setLat, this)
+    @watchLng()
+    @watchLat()
 
 
-  setLat: ($event) ->
-    $el = $($event.currentTarget)
-    oldSnippetModelData = @$scope.snippet.model.data('center')
-    @$scope.snippet.model.data
-      center:
-        zoom: oldSnippetModelData.zoom
-        lng: oldSnippetModelData.lng
-        lat: +$el.val()
+  watchLat: ($event) ->
+    @$scope.$watch 'center.lat', (newVal, oldVal) =>
+      if newVal
+        oldSnippetModelData = @$scope.snippet.model.data('center')
+        @$scope.snippet.model.data
+          center:
+            zoom: oldSnippetModelData.zoom
+            lng: oldSnippetModelData.lng
+            lat: newVal
 
 
-  setLng: ($event) ->
-    $el = $($event.currentTarget)
-    oldSnippetModelData = @$scope.snippet.model.data('center')
-    @$scope.snippet.model.data
-      center:
-        zoom: oldSnippetModelData.zoom
-        lng: +$el.val()
-        lat: oldSnippetModelData.lat
+  watchLng: ->
+    @$scope.$watch 'center.lng', (newVal, oldVal) =>
+      if newVal
+        oldSnippetModelData = @$scope.snippet.model.data('center')
+        @$scope.snippet.model.data
+          center:
+            zoom: oldSnippetModelData.zoom
+            lng: newVal
+            lat: oldSnippetModelData.lat
 
 
   watchZoom: ->
-    @$scope.$watch('center.zoom', (newVal, oldVal) =>
+    @$scope.$watch 'center.zoom', (newVal, oldVal) =>
       oldSnippetModelData = @$scope.snippet.model.data('center')
-      console.log oldSnippetModelData
       @$scope.snippet.model.data
         center:
           zoom: newVal
           lng: oldSnippetModelData.lng
           lat: oldSnippetModelData.lat
-    )
 
 
 
