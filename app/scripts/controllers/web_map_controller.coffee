@@ -12,10 +12,11 @@ class WebMapController
 
   initScope: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
-    @$scope.center =   # my home
-      lat: 47.388778
-      lng: 8.541971
-      zoom: 12
+    @$scope.snippetModel.data
+      center:
+        lat: 47.388778
+        lng: 8.541971
+        zoom: 12
 
 
   setupSnippetChangeListener: ->
