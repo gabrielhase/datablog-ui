@@ -1,7 +1,7 @@
 class Map
 
   template = """
-    <div ng-controller="MapController">
+    <div ng-controller="WebMapController">
       <leaflet center="center" geojson="geojson">
       </leaflet>
     </div>
