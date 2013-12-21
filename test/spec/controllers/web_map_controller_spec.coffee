@@ -1,0 +1,3 @@
+describe 'WebMapController', ->
+  beforeEach ->
+    # todo

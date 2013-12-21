@@ -1,5 +1,5 @@
-angular.module('ldEditor').controller 'MapController',
-class MapController
+angular.module('ldEditor').controller 'WebMapController',
+class WebMapController
 
   constructor: (@$scope, @mapMediatorService) ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
