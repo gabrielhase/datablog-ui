@@ -15,9 +15,7 @@ angular.module('ldEditor').service 'angularTemplateService', ($rootScope, $compi
       switch $(node).data('is')
         when 'leaflet-map'
           @loadTemplate($(node), $.proxy(@insertTemplateInstance, this,
-            snippetModel, $(node), new Map
-              id: snippetModel.id
-              mapMediatorService: mapMediatorService
+            snippetModel, $(node), new WebMap(snippetModel.id)
           ))
         when 'd3-choropleth'
           @loadTemplate($(node), $.proxy(@insertTemplateInstance, this,

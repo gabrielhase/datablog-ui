@@ -2,26 +2,36 @@ angular.module('ldEditor').controller 'WebMapController',
 class WebMapController
 
   constructor: (@$scope, @mapMediatorService) ->
+    @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
+    @snippetModel.data
+      lastPositioned: (new Date()).getTime()
+
+    @setupSnippetChangeListener()
+    @initScope()
+
+
+  initScope: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
-    @snippetModel = @$scope.snippetModel
     @$scope.center =   # my home
       lat: 47.388778
       lng: 8.541971
       zoom: 12
 
-    @setupListeners()
+
+  setupSnippetChangeListener: ->
+    doc.snippetDataChanged (snippet, changedProperties) =>
+      if snippet.id == @snippetModel.id
+        @changeMapAttrsData(changedProperties)
 
 
-  setupListeners: ->
-    @$scope.$watch('snippetModel.data("dataIdentifier")', (newVal) =>
-      @populateData()
-    )
-    @$scope.$watch('snippetModel.data("popupContentProperty")', (newVal) =>
-      @populateData()
-    )
+  changeMapAttrsData: (changedProperties) ->
+    for trackedProperty in webMapConfig.trackedProperties
+      if changedProperties.indexOf(trackedProperty) != -1
+        newVal = @snippetModel.data(trackedProperty)
+        if typeof(newVal) != 'undefined'
+          @$scope[trackedProperty] = newVal
 
 
-  populateData: ->
     newData = @snippetModel.data('geojson')
     if newData
       @$scope.geojson =
