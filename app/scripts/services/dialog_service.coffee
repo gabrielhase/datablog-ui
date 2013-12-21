@@ -40,5 +40,8 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       $modal.open(historyModalOptions)
 
 
-    openMapKickstartModal: ->
+    openMapKickstartModal: (data) ->
+      mapKickstartModalOptions.resolve =
+        data: ->
+          data
       $modal.open(mapKickstartModalOptions)
