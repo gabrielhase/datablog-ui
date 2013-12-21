@@ -1,4 +1,4 @@
-describe.only 'WebMapController', ->
+describe 'WebMapController', ->
   beforeEach ->
     @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel = doc.create('livingmaps.choropleth')

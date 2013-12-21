@@ -20,7 +20,7 @@ class WebMapFormController
         @ngProgress.complete()
       promise.success (response) =>
         if response.status == 'ok'
-          @dialogService.openMapKickstartModal()
+          @dialogService.openMapKickstartModal(data)
         else
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()
