@@ -12,15 +12,14 @@ htmlTemplates.webmapSidebarForm = """
         </select>
         <label>Enter a longitude</label>
         <input  style="width: 80%"
-                ng-class="{'invalid': webMapForm.input.$valid}"
-                ng-blur="setLng($event)"
                 type="number" min="-180" max="180"
-                ng-value="center.lng">
+                ng-model="center.lng"
+                required>
         <label>Enter a latitude</label>
         <input  style="width: 80%"
-                ng-blur="setLat($event)"
                 type="number" min="-90" max="90"
-                ng-value="center.lat">
+                ng-model="center.lat"
+                required>
       </fieldset>
     </form>
   </div>
