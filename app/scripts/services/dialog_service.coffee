@@ -13,6 +13,11 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       controller: 'HistoryModalController'
       windowClass: 'upfront-modal-full-width'
 
+    mapKickstartModalOptions =
+      template: htmlTemplates.mapKickstartModal
+      controller: 'MapKickstartModalController'
+      windowClass: 'upfront-modal-full-width'
+
     # Service
     # -------
 
@@ -33,3 +38,7 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
         snippet: ->
           snippet.model
       $modal.open(historyModalOptions)
+
+
+    openMapKickstartModal: ->
+      $modal.open(mapKickstartModalOptions)
