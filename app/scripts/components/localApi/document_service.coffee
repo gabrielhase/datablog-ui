@@ -97,6 +97,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
                "content":
                  "title": "The livingdocs.io manifesto"
               ,
+                @_getMockedSwissMap()
+              ,
                "identifier": "livingmaps.text"
                "content":
                  "text": "Shortly after its inception, the web was used by scientists at the major US universities to exchange and review papers and ideas. A web citizen was someone writing to the web and reading from the web."
