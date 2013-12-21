@@ -1,16 +1,32 @@
 angular.module('ldEditor').controller 'WebMapFormController',
 class WebMapFormController
 
-  constructor: (@$scope) ->
+  constructor: (@$scope, @ngProgress, @$http, @dialogService) ->
     @$scope.center = @$scope.snippet.model.data('center')
     @$scope.availableZoomLevels = [1..16]
+    @$scope.kickstartPins = $.proxy(@kickstartPins, this)
 
-    @watchZoom()
-    @watchLng()
-    @watchLat()
+    @watchCenter()
 
 
-  watchLat: ($event) ->
+  kickstartPins: (data, error) ->
+    if error.message
+      alert(error.message)
+    else
+      @ngProgress.start()
+      promise = @$http.post('http://geojsonlint.com/validate', data)
+      promise.error (error) =>
+        alert('Could not validate your json with geojsonlint.com. Do you have internet connection?')
+        @ngProgress.complete()
+      promise.success (response) =>
+        if response.status == 'ok'
+          @dialogService.openMapKickstartModal()
+        else
+          alert('This is not a geojson file. Sorry currently we only have support for geojson.')
+        @ngProgress.complete()
+
+
+  watchCenter: ($event) ->
     @$scope.$watch 'center.lat', (newVal, oldVal) =>
       if newVal
         oldSnippetModelData = @$scope.snippet.model.data('center')
@@ -20,8 +36,6 @@ class WebMapFormController
             lng: oldSnippetModelData.lng
             lat: newVal
 
-
-  watchLng: ->
     @$scope.$watch 'center.lng', (newVal, oldVal) =>
       if newVal
         oldSnippetModelData = @$scope.snippet.model.data('center')
@@ -31,8 +45,6 @@ class WebMapFormController
             lng: newVal
             lat: oldSnippetModelData.lat
 
-
-  watchZoom: ->
     @$scope.$watch 'center.zoom', (newVal, oldVal) =>
       oldSnippetModelData = @$scope.snippet.model.data('center')
       @$scope.snippet.model.data

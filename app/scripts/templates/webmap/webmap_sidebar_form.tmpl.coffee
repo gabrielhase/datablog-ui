@@ -21,6 +21,11 @@ htmlTemplates.webmapSidebarForm = """
                 ng-model="center.lat"
                 required>
       </fieldset>
+      <fieldset>
+        <legend>Kickstart</legend>
+        <label>Upload a geojson to kickstart your locations</label>
+        <input json-upload callback="kickstartPins(data, error)" type="file" name="data"></input>
+      </fieldset>
     </form>
   </div>
   <div>
