@@ -4,8 +4,18 @@ class MapKickstartModalController
   constructor: (@$scope, @$modalInstance, @data) ->
     @$scope.close = $.proxy(@close, this)
     @initMarkers()
-
+    @initMap() if @$scope.markers.length > 0
     @setupGlobalTextProperty()
+
+
+  initMap: ->
+    @$scope.center =
+      zoom: 8
+      lat: @$scope.markers[0].geojson.geometry.coordinates[1]
+      lng: @$scope.markers[0].geojson.geometry.coordinates[0]
+    @$scope.previewMarkers = _.map @$scope.markers, (marker) ->
+      lat: marker.geojson.geometry.coordinates[1]
+      lng: marker.geojson.geometry.coordinates[0]
 
 
   setupGlobalTextProperty: ->
