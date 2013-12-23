@@ -32,10 +32,13 @@ htmlTemplates.mapKickstartModal = """
             <td></td>
           </tr>
           <tr ng-repeat="marker in markers"
-              ng-class="{'success': marker.selected}">
+              ng-class="{'success': marker.selected}"
+              ng-mouseover="highlightMarker($index)"
+              ng-mouseleave="unHighlightMarker($index)"
+              ng-click="toggleMarker(marker, $index)">
             <td>{{$index}}</td>
             <td>
-              <input type="checkbox" ng-model="marker.selected">
+              <input type="checkbox" ng-checked="marker.selected">
             </td>
             <td>
               <select ng-model="marker.selectedTextProperty" ng-options="property for property in marker.textProperties">
