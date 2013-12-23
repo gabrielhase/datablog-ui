@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'MapKickstartModalController',
 class MapKickstartModalController
 
-  constructor: (@$scope, @$modalInstance, @data) ->
+  constructor: (@$scope, @$modalInstance, @data, @leafletData, @$timeout) ->
     @$scope.close = $.proxy(@close, this)
     @initMarkers()
     @initMap() if @$scope.markers.length > 0
@@ -16,6 +16,24 @@ class MapKickstartModalController
     @$scope.previewMarkers = _.map @$scope.markers, (marker) ->
       lat: marker.geojson.geometry.coordinates[1]
       lng: marker.geojson.geometry.coordinates[0]
+    @$timeout => # we need a timeout here to wait for the directive to be done
+      @leafletData.getMap().then (map) =>
+        map.fitBounds(@getBounds(@$scope.previewMarkers))
+    , 100
+
+
+  getBounds: (markers) ->
+    maxLat = @getMinOrMax(markers, 'max', 'lat')
+    maxLng = @getMinOrMax(markers, 'max', 'lng')
+    minLat = @getMinOrMax(markers, 'min', 'lat')
+    minLng = @getMinOrMax(markers, 'min', 'lng')
+    southWest = new L.LatLng(minLat, minLng)
+    northEast = new L.LatLng(maxLat, maxLng)
+    new L.LatLngBounds(southWest, northEast)
+
+
+  getMinOrMax: (markers, minOrMax, latOrLng) ->
+    _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
 
 
   setupGlobalTextProperty: ->
