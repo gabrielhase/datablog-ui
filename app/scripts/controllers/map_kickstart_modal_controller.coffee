@@ -1,11 +1,12 @@
 angular.module('ldEditor').controller 'MapKickstartModalController',
 class MapKickstartModalController
 
-  constructor: (@$scope, @$modalInstance, @data, @leafletData, @$timeout) ->
+  constructor: (@$scope, @$modalInstance, @data, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
     @initMarkers()
     @initMap() if @$scope.markers.length > 0
-    @setupGlobalTextProperty()
+    @setupMarkerEvents() if @$scope.markers.length > 0
+    @setupGlobalProperties()
 
 
   initMap: ->
@@ -16,10 +17,23 @@ class MapKickstartModalController
     @$scope.previewMarkers = _.map @$scope.markers, (marker) ->
       lat: marker.geojson.geometry.coordinates[1]
       lng: marker.geojson.geometry.coordinates[0]
+      riseOnHover: true
+      name: marker.uuid
     @$timeout => # we need a timeout here to wait for the directive to be done
       @leafletData.getMap().then (map) =>
         map.fitBounds(@getBounds(@$scope.previewMarkers))
     , 100
+
+
+  setupMarkerEvents: ->
+    @$scope.events =
+      markers:
+        enable: @leafletEvents.getAvailableMarkerEvents()
+
+    @$scope.$on 'leafletDirectiveMarker.click', (e, args) =>
+      # NOTE: The markerName is the index
+      @$scope.markers[+args.markerName].selected = !@$scope.markers[+args.markerName].selected
+      # TODO: maybe scroll to entry
 
 
   getBounds: (markers) ->
@@ -36,12 +50,17 @@ class MapKickstartModalController
     _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
 
 
-  setupGlobalTextProperty: ->
+  setupGlobalProperties: ->
     @$scope.globalValues = {}
     @$scope.globalValues.textProperty = ''
+    @$scope.globalValues.selected = true
     @$scope.$watch('globalValues.textProperty', (newVal, oldVal) =>
       for marker in @$scope.markers
         marker.selectedTextProperty = newVal
+    )
+    @$scope.$watch('globalValues.selected', (newVal, oldVal) =>
+      for marker in @$scope.markers
+        marker.selected = newVal
     )
 
 
@@ -52,6 +71,7 @@ class MapKickstartModalController
       if feature.type == 'Feature' && feature.geometry?.type == 'Point'
         @$scope.markers.push
           selected: true
+          uuid: livingmapsUid.guid()
           geojson: feature
           textProperties: @getTextProperties(feature)
         if @$scope.globalTextProperties.length == 0
