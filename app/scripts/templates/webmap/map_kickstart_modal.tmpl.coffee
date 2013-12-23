@@ -12,6 +12,7 @@ htmlTemplates.mapKickstartModal = """
       <table class="table table-bordered">
         <thead>
           <tr>
+            <td>#</td>
             <td><b>Inlcude this pin</b></td>
             <td>
               <b>Use as Popover Text</b>
@@ -20,7 +21,8 @@ htmlTemplates.mapKickstartModal = """
         </thead>
         <tbody>
           <tr>
-            <td>Global Properties:</td>
+            <td>Global:</td>
+            <td><input type="checkbox" ng-model="globalValues.selected"></td>
             <td>
               <select ng-model="globalValues.textProperty" ng-options="property for property in globalTextProperties">
                 <option value="">-- reset all --</option>
@@ -29,6 +31,7 @@ htmlTemplates.mapKickstartModal = """
           </tr>
           <tr ng-repeat="marker in markers"
               ng-class="{'success': marker.selected}">
+            <td>{{$index}}</td>
             <td>
               <input type="checkbox" ng-model="marker.selected">
             </td>
