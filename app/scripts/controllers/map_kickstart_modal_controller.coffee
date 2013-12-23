@@ -6,6 +6,8 @@ class MapKickstartModalController
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @$scope.toggleMarker = $.proxy(@toggleMarker, this)
+    @$scope.hasMarkers = $.proxy(@hasMarkers, this)
+    @$scope.kickstart = $.proxy(@kickstart, this)
 
     @initMarkers()
     @initMarkerStyles()
@@ -14,34 +16,49 @@ class MapKickstartModalController
     @setupGlobalProperties()
 
 
+  kickstart: ($event) ->
+    # todo
+
+  hasMarkers: ->
+    _.any @$scope.markers, (marker) -> marker.selected
+
+
   highlightMarker: (index) ->
-    unless @$scope.previewMarkers[index].icon == @greyMarker
-      @$scope.previewMarkers[index].icon = @redMarker
+    if @$scope.previewMarkers[index].icon == @removedMarker
+      @$scope.previewMarkers[index].icon = @addMarker
+    else
+      @$scope.previewMarkers[index].icon = @removeMarker
 
 
   unHighlightMarker: (index) ->
-    unless @$scope.previewMarkers[index].icon == @greyMarker
-      @$scope.previewMarkers[index].icon = @greenMarker
+    if @$scope.markers[index].selected
+      @$scope.previewMarkers[index].icon = @addedMarker
+    else
+      @$scope.previewMarkers[index].icon = @removedMarker
 
 
   toggleMarker: (marker, index) ->
     marker.selected = !marker.selected
     if marker.selected
-      @$scope.previewMarkers[index].icon = @greenMarker
+      @$scope.previewMarkers[index].icon = @addedMarker
     else
-      @$scope.previewMarkers[index].icon = @greyMarker
+      @$scope.previewMarkers[index].icon = @removedMarker
 
 
   initMarkerStyles: ->
-    @greenMarker = L.AwesomeMarkers.icon
+    @addedMarker = L.AwesomeMarkers.icon
       icon: 'fa-check'
+      markerColor: 'darkgreen'
+      prefix: 'fa'
+    @addMarker = L.AwesomeMarkers.icon
+      icon: 'fa-plus'
       markerColor: 'green'
       prefix: 'fa'
-    @redMarker = L.AwesomeMarkers.icon
+    @removeMarker = L.AwesomeMarkers.icon
       icon: 'fa-minus'
       markerColor: 'red'
       prefix: 'fa'
-    @greyMarker = L.AwesomeMarkers.icon
+    @removedMarker = L.AwesomeMarkers.icon
       icon: 'fa-times'
       markerColor: 'cadetblue'
       prefix: 'fa'
@@ -56,7 +73,7 @@ class MapKickstartModalController
       lat: marker.geojson.geometry.coordinates[1]
       lng: marker.geojson.geometry.coordinates[0]
       riseOnHover: true
-      icon: @greenMarker
+      icon: @addedMarker
     @$timeout => # we need a timeout here to wait for the directive to be done
       @leafletData.getMap().then (map) =>
         map.fitBounds(@getBounds(@$scope.previewMarkers))
