@@ -21,6 +21,7 @@ module.exports = function(config) {
       'app/vendor/angular/angular-mocks.js',
       'app/vendor/angular-ui-bootstrap/*.js',
       'app/vendor/ng-grid/ng-grid-2.0.7.debug.js',
+      'app/vendor/angular-truncate/truncate.js',
 
       // angular-slider
       'app/vendor/angular-slider/angular_slider.js',
