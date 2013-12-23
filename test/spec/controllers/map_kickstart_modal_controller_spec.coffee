@@ -1,4 +1,4 @@
-describe.only 'MapKickstartModalController', ->
+describe 'MapKickstartModalController', ->
   beforeEach ->
     @scope = retrieveService('$rootScope').$new()
     @modalInstance =
@@ -51,6 +51,7 @@ describe.only 'MapKickstartModalController', ->
       expect(@scope.previewMarkers[0]).to.eql
         lng: 8.51172926978877
         lat: 47.3530684006283
+        riseOnHover: true
 
 
   describe 'changes', ->

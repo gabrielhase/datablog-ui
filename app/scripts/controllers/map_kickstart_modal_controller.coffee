@@ -18,7 +18,6 @@ class MapKickstartModalController
       lat: marker.geojson.geometry.coordinates[1]
       lng: marker.geojson.geometry.coordinates[0]
       riseOnHover: true
-      name: marker.uuid
     @$timeout => # we need a timeout here to wait for the directive to be done
       @leafletData.getMap().then (map) =>
         map.fitBounds(@getBounds(@$scope.previewMarkers))
