@@ -3,10 +3,48 @@ class MapKickstartModalController
 
   constructor: (@$scope, @$modalInstance, @data, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
+    @$scope.highlightMarker = $.proxy(@highlightMarker, this)
+    @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
+    @$scope.toggleMarker = $.proxy(@toggleMarker, this)
+
     @initMarkers()
+    @initMarkerStyles()
     @initMap() if @$scope.markers.length > 0
     @setupMarkerEvents() if @$scope.markers.length > 0
     @setupGlobalProperties()
+
+
+  highlightMarker: (index) ->
+    unless @$scope.previewMarkers[index].icon == @greyMarker
+      @$scope.previewMarkers[index].icon = @redMarker
+
+
+  unHighlightMarker: (index) ->
+    unless @$scope.previewMarkers[index].icon == @greyMarker
+      @$scope.previewMarkers[index].icon = @greenMarker
+
+
+  toggleMarker: (marker, index) ->
+    marker.selected = !marker.selected
+    if marker.selected
+      @$scope.previewMarkers[index].icon = @greenMarker
+    else
+      @$scope.previewMarkers[index].icon = @greyMarker
+
+
+  initMarkerStyles: ->
+    @greenMarker = L.AwesomeMarkers.icon
+      icon: 'fa-check'
+      markerColor: 'green'
+      prefix: 'fa'
+    @redMarker = L.AwesomeMarkers.icon
+      icon: 'fa-minus'
+      markerColor: 'red'
+      prefix: 'fa'
+    @greyMarker = L.AwesomeMarkers.icon
+      icon: 'fa-times'
+      markerColor: 'cadetblue'
+      prefix: 'fa'
 
 
   initMap: ->
@@ -14,10 +52,11 @@ class MapKickstartModalController
       zoom: 8
       lat: @$scope.markers[0].geojson.geometry.coordinates[1]
       lng: @$scope.markers[0].geojson.geometry.coordinates[0]
-    @$scope.previewMarkers = _.map @$scope.markers, (marker) ->
+    @$scope.previewMarkers = _.map @$scope.markers, (marker) =>
       lat: marker.geojson.geometry.coordinates[1]
       lng: marker.geojson.geometry.coordinates[0]
       riseOnHover: true
+      icon: @greenMarker
     @$timeout => # we need a timeout here to wait for the directive to be done
       @leafletData.getMap().then (map) =>
         map.fitBounds(@getBounds(@$scope.previewMarkers))
@@ -31,7 +70,7 @@ class MapKickstartModalController
 
     @$scope.$on 'leafletDirectiveMarker.click', (e, args) =>
       # NOTE: The markerName is the index
-      @$scope.markers[+args.markerName].selected = !@$scope.markers[+args.markerName].selected
+      @toggleMarker(@$scope.markers[+args.markerName], +args.markerName)
       # TODO: maybe scroll to entry
 
 
@@ -58,8 +97,9 @@ class MapKickstartModalController
         marker.selectedTextProperty = newVal
     )
     @$scope.$watch('globalValues.selected', (newVal, oldVal) =>
-      for marker in @$scope.markers
-        marker.selected = newVal
+      for marker, idx in @$scope.markers
+        if marker.selected != newVal
+          @toggleMarker(marker, idx)
     )
 
 
