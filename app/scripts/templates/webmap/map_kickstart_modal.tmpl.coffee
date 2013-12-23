@@ -15,8 +15,9 @@ htmlTemplates.mapKickstartModal = """
             <td>#</td>
             <td><b>Inlcude this pin</b></td>
             <td>
-              <b>Use as Popover Text</b>
+              <b>Property for Popover Text</b>
             </td>
+            <td><b>Popover Text</b></td>
           </tr>
         </thead>
         <tbody>
@@ -28,6 +29,7 @@ htmlTemplates.mapKickstartModal = """
                 <option value="">-- reset all --</option>
               </select>
             </td>
+            <td></td>
           </tr>
           <tr ng-repeat="marker in markers"
               ng-class="{'success': marker.selected}">
@@ -40,6 +42,9 @@ htmlTemplates.mapKickstartModal = """
                 <option value="">-- no text initialization --</option>
               </select>
             </td>
+            <td>
+              {{marker.geojson.properties[marker.selectedTextProperty] | characters: 40}}
+            </td>
           </tr>
         </tbody>
 
@@ -47,7 +52,7 @@ htmlTemplates.mapKickstartModal = """
     </form>
   </div>
   <div style="width: 40%; position: absolute; right: 10px;">
-    <leaflet center="center" markers="previewMarkers"></leaflet>
+    <leaflet center="center" markers="previewMarkers" event-broadcast="events"></leaflet>
   </div>
 
 </div>
