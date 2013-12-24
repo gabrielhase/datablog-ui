@@ -2,14 +2,18 @@ angular.module('ldEditor').controller 'WebMapFormController',
 class WebMapFormController
 
   constructor: (@$scope, @ngProgress, @$http, @dialogService) ->
-    @$scope.center = @$scope.snippet.model.data('center')
+    @$scope.center = {}
+    $.extend(true, @$scope.center, @$scope.snippet.model.data('center'))
+    @$scope.markers = []
+    $.extend(true, @$scope.markers, @$scope.snippet.model.data('markers'))
     @$scope.availableZoomLevels = [1..16]
-    @$scope.kickstartPins = $.proxy(@kickstartPins, this)
+    @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
 
     @watchCenter()
+    @watchMarkers()
 
 
-  kickstartPins: (data, error) ->
+  kickstartMarkers: (data, error) ->
     if error.message
       alert(error.message)
     else
@@ -22,16 +26,15 @@ class WebMapFormController
         if response.status == 'ok'
           @dialogService.openMapKickstartModal(data).result.then (result) =>
             if result.action == 'kickstart'
-              @$scope.snippet.model.data
-                markers: result.markers
+              @$scope.markers = result.markers
         else
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()
 
 
-  watchCenter: ($event) ->
+  watchCenter: () ->
     @$scope.$watch 'center.lat', (newVal, oldVal) =>
-      if newVal
+      if newVal && $.isNumeric(newVal)
         oldSnippetModelData = @$scope.snippet.model.data('center')
         @$scope.snippet.model.data
           center:
@@ -40,7 +43,7 @@ class WebMapFormController
             lat: newVal
 
     @$scope.$watch 'center.lng', (newVal, oldVal) =>
-      if newVal
+      if newVal && $.isNumeric(newVal)
         oldSnippetModelData = @$scope.snippet.model.data('center')
         @$scope.snippet.model.data
           center:
@@ -49,13 +52,30 @@ class WebMapFormController
             lat: oldSnippetModelData.lat
 
     @$scope.$watch 'center.zoom', (newVal, oldVal) =>
-      oldSnippetModelData = @$scope.snippet.model.data('center')
-      @$scope.snippet.model.data
-        center:
-          zoom: newVal
-          lng: oldSnippetModelData.lng
-          lat: oldSnippetModelData.lat
+      if newVal && $.isNumeric(newVal)
+        oldSnippetModelData = @$scope.snippet.model.data('center')
+        @$scope.snippet.model.data
+          center:
+            zoom: newVal
+            lng: oldSnippetModelData.lng
+            lat: oldSnippetModelData.lat
 
+
+  # NOTE: the angular leaflet directive does not allow input of invalid
+  # markers thus we need to work with deep copies
+  watchMarkers: ->
+    @$scope.$watch 'markers', (newVal, oldVal) =>
+      if newVal && @validateMarkers(newVal)
+        newMarkers = []
+        $.extend(true, newMarkers, newVal)
+        @$scope.snippet.model.data
+          markers: newMarkers
+    , true
+
+
+  validateMarkers: (markers) ->
+    _.every markers, (marker) ->
+      $.isNumeric(marker.lat) && $.isNumeric(marker.lng)
 
 
     # @$scope.sidebarBecameVisible.add =>
