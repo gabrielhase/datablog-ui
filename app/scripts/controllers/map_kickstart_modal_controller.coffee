@@ -17,7 +17,14 @@ class MapKickstartModalController
 
 
   kickstart: ($event) ->
-    # todo
+    @$modalInstance.close
+      action: 'kickstart'
+      markers: _.map @$scope.markers, (marker) ->
+        lat: marker.geojson.geometry.coordinates[1]
+        lng: marker.geojson.geometry.coordinates[0]
+        message: marker.geojson.properties[marker.selectedTextProperty]
+        uuid: marker.uuid
+
 
   hasMarkers: ->
     _.any @$scope.markers, (marker) -> marker.selected

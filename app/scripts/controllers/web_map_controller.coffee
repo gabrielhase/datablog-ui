@@ -17,6 +17,16 @@ class WebMapController
         lat: 47.388778
         lng: 8.541971
         zoom: 12
+    # NOTE: we need to set a dummy pin at the north pole because otherwise
+    # the angular directive wouldn't watch for changes (line 623)
+    @$scope.snippetModel.data
+      markers: [
+        {
+          lat: 90
+          lng: 0
+          uuid: ''
+        }
+      ]
 
 
   setupSnippetChangeListener: ->
@@ -31,14 +41,6 @@ class WebMapController
         newVal = @snippetModel.data(trackedProperty)
         if typeof(newVal) != 'undefined'
           @$scope[trackedProperty] = newVal
-
-
-    newData = @snippetModel.data('geojson')
-    if newData
-      @$scope.geojson =
-        data: newData
-        popupContentProperty: @snippetModel.data('popupContentProperty')
-
 
   # setupGeojsonListeners: (scope)->
   # scope.$on "leafletDirectiveMap.geojsonClick", (ev, featureSelected, leafletEvent) ->
