@@ -26,6 +26,19 @@ htmlTemplates.webmapSidebarForm = """
         <label>Upload a geojson to kickstart your locations</label>
         <input json-upload callback="kickstartPins(data, error)" type="file" name="data"></input>
       </fieldset>
+      <fieldset>
+        <legend>Markers</legend>
+        <h4>New Marker</h4>
+
+        <div sidebar-region caption="All Markers">
+          <ul class="upfront-list">
+            <li ng-repeat="marker in snippet.model.data('markers')">
+              {{marker.lat}}, {{marker.lng}}
+            </li>
+          </ul>
+        </div>
+      </fieldset>
+
     </form>
   </div>
   <div>
