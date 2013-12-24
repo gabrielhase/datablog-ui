@@ -1,0 +1,41 @@
+/* SIDEBAR REGION */
+.upfront-sidebar-region-header {
+  position: relative;
+  cursor: pointer;
+  padding: 7px 15px;
+  font-weight: 500;
+  height: 20px;
+  line-height: 1.1em;
+  background: #F0F0F0;
+  border: 1px solid #DDD;
+  border-width: 1px 0;
+
+  i {
+    margin-right: 10px;
+  }
+}
+
+.upfront-sidebar-region-closed {
+  .upfront-sidebar-region-header {
+    border-bottom: 0;
+  }
+
+  &:last-child .upfront-sidebar-region-header {
+    border-bottom: 1px solid #DDD;
+  }
+}
+
+.upfront-sidebar-region-header-caption {
+  position: absolute;
+  top: 7px;
+  left: 35px;
+  right: 40px;
+}
+
+.upfront-sidebar-region-header-icon {
+  float: right;
+}
+
+.upfront-sidebar-region-inner {
+  padding: 10px 15px;
+}
