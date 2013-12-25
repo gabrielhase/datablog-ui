@@ -7,10 +7,34 @@ class WebMapFormController
     @$scope.markers = []
     $.extend(true, @$scope.markers, @$scope.snippet.model.data('markers'))
     @$scope.availableZoomLevels = [1..16]
-    @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
 
+    @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
+    @$scope.deleteMarker = $.proxy(@deleteMarker, this)
+    @$scope.highlightMarker = $.proxy(@highlightMarker, this)
+    @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
+
+    @initMarkerStyles()
     @watchCenter()
     @watchMarkers()
+
+
+  initMarkerStyles: ->
+    @hoverMarker = L.AwesomeMarkers.icon
+      icon: 'fa-cogs'
+      markerColor: 'green'
+      prefix: 'fa'
+
+
+  highlightMarker: (index) ->
+    @$scope.markers[index].icon = @hoverMarker
+
+
+  unHighlightMarker: (index) ->
+    @$scope.markers[index].icon = undefined
+
+
+  deleteMarker: (index) ->
+    @$scope.markers.splice(index, 1)
 
 
   kickstartMarkers: (data, error) ->

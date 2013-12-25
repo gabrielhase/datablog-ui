@@ -17,7 +17,7 @@ htmlTemplates.webmapSidebarForm = """
                 required>
         <label>Enter a latitude</label>
         <input  style="width: 80%"
-                type="number" min="-90" max="90"
+                type="number" min="-90" max="90"3
                 ng-model="center.lat"
                 required>
       </fieldset>
@@ -32,13 +32,18 @@ htmlTemplates.webmapSidebarForm = """
 
         <div sidebar-region caption="All Markers">
           <ul class="upfront-list">
-            <li ng-repeat="marker in markers">
+            <li ng-repeat="marker in markers"
+                ng-mouseover="highlightMarker($index)"
+                ng-mouseleave="unHighlightMarker($index)">
+              <a  href=""
+                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"
+                  ng-click="deleteMarker($index)">X</a>
               <label>Location (lng, lat)</label>
-              <input  style="float: left; width: 40%"
+              <input class="half-width left"
                 type="number" min="-180" max="180"
                 ng-model="marker.lng"
                 required>
-              <input style="float: right; width: 40%"
+              <input class="half-width left"
                 type="number" min="-90" max="90"
                 ng-model="marker.lat"
                 required>
