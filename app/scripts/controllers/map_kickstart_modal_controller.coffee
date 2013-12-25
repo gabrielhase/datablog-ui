@@ -16,20 +16,23 @@ class MapKickstartModalController
     @setupGlobalProperties()
 
 
-  kickstart: ($event) ->
-    selectedMarkers = _.filter @$scope.markers, (marker) -> marker.selected
-    @$modalInstance.close
-      action: 'kickstart'
-      markers: _.map selectedMarkers, (marker) ->
-        lat: marker.geojson.geometry.coordinates[1]
-        lng: marker.geojson.geometry.coordinates[0]
-        message: marker.geojson.properties[marker.selectedTextProperty]
-        uuid: marker.uuid
-    $event.stopPropagation() # so sidebar selection is not lost
-
-
-  hasMarkers: ->
-    _.any @$scope.markers, (marker) -> marker.selected
+  initMarkers: ->
+    @$scope.markers = []
+    @$scope.globalTextProperties = []
+    for feature in @data.features
+      if feature.type == 'Feature' && feature.geometry?.type == 'Point'
+        @$scope.markers.push
+          selected: true
+          uuid: livingmapsUid.guid()
+          geojson: feature
+          textProperties: @getTextProperties(feature)
+        if @$scope.globalTextProperties.length == 0
+          @$scope.globalTextProperties = @getTextProperties(feature)
+        else
+          featureTextProperties = @getTextProperties(feature)
+          for property, idx in @$scope.globalTextProperties
+            if featureTextProperties.indexOf(property) == -1
+              @$scope.globalTextProperties.splice(idx, 1)
 
 
   highlightMarker: (index) ->
@@ -99,21 +102,6 @@ class MapKickstartModalController
       @toggleMarker(@$scope.markers[+args.markerName], +args.markerName)
       # TODO: maybe scroll to entry
 
-
-  getBounds: (markers) ->
-    maxLat = @getMinOrMax(markers, 'max', 'lat')
-    maxLng = @getMinOrMax(markers, 'max', 'lng')
-    minLat = @getMinOrMax(markers, 'min', 'lat')
-    minLng = @getMinOrMax(markers, 'min', 'lng')
-    southWest = new L.LatLng(minLat, minLng)
-    northEast = new L.LatLng(maxLat, maxLng)
-    new L.LatLngBounds(southWest, northEast)
-
-
-  getMinOrMax: (markers, minOrMax, latOrLng) ->
-    _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
-
-
   setupGlobalProperties: ->
     @$scope.globalValues = {}
     @$scope.globalValues.textProperty = ''
@@ -129,27 +117,21 @@ class MapKickstartModalController
     )
 
 
-  initMarkers: ->
-    @$scope.markers = []
-    @$scope.globalTextProperties = []
-    for feature in @data.features
-      if feature.type == 'Feature' && feature.geometry?.type == 'Point'
-        @$scope.markers.push
-          selected: true
-          uuid: livingmapsUid.guid()
-          geojson: feature
-          textProperties: @getTextProperties(feature)
-        if @$scope.globalTextProperties.length == 0
-          @$scope.globalTextProperties = @getTextProperties(feature)
-        else
-          featureTextProperties = @getTextProperties(feature)
-          for property, idx in @$scope.globalTextProperties
-            if featureTextProperties.indexOf(property) == -1
-              @$scope.globalTextProperties.splice(idx, 1)
 
+  # ########################
+  # Modal Actions
+  # ########################
 
-  getTextProperties: (feature) ->
-    _.keys(feature.properties)
+  kickstart: (event) ->
+    selectedMarkers = _.filter @$scope.markers, (marker) -> marker.selected
+    @$modalInstance.close
+      action: 'kickstart'
+      markers: _.map selectedMarkers, (marker) ->
+        lat: marker.geojson.geometry.coordinates[1]
+        lng: marker.geojson.geometry.coordinates[0]
+        message: marker.geojson.properties[marker.selectedTextProperty]
+        uuid: marker.uuid
+    event.stopPropagation() # so sidebar selection is not lost
 
 
   close: (event) ->
@@ -157,4 +139,27 @@ class MapKickstartModalController
     event.stopPropagation() # so sidebar selection is not lost
 
 
+  # ########################
+  # Utils
+  # ########################
 
+  hasMarkers: ->
+    _.any @$scope.markers, (marker) -> marker.selected
+
+
+  getBounds: (markers) ->
+    maxLat = @getMinOrMax(markers, 'max', 'lat')
+    maxLng = @getMinOrMax(markers, 'max', 'lng')
+    minLat = @getMinOrMax(markers, 'min', 'lat')
+    minLng = @getMinOrMax(markers, 'min', 'lng')
+    southWest = new L.LatLng(minLat, minLng)
+    northEast = new L.LatLng(maxLat, maxLng)
+    new L.LatLngBounds(southWest, northEast)
+
+
+  getMinOrMax: (markers, minOrMax, latOrLng) ->
+    _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
+
+
+  getTextProperties: (feature) ->
+    _.keys(feature.properties)
