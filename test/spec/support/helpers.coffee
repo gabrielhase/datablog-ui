@@ -5,6 +5,9 @@ expect = chai.expect
 
 mockLeaflet = ->
   return {
+    AwesomeMarkers:
+      icon: ->
+        'default'
     Icon:
       extend: ->
         true
