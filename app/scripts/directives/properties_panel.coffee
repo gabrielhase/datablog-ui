@@ -11,6 +11,7 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
     require: '^sidebar'
     link: (scope, element, attrs, SidebarController) ->
       scope.hideSidebar = => SidebarController.hideSidebar('propertiesPanel')
+      scope.sidebarBecameVisible = SidebarController.sidebarBecameVisible
 
       # changes in the selected snippet trigger a re-render of the properties panel
       scope.$watch('snippet', (newVal, oldVal) ->
@@ -103,9 +104,18 @@ angular.module('ldEditor').directive 'propertiesPanel', ($compile, dataService) 
         )
 
 
+      renderWebMapForm = ->
+        insertScope = scope.$new()
+        formElementScopes.push(insertScope)
+        $compile(htmlTemplates.webmapSidebarForm)(insertScope, (form, childScope) ->
+          childScope.htmlElement = form
+          $(".visual-form-placeholder").append(form)
+        )
+
+
       renderData = (data, snippet) ->
         cleanForm()
         switch snippet.model.identifier
           when 'livingmaps.choropleth' then renderChoroplethForm()
-          when 'livingmaps.map' then renderDataSelect('Mock Data', dataService.options(), snippet)
+          when 'livingmaps.map' then renderWebMapForm() #renderDataSelect('Mock Data', dataService.options(), snippet)
   }
