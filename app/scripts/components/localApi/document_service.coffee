@@ -83,7 +83,10 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
             "identifier": "livingmaps.column"
             "containers":
               "default": [
-                @_getMockedSwissMap()
+                #@_getMockedSwissMap()
+                "identifier": "livingmaps.map"
+                "content":
+                  "title": "Holy crap this is an interactive map"
               ]
           },
           {
@@ -93,6 +96,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
                "identifier": "livingmaps.title"
                "content":
                  "title": "The livingdocs.io manifesto"
+              ,
+                @_getMockedSwissMap()
               ,
                "identifier": "livingmaps.text"
                "content":
@@ -116,10 +121,6 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
              ],
              "sidebar": [
               "identifier": "livingmaps.image"
-             ,
-              "identifier": "livingmaps.map"
-              "content":
-                "title": "Holy crap this is an interactive map"
              ]
           }
 

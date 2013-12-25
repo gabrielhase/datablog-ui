@@ -41,6 +41,9 @@
   };
 
   width = function(element) {
+    console.log(element[0].offsetWidth);
+    console.log($(element[0]).width());
+    console.log(element[0]);
     return element[0].offsetWidth;
   };
 
@@ -96,6 +99,7 @@
       },
       template: '<span class="bar"></span><span class="bar selection"></span><span class="pointer"></span><span class="pointer"></span><span class="bubble selection"></span><span ng-bind-html-unsafe="translate({value: floor})" class="bubble limit"></span><span ng-bind-html-unsafe="translate({value: ceiling})" class="bubble limit"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>',
       compile: function(element, attributes) {
+        console.log("COMPILE");
         var ceilBub, cmbBub, e, flrBub, fullBar, highBub, lowBub, maxPtr, minPtr, range, refHigh, refLow, selBar, selBub, watchables, _i, _len, _ref, _ref1;
 
         if (attributes.translate) {
@@ -105,7 +109,9 @@
         _ref = (function() {
           var _i, _len, _ref, _results;
 
-          _ref = element.children();
+          console.log(element);
+          _ref = $(element).children();
+          console.log(_ref);
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             e = _ref[_i];
@@ -157,7 +163,7 @@
               }
               scope.diff = roundStep(scope[refHigh] - scope[refLow], parseInt(scope.precision), parseFloat(scope.step), parseFloat(scope.floor));
               pointerHalfWidth = halfWidth(minPtr);
-              barWidth = width(fullBar);
+              barWidth = width(fullBar);//(element.find('.bar'));
               minOffset = 0;
               maxOffset = barWidth - width(minPtr);
               minValue = parseFloat(attributes.floor);
@@ -320,6 +326,13 @@
               w = watchables[_j];
               scope.$watch(w, updateDOM);
             }
+
+            scope.$on('modalOpened', function(){
+              console.log("in angular slider redraw");
+              //$timeout(updateDOM,500);
+              updateDOM();
+            });
+
             return window.addEventListener("resize", updateDOM);
           }
         };

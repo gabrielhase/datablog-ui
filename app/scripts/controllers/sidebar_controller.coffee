@@ -9,6 +9,7 @@ class SidebarController
     @$scope.loadProperties = => @registerActivePanel('propertiesPanel')
     # API for panels
     @hideSidebar = $.proxy(@hide, this)
+    @sidebarBecameVisible = $.Callbacks()
 
 
   registerActivePanel: (panel) ->
@@ -19,11 +20,13 @@ class SidebarController
       else
         @uiStateService.set 'sidebar',
           foldedOut: true
+        @sidebarBecameVisible.fire()
     else
       @uiStateService.blurCurrentSnippet()
       @uiStateService.set(panel, {})
       @uiStateService.set 'sidebar',
         foldedOut: true
+      @sidebarBecameVisible.fire()
 
 
   hide: (activePanel) ->
