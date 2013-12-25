@@ -9,16 +9,28 @@ class WebMapFormController
     @$scope.markers = []
     $.extend(true, @$scope.markers, @$scope.snippet.data('markers'))
     @$scope.availableZoomLevels = [1..16]
+    @$scope.newMarker = {}
 
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
     @$scope.deleteMarker = $.proxy(@deleteMarker, this)
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
+    @$scope.addMarker = $.proxy(@addMarker, this)
 
     @initMarkerStyles()
     @watchCenter()
     @watchMarkers()
 
+
+  addMarker: ->
+    if !@validateMarkers([@$scope.newMarker])
+      alert('Please fill out the required fields')
+    else
+      newValidMarker = {}
+      $.extend(true, newValidMarker, @$scope.newMarker)
+      newValidMarker.uuid = livingmapsUid.guid()
+      @$scope.markers.unshift(newValidMarker)
+      @$scope.newMarker = {}
 
   initMarkerStyles: ->
     @hoverMarker = L.AwesomeMarkers.icon

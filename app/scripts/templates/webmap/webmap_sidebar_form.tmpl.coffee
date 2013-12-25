@@ -28,8 +28,25 @@ htmlTemplates.webmapSidebarForm = """
       </fieldset>
       <fieldset>
         <legend>Markers</legend>
-        <h4>New Marker</h4>
-
+        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">
+          <label>Location (lng, lat)</label>
+            <input class="half-width left"
+              type="number" min="-180" max="180"
+              ng-model="newMarker.lng"
+              required>
+            <input class="half-width left"
+              type="number" min="-90" max="90"
+              ng-model="newMarker.lat"
+              required>
+            <label>Popover Text</label>
+            <input style="width: 80%"
+                ng-model="newMarker.message">
+            <a  href=""
+                ng-click="addMarker()"
+                class="upfront-btn upfront-btn-success">
+              Add Marker
+            </a>
+        </div>
         <div sidebar-region caption="All Markers">
           <ul class="upfront-list">
             <li ng-repeat="marker in markers"
