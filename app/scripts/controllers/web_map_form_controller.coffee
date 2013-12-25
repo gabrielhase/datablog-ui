@@ -4,6 +4,8 @@ class WebMapFormController
   constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
     @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
 
+    # NOTE: since the angular leaflet directive references the literals we need
+    # to make sure to update all references so we need to work with deep copies
     @$scope.center = {}
     $.extend(true, @$scope.center, @$scope.snippet.data('center'))
     @$scope.markers = []
@@ -11,26 +13,20 @@ class WebMapFormController
     @$scope.availableZoomLevels = [1..16]
     @$scope.newMarker = {}
 
-    @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
+    @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.deleteMarker = $.proxy(@deleteMarker, this)
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
-    @$scope.addMarker = $.proxy(@addMarker, this)
+    @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
 
     @initMarkerStyles()
     @watchCenter()
     @watchMarkers()
 
 
-  addMarker: ->
-    if !@validateMarkers([@$scope.newMarker])
-      alert('Please fill out the required fields')
-    else
-      newValidMarker = {}
-      $.extend(true, newValidMarker, @$scope.newMarker)
-      newValidMarker.uuid = livingmapsUid.guid()
-      @$scope.markers.unshift(newValidMarker)
-      @$scope.newMarker = {}
+  # ########################
+  # Marker Handling
+  # ########################
 
   initMarkerStyles: ->
     @hoverMarker = L.AwesomeMarkers.icon
@@ -47,9 +43,24 @@ class WebMapFormController
     @$scope.markers[index].icon = undefined
 
 
+  addMarker: ->
+    if !@validateMarkers([@$scope.newMarker])
+      alert('Please fill out the required fields')
+    else
+      newValidMarker = {}
+      $.extend(true, newValidMarker, @$scope.newMarker)
+      newValidMarker.uuid = livingmapsUid.guid()
+      @$scope.markers.unshift(newValidMarker)
+      @$scope.newMarker = {}
+
+
   deleteMarker: (index) ->
     @$scope.markers.splice(index, 1)
 
+
+  # ########################
+  # Geojson Kickstart
+  # ########################
 
   kickstartMarkers: (data, error) ->
     if error.message
@@ -69,6 +80,10 @@ class WebMapFormController
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()
 
+
+  # ########################
+  # Deep Copy Watchers
+  # ########################
 
   watchCenter: () ->
     @$scope.$watch 'center.lat', (newVal, oldVal) =>
