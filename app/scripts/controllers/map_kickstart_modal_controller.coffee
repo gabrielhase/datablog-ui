@@ -17,13 +17,15 @@ class MapKickstartModalController
 
 
   kickstart: ($event) ->
+    selectedMarkers = _.filter @$scope.markers, (marker) -> marker.selected
     @$modalInstance.close
       action: 'kickstart'
-      markers: _.map @$scope.markers, (marker) ->
+      markers: _.map selectedMarkers, (marker) ->
         lat: marker.geojson.geometry.coordinates[1]
         lng: marker.geojson.geometry.coordinates[0]
         message: marker.geojson.properties[marker.selectedTextProperty]
         uuid: marker.uuid
+    $event.stopPropagation() # so sidebar selection is not lost
 
 
   hasMarkers: ->
