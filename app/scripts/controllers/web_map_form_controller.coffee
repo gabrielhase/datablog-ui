@@ -1,11 +1,13 @@
 angular.module('ldEditor').controller 'WebMapFormController',
 class WebMapFormController
 
-  constructor: (@$scope, @ngProgress, @$http, @dialogService) ->
+  constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
+    @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
+
     @$scope.center = {}
-    $.extend(true, @$scope.center, @$scope.snippet.model.data('center'))
+    $.extend(true, @$scope.center, @$scope.snippet.data('center'))
     @$scope.markers = []
-    $.extend(true, @$scope.markers, @$scope.snippet.model.data('markers'))
+    $.extend(true, @$scope.markers, @$scope.snippet.data('markers'))
     @$scope.availableZoomLevels = [1..16]
 
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
@@ -59,8 +61,8 @@ class WebMapFormController
   watchCenter: () ->
     @$scope.$watch 'center.lat', (newVal, oldVal) =>
       if newVal && $.isNumeric(newVal)
-        oldSnippetModelData = @$scope.snippet.model.data('center')
-        @$scope.snippet.model.data
+        oldSnippetModelData = @$scope.snippet.data('center')
+        @$scope.snippet.data
           center:
             zoom: oldSnippetModelData.zoom
             lng: oldSnippetModelData.lng
@@ -68,8 +70,8 @@ class WebMapFormController
 
     @$scope.$watch 'center.lng', (newVal, oldVal) =>
       if newVal && $.isNumeric(newVal)
-        oldSnippetModelData = @$scope.snippet.model.data('center')
-        @$scope.snippet.model.data
+        oldSnippetModelData = @$scope.snippet.data('center')
+        @$scope.snippet.data
           center:
             zoom: oldSnippetModelData.zoom
             lng: newVal
@@ -77,8 +79,8 @@ class WebMapFormController
 
     @$scope.$watch 'center.zoom', (newVal, oldVal) =>
       if newVal && $.isNumeric(newVal)
-        oldSnippetModelData = @$scope.snippet.model.data('center')
-        @$scope.snippet.model.data
+        oldSnippetModelData = @$scope.snippet.data('center')
+        @$scope.snippet.data
           center:
             zoom: newVal
             lng: oldSnippetModelData.lng
@@ -92,7 +94,7 @@ class WebMapFormController
       if newVal && @validateMarkers(newVal)
         newMarkers = []
         $.extend(true, newMarkers, newVal)
-        @$scope.snippet.model.data
+        @$scope.snippet.data
           markers: newMarkers
     , true
 
