@@ -2076,10 +2076,12 @@ angular.module("leaflet-directive").factory('leafletMarkerHelpers', function ($r
                                         isCluster = true;
                                     }
                                 }
-                                marker.setLatLng([data.lat, data.lng]);
-                                if (isCluster) {
+                                try {
+                                  marker.setLatLng([data.lat, data.lng]);
+                                  if (isCluster) {
                                     layers.overlays[data.layer].addLayer(marker);
-                                }
+                                  }
+                                } catch (e) {}
                             }
                         }
                     }
