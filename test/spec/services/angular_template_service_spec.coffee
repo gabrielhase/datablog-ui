@@ -130,7 +130,7 @@ describe 'angularTemplateService', ->
       service.insertTemplateInstance(@snippetModel, @$directiveRoot, new WebMap(@snippetModel.id))
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="WebMapController" class="ng-scope">
-          <div class="angular-leaflet-map ng-isolate-scope" center="center" geojson="geojson"></div>
+          <div class="angular-leaflet-map ng-isolate-scope" center="center" markers="markers"></div>
         </div>
       """)
 
