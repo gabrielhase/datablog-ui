@@ -13,10 +13,14 @@ htmlTemplates.mapEditModal = """
   </leaflet>
 
   <div popover ng-if="editState.markerSelected" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">
-    <form class="upfront-form">
-      <h3>Properties for selected Marker</h3>
+    <form class="upfront-form upfront-control">
+      <h3>Selected Marker</h3>
       <label>Popover Text (optional)</label>
-      <input class="full-width" ng-model="editState.markerSelected.message">
+      <input style="width: 90%" ng-model="editState.markerSelected.message">
+      <a href="" class="upfront-btn upfront-btn-danger"
+          ng-click="removeMarker(editState.markerSelected)">
+          Delete Marker
+      </a>
     </form>
   </div>
 
