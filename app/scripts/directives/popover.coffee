@@ -45,6 +45,10 @@ angular.module('ldEditor').directive 'popover', ($timeout) ->
               scope.left = left
               scope.top = box.bottom + arrowHeight
               scope.arrowCss = 'arrow-top'
+            when 'no-arrow'
+              scope.left = left
+              scope.top = box.top - $container.outerHeight()
+              scope.arrowCss = 'no-arrow'
             else
               scope.left = left
               scope.top = box.top - $container.outerHeight() - arrowHeight
