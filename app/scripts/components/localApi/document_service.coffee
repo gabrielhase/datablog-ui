@@ -101,6 +101,20 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
             "identifier": "livingmaps.column"
             "containers":
               "default": [
+                #@_getMockedSwissMap()
+                "identifier": "livingmaps.map"
+                "content":
+                  "title": "Interactive map example"
+              ]
+          },
+          {
+           "identifier": "livingmaps.mainAndSidebar"
+           "containers":
+             "main": [
+               "identifier": "livingmaps.title"
+               "content":
+                 "title": "The livingdocs.io manifesto"
+              ,
                 @_getMockedSwissMap()
               ]
           }
