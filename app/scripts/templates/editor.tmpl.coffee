@@ -18,13 +18,13 @@ htmlTemplates.editor = """
     </div>
 
     <!-- Selected Text Options -->
-    <div popover ng-if="state.isActive('flowtextPopover')" arrow-distance="14" open-condition="state.flowtextPopover" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">
+    <div popover ng-if="state.isActive('flowtextPopover')" arrow-distance="14" open-condition="state.flowtextPopover.active" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">
       <ng-include src="'flowtext-options.html'">
       </ng-include>
     </div>
 
     <!-- Selected Image Popover -->
-    <div popover ng-if="state.isActive('imagePopover')" arrow-distance="14" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">
+    <div popover ng-if="state.isActive('imagePopover')" arrow-distance="14" open-condition="state.imagePopover.active" bounding-box="{{ state.imagePopover.boundingBox }}">
       <ng-include src="'image-input.html'"></ng-include>
     </div>
 
