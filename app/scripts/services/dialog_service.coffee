@@ -52,5 +52,8 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       $modal.open(mapKickstartModalOptions)
 
 
-    openMapEditModal: (data) ->
+    openMapEditModal: (snippet) ->
+      mapEditModalOptions.resolve =
+        snippet: ->
+          snippet.model
       $modal.open(mapEditModalOptions)
