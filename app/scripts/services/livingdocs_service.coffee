@@ -29,6 +29,8 @@ angular.module('ldEditor').factory 'livingdocsService',
         snippetInlineOptionsService.drawEditButton(snippet)
         if snippet.template.identifier == 'livingmaps.choropleth'
           snippetInlineOptionsService.drawHistoryButton(snippet)
+        if snippet.template.identifier == 'livingmaps.map'
+          snippetInlineOptionsService.drawMapButton(snippet)
         uiStateService.set 'propertiesPanel',
           snippet: snippet
 
@@ -36,6 +38,8 @@ angular.module('ldEditor').factory 'livingdocsService',
         snippetInlineOptionsService.removeEditButton()
         if snippet.template.identifier == 'livingmaps.choropleth'
           snippetInlineOptionsService.removeHistoryButton()
+        if snippet.template.identifier == 'livingmaps.map'
+          snippetInlineOptionsService.removeMapButton()
         currentSelection = undefined # set the current selection in the scope
         uiStateService.deactivatePopovers()
         uiStateService.set 'propertiesPanel',
