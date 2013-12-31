@@ -10,6 +10,17 @@ class MapEditModalController
 
     @addGeosearch()
     @setupMapEvents()
+  #   #@setupMarkerPropertiesBB()
+
+
+  # setupMarkerPropertiesBB: ->
+  #   @$timeout =>
+  #     @$scope.editState.markerPropertiesBB =
+  #       top: $('.upfront-modal-body').offset().top + $('.upfront-modal-body').height() / 2
+  #       bottom: $('.upfront-modal-body').offset().top + $('.upfront-modal-body').height() / 2
+  #       left: $('.upfront-modal-body').offset().left + $('.upfront-modal-body').width() / 2
+  #       width: $('.upfront-modal-body').width() / 2
+  #   , 100
 
 
   addGeosearch: ->
@@ -29,35 +40,60 @@ class MapEditModalController
       markers:
         enable: ['click']
 
-    @$scope.$on 'leafletDirectiveMap.click', (e, args) =>
-      @$scope.editState.addMarker = true
-      @$scope.editState.boundingBox =
-        top: args.leafletEvent.originalEvent.clientY - 7
-        bottom: args.leafletEvent.originalEvent.clientY
-        left: args.leafletEvent.originalEvent.clientX - 7
-        width: 0
-      @$scope.editState.geolocation =
-        lat: args.leafletEvent.latlng.lat
-        lng: args.leafletEvent.latlng.lng
+    @$scope.$on 'leafletDirectiveMap.click', $.proxy(@mapClick, this)
+    @$scope.$on 'leafletDirectiveMarker.click', $.proxy(@markerClick, this)
 
-    @$scope.$on 'leafletDirectiveMarker.click', (e, args) =>
-      @disableAddMarkerState()
+
+  mapClick: (e, args) ->
+    @disableMarkerSelectedState()
+    @$scope.editState.addMarker = true
+    @$scope.editState.boundingBox =
+      top: args.leafletEvent.originalEvent.clientY - 7
+      bottom: args.leafletEvent.originalEvent.clientY - 7
+      left: args.leafletEvent.originalEvent.clientX - 7
+      width: 0
+    @$scope.editState.geolocation =
+      lat: args.leafletEvent.latlng.lat
+      lng: args.leafletEvent.latlng.lng
+
+
+  markerClick: (e, args) ->
+    @disableAddMarkerState()
+    marker = @$scope.markers[args.markerName]
+    @$scope.editState.markerSelected = marker
+    @$scope.editState.markerPropertiesBB =
+      top: args.leafletEvent.originalEvent.clientY - 7
+      bottom: args.leafletEvent.originalEvent.clientY - 7
+      left: args.leafletEvent.originalEvent.clientX - 7
+      width: 0
+    args.leafletEvent.originalEvent.stopPropagation()
+
+
+  disableMarkerSelectedState: ->
+    @$scope.editState.markerSelected = false
 
 
   disableAddMarkerState: ->
     @$scope.editState.addMarker = false
 
 
-  addMarker: ->
+  addMarker: (event) ->
     # NOTE: since the snippet data is a reference to the scope var, we
     # can work with the collection directly. For once the non-deep-copy thing
     # comes in handy :)
-    @$scope.markers.push
+    newMarker =
       lat: @$scope.editState.geolocation.lat
       lng: @$scope.editState.geolocation.lng
       uuid: livingmapsUid.guid()
+    @$scope.markers.push(newMarker)
 
-    @$scope.editState.addMarker = false
+    @disableAddMarkerState()
+    @$scope.editState.markerSelected = newMarker
+    @$scope.editState.markerPropertiesBB =
+      top: event.clientY - 7
+      bottom: event.clientY - 7
+      left: event.clientX - 7
+      width: 0
 
 
   close: (event) ->
