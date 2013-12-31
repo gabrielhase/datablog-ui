@@ -53,4 +53,4 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
 
 
     openMapEditModal: (data) ->
-      # todo
+      $modal.open(mapEditModalOptions)
