@@ -4,6 +4,7 @@ class MapEditModalController
   constructor: (@$scope, @$modalInstance, @snippet, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
     @$scope.addMarker = $.proxy(@addMarker, this)
+    @$scope.removeMarker = $.proxy(@removeMarker, this)
     @$scope.center = @snippet.data('center')
     @$scope.markers = @snippet.data('markers')
     @$scope.editState = {}
@@ -94,6 +95,12 @@ class MapEditModalController
       bottom: event.clientY - 7
       left: event.clientX - 7
       width: 0
+
+
+  removeMarker: (marker) ->
+    idx = @$scope.markers.indexOf(marker)
+    @$scope.markers.splice(idx, 1)
+    @$scope.editState.markerSelected = false
 
 
   close: (event) ->
