@@ -12,7 +12,7 @@ htmlTemplates.mapEditModal = """
   <leaflet center="center" markers="markers" event-broadcast="events" style="height: 100%">
   </leaflet>
 
-  <div popover ng-if="editState.markerSelected" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">
+  <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">
     <form class="upfront-form upfront-control">
       <h3>Selected Marker</h3>
       <label>Popover Text (optional)</label>

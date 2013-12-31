@@ -11,17 +11,6 @@ class MapEditModalController
 
     @addGeosearch()
     @setupMapEvents()
-  #   #@setupMarkerPropertiesBB()
-
-
-  # setupMarkerPropertiesBB: ->
-  #   @$timeout =>
-  #     @$scope.editState.markerPropertiesBB =
-  #       top: $('.upfront-modal-body').offset().top + $('.upfront-modal-body').height() / 2
-  #       bottom: $('.upfront-modal-body').offset().top + $('.upfront-modal-body').height() / 2
-  #       left: $('.upfront-modal-body').offset().left + $('.upfront-modal-body').width() / 2
-  #       width: $('.upfront-modal-body').width() / 2
-  #   , 100
 
 
   addGeosearch: ->
@@ -43,6 +32,11 @@ class MapEditModalController
 
     @$scope.$on 'leafletDirectiveMap.click', $.proxy(@mapClick, this)
     @$scope.$on 'leafletDirectiveMarker.click', $.proxy(@markerClick, this)
+    for e in ['leafletDirectiveMap.drag', 'leafletDirectiveMap.move', 'leafletDirectiveMap.zoomstart',
+    'leafletDirectiveMap.blur']
+      @$scope.$on e, (e, args) =>
+        @disableMarkerSelectedState(e, args)
+        @disableAddMarkerState(e, args)
 
 
   mapClick: (e, args) ->
@@ -67,7 +61,6 @@ class MapEditModalController
       bottom: args.leafletEvent.originalEvent.clientY - 7
       left: args.leafletEvent.originalEvent.clientX - 7
       width: 0
-    args.leafletEvent.originalEvent.stopPropagation()
 
 
   disableMarkerSelectedState: ->
