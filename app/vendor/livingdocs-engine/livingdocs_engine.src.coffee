@@ -434,15 +434,28 @@ class LimitedLocalstore
       date: Date.now()
 
     index = @getIndex()
-    index.push(reference)
-
-    while index.length > @limit
+    while index.length + 1 > @limit
       removeRef = index[0]
       index.splice(0, 1)
       localstore.remove(removeRef.key)
 
-    localstore.set(reference.key, obj)
-    localstore.set("#{ @key }--index", index)
+    try
+      localstore.set(reference.key, obj)
+      # update index when entering worked
+      index.push(reference)
+      localstore.set("#{ @key }--index", index)
+    catch e
+      if index.length > 0
+        removeRef = index[0]
+        index.splice(0, 1)
+        localstore.remove(removeRef.key)
+        return @push(obj) # try again
+      else
+        log 'The document is too large to be stored in localstorage'
+        @setIndex()
+        return false # failure
+
+    return true # success
 
 
   pop: ->

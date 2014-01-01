@@ -8,7 +8,5 @@ class DocumentPanelController
 
   resetStory: ->
     doc.stash.clear()
-    window.location = '/'
-    # @documentService.get(15).then (document) =>
-    #   @editorService.loadDocument(document)
+    window.location = '/' # NOTE: reload the browser for now, reloading a document is not supported yet.
 

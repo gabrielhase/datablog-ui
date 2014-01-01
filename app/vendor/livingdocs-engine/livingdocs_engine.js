@@ -398,20 +398,35 @@
     }
 
     LimitedLocalstore.prototype.push = function(obj) {
-      var index, reference, removeRef;
+      var e, index, reference, removeRef;
       reference = {
         key: this.nextKey(),
         date: Date.now()
       };
       index = this.getIndex();
-      index.push(reference);
-      while (index.length > this.limit) {
+      while (index.length + 1 > this.limit) {
         removeRef = index[0];
         index.splice(0, 1);
         localstore.remove(removeRef.key);
       }
-      localstore.set(reference.key, obj);
-      return localstore.set("" + this.key + "--index", index);
+      try {
+        localstore.set(reference.key, obj);
+        index.push(reference);
+        localstore.set("" + this.key + "--index", index);
+      } catch (_error) {
+        e = _error;
+        if (index.length > 0) {
+          removeRef = index[0];
+          index.splice(0, 1);
+          localstore.remove(removeRef.key);
+          return this.push(obj);
+        } else {
+          log('The document is too large to be stored in localstorage');
+          this.setIndex();
+          return false;
+        }
+      }
+      return true;
     };
 
     LimitedLocalstore.prototype.pop = function() {
