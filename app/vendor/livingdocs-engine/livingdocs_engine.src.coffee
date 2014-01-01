@@ -445,14 +445,13 @@ class LimitedLocalstore
       index.push(reference)
       localstore.set("#{ @key }--index", index)
     catch e
-      if index.length > 0
+      if index.length > 1 # leave at least one revision
         removeRef = index[0]
         index.splice(0, 1)
         localstore.remove(removeRef.key)
         return @push(obj) # try again
       else
         log 'The document is too large to be stored in localstorage'
-        @setIndex()
         return false # failure
 
     return true # success

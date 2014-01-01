@@ -415,14 +415,13 @@
         localstore.set("" + this.key + "--index", index);
       } catch (_error) {
         e = _error;
-        if (index.length > 0) {
+        if (index.length > 1) {
           removeRef = index[0];
           index.splice(0, 1);
           localstore.remove(removeRef.key);
           return this.push(obj);
         } else {
           log('The document is too large to be stored in localstorage');
-          this.setIndex();
           return false;
         }
       }
