@@ -588,6 +588,10 @@
       }
     };
 
+    Semaphore.prototype.isReady = function() {
+      return this.wasFired;
+    };
+
     Semaphore.prototype.start = function() {
       assert(!this.started, "Unable to start Semaphore once started.");
       this.started = true;
@@ -647,6 +651,9 @@
       stash: function() {
         this.snapshot();
         return document.reset();
+      },
+      clear: function() {
+        return this.store.clear();
       },
       "delete": function() {
         return this.store.pop();
@@ -3611,8 +3618,12 @@
       return this.readySemaphore.addCallback(callback);
     };
 
+    Renderer.prototype.isReady = function() {
+      return this.readySemaphore.isReady();
+    };
+
     Renderer.prototype.html = function() {
-      this.render();
+      assert(this.isReady(), 'Cannot generate html. Renderer is not ready.');
       return this.renderingContainer.html();
     };
 
@@ -3657,7 +3668,6 @@
 
     Renderer.prototype.render = function() {
       var _this = this;
-      this.$root.empty();
       return this.snippetTree.each(function(model) {
         return _this.insertSnippet(model);
       });
@@ -4264,6 +4274,7 @@
     this.stash = $.proxy(stash, 'stash');
     this.stash.snapshot = $.proxy(stash, 'snapshot');
     this.stash["delete"] = $.proxy(stash, 'delete');
+    this.stash.clear = $.proxy(stash, 'clear');
     this.stash.restore = $.proxy(stash, 'restore');
     this.stash.get = $.proxy(stash, 'get');
     this.stash.list = $.proxy(stash, 'list');
