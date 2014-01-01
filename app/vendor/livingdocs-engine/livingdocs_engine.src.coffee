@@ -639,6 +639,10 @@ class Semaphore
       @callbacks.push(callback)
 
 
+  isReady: ->
+    @wasFired
+
+
   start: ->
     assert not @started,
       "Unable to start Semaphore once started."
@@ -689,6 +693,10 @@ stash = do ->
   stash: ->
     @snapshot()
     document.reset()
+
+
+  clear: ->
+    @store.clear()
 
 
   delete: ->
@@ -3416,8 +3424,12 @@ class Renderer
     @readySemaphore.addCallback(callback)
 
 
+  isReady: ->
+    @readySemaphore.isReady()
+
+
   html: ->
-    @render()
+    assert @isReady(), 'Cannot generate html. Renderer is not ready.'
     @renderingContainer.html()
 
 
@@ -3467,8 +3479,6 @@ class Renderer
 
 
   render: ->
-    @$root.empty()
-
     @snippetTree.each (model) =>
       @insertSnippet(model)
 
@@ -4012,6 +4022,7 @@ setupApi = ->
   @stash = $.proxy(stash, 'stash')
   @stash.snapshot = $.proxy(stash, 'snapshot')
   @stash.delete = $.proxy(stash, 'delete')
+  @stash.clear = $.proxy(stash, 'clear')
   @stash.restore = $.proxy(stash, 'restore')
   @stash.get = $.proxy(stash, 'get')
   @stash.list = $.proxy(stash, 'list')

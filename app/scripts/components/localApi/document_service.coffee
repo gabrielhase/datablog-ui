@@ -71,8 +71,21 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
 
   get: (id) ->
     documentPromise = $q.defer()
+    if JSON.parse(doc.stash.list()).length > 0
+      docs[id] ||= new Document
+        id: id
+        title: 'Test Story'
+        revisionNumber: 4
+        updatedAt: new Date()
+        data: doc.stash.get()
+    else
+      docs[id] ||= @getStubbedDocument(id)
+    documentPromise.resolve(docs[id])
+    documentPromise.promise
 
-    docs[id] ||= new Document
+
+  getStubbedDocument: (id) ->
+    new Document
       id: id
       title: 'Test Story'
       revisionNumber: 4
@@ -128,13 +141,15 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
         "meta": {}
 
 
-    documentPromise.resolve(docs[id])
-    documentPromise.promise
+  saveDocument: (document) ->
+    document.revisionNumber = document.revision + 1
+    doc.stash.snapshot()
+    document
 
 
   save: (document) ->
     deferred = $q.defer()
-    document.revisionNumber = document.revision + 1
+    document = @saveDocument(document)
     deferred.resolve(document)
 
     deferred.promise
