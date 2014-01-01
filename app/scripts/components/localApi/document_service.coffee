@@ -144,13 +144,14 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
   saveDocument: (document) ->
     document.revisionNumber = document.revision + 1
     doc.stash.snapshot()
-    document
 
 
   save: (document) ->
     deferred = $q.defer()
-    document = @saveDocument(document)
-    deferred.resolve(document)
+    if @saveDocument(document)
+      deferred.resolve(document)
+    else
+      deferred.reject('Save failed: the document is too large for your Browsers localstorage')
 
     deferred.promise
 
