@@ -18,6 +18,7 @@ class WebMapFormController
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
+    @$scope.openFreeformEditor = $.proxy(@openFreeformEditor, this)
 
     @initMarkerStyles()
     @watchCenter()
@@ -79,6 +80,14 @@ class WebMapFormController
         else
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()
+
+
+  # ########################
+  # Freeform Editor
+  # ########################
+
+  openFreeformEditor: ->
+    @dialogService.openMapEditModal(@$scope.snippet)
 
 
   # ########################
