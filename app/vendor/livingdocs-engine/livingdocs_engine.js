@@ -397,6 +397,29 @@
       this.index = void 0;
     }
 
+    LimitedLocalstore.prototype.compress = function(obj) {
+      var compressedString, str;
+      if (typeof obj === 'object') {
+        str = JSON.stringify(obj);
+      } else {
+        str = obj;
+      }
+      compressedString = LZString.compress(str);
+      return compressedString;
+    };
+
+    LimitedLocalstore.prototype.decompress = function(obj) {
+      var e, res, str;
+      str = LZString.decompress(obj);
+      try {
+        res = JSON.parse(str);
+      } catch (_error) {
+        e = _error;
+        res = str;
+      }
+      return res;
+    };
+
     LimitedLocalstore.prototype.push = function(obj) {
       var e, index, reference, removeRef;
       reference = {
@@ -410,7 +433,7 @@
         localstore.remove(removeRef.key);
       }
       try {
-        localstore.set(reference.key, obj);
+        localstore.set(reference.key, this.compress(obj));
         index.push(reference);
         localstore.set("" + this.key + "--index", index);
       } catch (_error) {
@@ -433,7 +456,7 @@
       index = this.getIndex();
       if (index && index.length) {
         reference = index.pop();
-        value = localstore.get(reference.key);
+        value = this.decompress(localstore.get(reference.key));
         localstore.remove(reference.key);
         this.setIndex();
         return value;
@@ -448,7 +471,7 @@
       if (index && index.length) {
         num || (num = index.length - 1);
         reference = index[num];
-        return value = localstore.get(reference.key);
+        return value = this.decompress(localstore.get(reference.key));
       } else {
         return void 0;
       }
