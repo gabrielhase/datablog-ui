@@ -428,6 +428,24 @@ class LimitedLocalstore
     @index = undefined
 
 
+  compress: (obj) ->
+    if typeof obj == 'object'
+      str = JSON.stringify(obj)
+    else
+      str = obj
+    compressedString = LZString.compress(str)
+    compressedString
+
+
+  decompress: (obj) ->
+    str = LZString.decompress(obj)
+    try
+      res = JSON.parse(str)
+    catch e
+      res = str
+    res
+
+
   push: (obj) ->
     reference =
       key: @nextKey()
@@ -440,7 +458,7 @@ class LimitedLocalstore
       localstore.remove(removeRef.key)
 
     try
-      localstore.set(reference.key, obj)
+      localstore.set(reference.key, @compress(obj))
       # update index when entering worked
       index.push(reference)
       localstore.set("#{ @key }--index", index)
@@ -461,7 +479,7 @@ class LimitedLocalstore
     index = @getIndex()
     if index && index.length
       reference = index.pop()
-      value = localstore.get(reference.key)
+      value = @decompress(localstore.get(reference.key))
       localstore.remove(reference.key)
       @setIndex()
       value
@@ -474,7 +492,7 @@ class LimitedLocalstore
     if index && index.length
       num ||= index.length - 1
       reference = index[num]
-      value = localstore.get(reference.key)
+      value = @decompress(localstore.get(reference.key))
     else
       undefined
 
