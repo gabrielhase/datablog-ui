@@ -24,7 +24,7 @@ htmlTemplates.historyModal = """
       <div class="history-explorer">
         <div class="upfront-timeline">
           <ol class="upfront-timeline-entries"
-              style="width: 76px; left: 0px;">
+              style="left: 0px;">
 
             <li role="tab"
                 ng-click="chooseRevision(historyEntry)"
