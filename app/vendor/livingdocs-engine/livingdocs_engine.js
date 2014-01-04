@@ -469,7 +469,9 @@
       var index, reference, value;
       index = this.getIndex();
       if (index && index.length) {
-        num || (num = index.length - 1);
+        if (num == null) {
+          num = index.length - 1;
+        }
         reference = index[num];
         return value = this.decompress(localstore.get(reference.key));
       } else {
@@ -697,6 +699,14 @@
       },
       get: function() {
         return this.store.get();
+      },
+      getAll: function() {
+        var allEntries, i, _i, _ref;
+        allEntries = [];
+        for (i = _i = 0, _ref = this.store.getIndex().length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          allEntries.push(this.store.get(i));
+        }
+        return allEntries;
       },
       restore: function() {
         var json;
@@ -4314,6 +4324,7 @@
     this.stash.clear = $.proxy(stash, 'clear');
     this.stash.restore = $.proxy(stash, 'restore');
     this.stash.get = $.proxy(stash, 'get');
+    this.stash.getAll = $.proxy(stash, 'getAll');
     this.stash.list = $.proxy(stash, 'list');
     this.words = words;
     return this.fn = SnippetArray.prototype;
