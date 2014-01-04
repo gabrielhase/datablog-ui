@@ -490,7 +490,7 @@ class LimitedLocalstore
   get: (num) ->
     index = @getIndex()
     if index && index.length
-      num ||= index.length - 1
+      num ?= index.length - 1
       reference = index[num]
       value = @decompress(localstore.get(reference.key))
     else
@@ -735,6 +735,13 @@ stash = do ->
 
   get: ->
     @store.get()
+
+
+  getAll: ->
+    allEntries = []
+    for i in [0..@store.getIndex().length - 1]
+      allEntries.push(@store.get(i))
+    allEntries
 
 
   restore: ->
@@ -4055,6 +4062,7 @@ setupApi = ->
   @stash.clear = $.proxy(stash, 'clear')
   @stash.restore = $.proxy(stash, 'restore')
   @stash.get = $.proxy(stash, 'get')
+  @stash.getAll = $.proxy(stash, 'getAll')
   @stash.list = $.proxy(stash, 'list')
 
 
