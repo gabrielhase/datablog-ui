@@ -701,10 +701,14 @@
         return this.store.get();
       },
       getAll: function() {
-        var allEntries, i, _i, _ref;
+        var allEntries, i, index, _i, _ref;
         allEntries = [];
-        for (i = _i = 0, _ref = this.store.getIndex().length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-          allEntries.push(this.store.get(i));
+        index = this.store.getIndex();
+        for (i = _i = 0, _ref = index.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          allEntries.push({
+            document: this.store.get(i),
+            date: index[i].date
+          });
         }
         return allEntries;
       },

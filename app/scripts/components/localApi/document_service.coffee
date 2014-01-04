@@ -13,21 +13,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
     for i in [0..allLocalEntries.length - 1]
       history.push
         revisionId: i
-        userId: 8 # TODO
-        #changeImpact: Math.random() # TODO
-        lastChanged: '2013-11-16 22:02:15' # TODO
-    history = history.reverse()
-    # history = [
-    #   revisionId: 3
-    #   userId: 8
-    #   changeImpact: 3.2
-    #   lastChanged: '2013-11-16 22:02:15'
-    # ,
-    #   revisionId: 2
-    #   userId: 8
-    #   changeImpact: 1.4
-    #   lastChanged: '2013-11-01 10:11:32'
-    # ]
+        userId: -1 # -1 stands for the test document user
+        lastChanged: new Date(allLocalEntries[i].date)
     historyPromise.resolve(history)
     historyPromise.promise
 
@@ -44,48 +31,8 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
         id: documentId
         revisionNumber: revisionId
         title: 'Test Story'
-        data: historyEntry
-        updatedAt: '2013-11-01 10:11:32' # TODO
-
-    # switch revisionId
-    #   when 3
-    #     $timeout =>
-    #       revisionPromise.resolve(
-    #         new Document
-    #           id: documentId
-    #           title: 'Test Story Original'
-    #           revisionNumber: 3
-    #           updatedAt: new Date()
-    #           data:
-    #             "content": [
-    #               "identifier": "livingmaps.column"
-    #               "containers":
-    #                 "default": [
-    #                   @_getMockedSwissMap()
-    #                 ]
-    #             ]
-    #       )
-    #   when 2
-    #     $timeout =>
-    #       revisionPromise.resolve(
-    #         new Document
-    #           id: documentId
-    #           title: 'Test Story Original'
-    #           revisionNumber: 2
-    #           updatedAt: new Date()
-    #           data:
-    #             "content": [
-    #               "identifier": "livingmaps.column"
-    #               "containers":
-    #                 "default": [
-    #                   @_getMockedSwissMapWithOrthogonal()
-    #                 ]
-    #             ]
-
-    #       )
-    #   else
-    #     log.error "unknown revision #{revisionId} for document #{documentId}"
-
+        data: historyEntry.document
+        updatedAt: new Date(historyEntry.date)
     revisionPromise.promise
 
 
@@ -108,7 +55,7 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
     new Document
       id: id
       title: 'Test Story'
-      revisionNumber: 1
+      revisionNumber: 0
       updatedAt: new Date()
       data:
         "content": [

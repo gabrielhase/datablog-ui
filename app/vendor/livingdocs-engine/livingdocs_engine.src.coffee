@@ -739,8 +739,11 @@ stash = do ->
 
   getAll: ->
     allEntries = []
-    for i in [0..@store.getIndex().length - 1]
-      allEntries.push(@store.get(i))
+    index = @store.getIndex()
+    for i in [0..index.length - 1]
+      allEntries.push
+        document: @store.get(i)
+        date: index[i].date
     allEntries
 
 
