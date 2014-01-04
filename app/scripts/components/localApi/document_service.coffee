@@ -5,18 +5,45 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
   # Service
   # -------
 
+
+  searchSnippet: (docJson, searchedSnippetId) ->
+    searchedSnippetJson = undefined
+    for snippetJson in docJson.content
+      searchedSnippetJson ||= @_recursiveSearch(snippetJson, searchedSnippetId)
+    searchedSnippetJson
+
+
   getHistory: (documentId, snippetModelId) ->
     historyPromise = $q.defer()
 
     history = []
     allLocalEntries = doc.stash.getAll()
-    for i in [0..allLocalEntries.length - 1]
-      history.push
-        revisionId: i
-        userId: -1 # -1 stands for the test document user
-        lastChanged: new Date(allLocalEntries[i].date)
+    if snippetModelId
+      relevantLocalEntries = @trimHistoryToSnippet(snippetModelId, allLocalEntries)
+    else
+      relevantLocalEntries = _.map allLocalEntries, (entry, idx) -> idx
+
+    for i in relevantLocalEntries
+        history.push
+          revisionId: i
+          userId: -1 # -1 stands for the test document user
+          lastChanged: new Date(allLocalEntries[i]?.date)
     historyPromise.resolve(history)
     historyPromise.promise
+
+
+  # returns the indexes into the history array of only those revisions that
+  # are different in the looked at snippet.
+  trimHistoryToSnippet: (snippetModelId, history) ->
+    currentJson = @searchSnippet(doc.document.toJson(), snippetModelId)
+    return [] unless currentJson?.data
+    indexes = _.map history, (historyEntry, idx) =>
+      snippetJson = @searchSnippet(historyEntry.document, snippetModelId)
+      if snippetJson?.data && !@_isEqualChoropleth(snippetJson.data, currentJson.data)
+        return idx
+      else
+        return -1
+    _.filter indexes, (entry) -> entry != -1
 
 
   getRevision: (documentId, revisionId) ->
@@ -142,3 +169,24 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
     map = @_getMockedSwissMap()
     map.data.projection = 'orthographic'
     map
+
+
+  _recursiveSearch: (snippetJson, searchedSnippetId) ->
+    searchedSnippetJson = undefined
+    if snippetJson.hasOwnProperty('containers')
+      for container of snippetJson.containers
+        containerJson = snippetJson.containers[container]
+        for childSnippetJson in containerJson
+          searchedSnippetJson ||= @_recursiveSearch(childSnippetJson, searchedSnippetId)
+    else
+      if snippetJson.id == searchedSnippetId
+        return snippetJson
+      else
+        return undefined
+
+    return searchedSnippetJson
+
+
+  _isEqualChoropleth: (a, b) ->
+    _.every ['projection', 'data', 'map', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'colorSteps'], (definingProperty) ->
+      _.isEqual(a[definingProperty], b[definingProperty])

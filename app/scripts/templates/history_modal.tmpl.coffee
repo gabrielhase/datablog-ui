@@ -16,7 +16,7 @@ htmlTemplates.historyModal = """
 </div>
 <div class="upfront-modal-body" style="height: 100%">
   <div ng-show="history.length == 0">
-    There is no history for this snippet yet.
+    There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).
   </div>
   <div class="upfront-snippet-history" ng-show="history.length > 0">
 
