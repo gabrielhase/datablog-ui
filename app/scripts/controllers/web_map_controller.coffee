@@ -11,22 +11,31 @@ class WebMapController
 
 
   initScope: ->
+    @initDefaults()
+    for property in ['center', 'markers']
+      @$scope[property] = @$scope.snippetModel.data(property)
+
+
+  initDefaults: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
-    @$scope.snippetModel.data
-      center:
-        lat: 47.388778
-        lng: 8.541971
-        zoom: 12
+    unless @$scope.snippetModel.data('center')
+      @$scope.snippetModel.data
+        center:
+          lat: 47.388778
+          lng: 8.541971
+          zoom: 12
     # NOTE: we need to set a dummy pin at the north pole because otherwise
     # the angular directive wouldn't watch for changes (line 623)
-    @$scope.snippetModel.data
-      markers: [
-        {
-          lat: 90
-          lng: 0
-          uuid: ''
-        }
-      ]
+    markers = @$scope.snippetModel.data('markers')
+    if !markers || markers.length == 0
+      @$scope.snippetModel.data
+        markers: [
+          {
+            lat: 90
+            lng: 0
+            uuid: ''
+          }
+        ]
 
 
   setupSnippetChangeListener: ->

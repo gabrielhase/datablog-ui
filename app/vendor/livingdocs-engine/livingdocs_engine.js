@@ -397,21 +397,56 @@
       this.index = void 0;
     }
 
+    LimitedLocalstore.prototype.compress = function(obj) {
+      var str;
+      if (typeof obj === 'object') {
+        str = JSON.stringify(obj);
+      } else {
+        str = obj;
+      }
+      return LZString.compress(str);
+    };
+
+    LimitedLocalstore.prototype.decompress = function(obj) {
+      var e, str;
+      str = LZString.decompress(obj);
+      try {
+        return JSON.parse(str);
+      } catch (_error) {
+        e = _error;
+        return str;
+      }
+    };
+
     LimitedLocalstore.prototype.push = function(obj) {
-      var index, reference, removeRef;
+      var e, index, reference, removeRef;
       reference = {
         key: this.nextKey(),
         date: Date.now()
       };
       index = this.getIndex();
-      index.push(reference);
-      while (index.length > this.limit) {
+      while (index.length + 1 > this.limit) {
         removeRef = index[0];
         index.splice(0, 1);
         localstore.remove(removeRef.key);
       }
-      localstore.set(reference.key, obj);
-      return localstore.set("" + this.key + "--index", index);
+      try {
+        localstore.set(reference.key, this.compress(obj));
+        index.push(reference);
+        localstore.set("" + this.key + "--index", index);
+      } catch (_error) {
+        e = _error;
+        if (index.length > 1) {
+          removeRef = index[0];
+          index.splice(0, 1);
+          localstore.remove(removeRef.key);
+          return this.push(obj);
+        } else {
+          log('The document is too large to be stored in localstorage');
+          return false;
+        }
+      }
+      return true;
     };
 
     LimitedLocalstore.prototype.pop = function() {
@@ -419,7 +454,7 @@
       index = this.getIndex();
       if (index && index.length) {
         reference = index.pop();
-        value = localstore.get(reference.key);
+        value = this.decompress(localstore.get(reference.key));
         localstore.remove(reference.key);
         this.setIndex();
         return value;
@@ -432,9 +467,11 @@
       var index, reference, value;
       index = this.getIndex();
       if (index && index.length) {
-        num || (num = index.length - 1);
+        if (num == null) {
+          num = index.length - 1;
+        }
         reference = index[num];
-        return value = localstore.get(reference.key);
+        return value = this.decompress(localstore.get(reference.key));
       } else {
         return void 0;
       }
@@ -588,6 +625,10 @@
       }
     };
 
+    Semaphore.prototype.isReady = function() {
+      return this.wasFired;
+    };
+
     Semaphore.prototype.start = function() {
       assert(!this.started, "Unable to start Semaphore once started.");
       this.started = true;
@@ -648,11 +689,26 @@
         this.snapshot();
         return document.reset();
       },
+      clear: function() {
+        return this.store.clear();
+      },
       "delete": function() {
         return this.store.pop();
       },
       get: function() {
         return this.store.get();
+      },
+      getAll: function() {
+        var allEntries, i, index, _i, _ref;
+        allEntries = [];
+        index = this.store.getIndex();
+        for (i = _i = 0, _ref = index.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          allEntries.push({
+            document: this.store.get(i),
+            date: index[i].date
+          });
+        }
+        return allEntries;
       },
       restore: function() {
         var json;
@@ -3611,8 +3667,12 @@
       return this.readySemaphore.addCallback(callback);
     };
 
+    Renderer.prototype.isReady = function() {
+      return this.readySemaphore.isReady();
+    };
+
     Renderer.prototype.html = function() {
-      this.render();
+      assert(this.isReady(), 'Cannot generate html. Renderer is not ready.');
       return this.renderingContainer.html();
     };
 
@@ -3657,7 +3717,6 @@
 
     Renderer.prototype.render = function() {
       var _this = this;
-      this.$root.empty();
       return this.snippetTree.each(function(model) {
         return _this.insertSnippet(model);
       });
@@ -4264,8 +4323,10 @@
     this.stash = $.proxy(stash, 'stash');
     this.stash.snapshot = $.proxy(stash, 'snapshot');
     this.stash["delete"] = $.proxy(stash, 'delete');
+    this.stash.clear = $.proxy(stash, 'clear');
     this.stash.restore = $.proxy(stash, 'restore');
     this.stash.get = $.proxy(stash, 'get');
+    this.stash.getAll = $.proxy(stash, 'getAll');
     this.stash.list = $.proxy(stash, 'list');
     this.words = words;
     return this.fn = SnippetArray.prototype;

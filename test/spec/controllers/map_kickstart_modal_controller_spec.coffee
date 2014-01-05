@@ -49,7 +49,6 @@ describe 'MapKickstartModalController', ->
 
 
     it 'initializes the structure of a preview marker', ->
-      console.log @scope.previewMarkers[0]
       expect(@scope.previewMarkers[0]).to.eql
         lng: 8.51172926978877
         lat: 47.3530684006283

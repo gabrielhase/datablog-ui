@@ -43,13 +43,14 @@ class ChoroplethMapController
 
 
   initColorScheme: ->
-    if @choroplethMapInstance.getValueType() == 'numerical'
-      @snippetModel.data
-        colorScheme: 'OrRd'
-        colorSteps: 9
-    else
-      @snippetModel.data
-        colorScheme: 'Paired'
+    unless @snippetModel.data('colorScheme')
+      if @choroplethMapInstance.getValueType() == 'numerical'
+        @snippetModel.data
+          colorScheme: 'OrRd'
+          colorSteps: 9
+      else
+        @snippetModel.data
+          colorScheme: 'Paired'
 
 
   initScope: ->
