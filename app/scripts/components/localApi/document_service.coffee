@@ -1,4 +1,4 @@
-angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
+angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
 
   docs = {}
 
@@ -68,14 +68,26 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
     if JSON.parse(doc.stash.list()).length > 0
       docs[id] ||= new Document
         id: id
-        title: 'Test Story'
-        revisionNumber: 1
+        title: 'Demo Page'
+        revisionNumber: JSON.parse(doc.stash.list()).length
         updatedAt: new Date()
         data: doc.stash.get()
+      documentPromise.resolve(docs[id])
     else
-      docs[id] ||= @getStubbedDocument(id)
-    documentPromise.resolve(docs[id])
+      #docs[id] ||= @getStubbedDocument(id)
+      @getDemoPage().then (demoPage) ->
+        docs[id] ||= new Document
+          id: id
+          title: 'Demo Page'
+          revisionNumber: 0
+          updatedAt: new Date()
+          data: demoPage.data
+        documentPromise.resolve(docs[id])
     documentPromise.promise
+
+
+  getDemoPage: ->
+    $http.get('data/demo-page.json')
 
 
   getStubbedDocument: (id) ->
@@ -93,6 +105,7 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
                 @_getMockedSwissMap()
               ]
           }
+
           # {
           #   "identifier": "livingmaps.column"
           #   "containers":
