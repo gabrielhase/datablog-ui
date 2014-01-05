@@ -1,81 +1,99 @@
-angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
+angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
 
   docs = {}
 
   # Service
   # -------
 
+
+  searchSnippet: (docJson, searchedSnippetId) ->
+    searchedSnippetJson = undefined
+    for snippetJson in docJson.content
+      searchedSnippetJson ||= @_recursiveSearch(snippetJson, searchedSnippetId)
+    searchedSnippetJson
+
+
   getHistory: (documentId, snippetModelId) ->
     historyPromise = $q.defer()
 
-    history = [
-      revisionId: 3
-      userId: 8
-      changeImpact: 3.2
-      lastChanged: '2013-11-16 22:02:15'
-    ,
-      revisionId: 2
-      userId: 8
-      changeImpact: 1.4
-      lastChanged: '2013-11-01 10:11:32'
-    ]
+    history = []
+    allLocalEntries = doc.stash.getAll()
+    if snippetModelId
+      relevantLocalEntries = @trimHistoryToSnippet(snippetModelId, allLocalEntries)
+    else
+      relevantLocalEntries = _.map allLocalEntries, (entry, idx) -> idx
 
+    for i in relevantLocalEntries
+        history.push
+          revisionId: i
+          userId: -1 # -1 stands for the test document user
+          lastChanged: new Date(allLocalEntries[i]?.date)
     historyPromise.resolve(history)
     historyPromise.promise
 
 
+  # returns the indexes into the history array of only those revisions that
+  # are different in the looked at snippet.
+  trimHistoryToSnippet: (snippetModelId, history) ->
+    currentJson = @searchSnippet(doc.document.toJson(), snippetModelId)
+    return [] unless currentJson?.data
+    indexes = _.map history, (historyEntry, idx) =>
+      snippetJson = @searchSnippet(historyEntry.document, snippetModelId)
+      if snippetJson?.data && !@_isEqualChoropleth(snippetJson.data, currentJson.data)
+        return idx
+      else
+        return -1
+    _.filter indexes, (entry) -> entry != -1
+
+
   getRevision: (documentId, revisionId) ->
     revisionPromise = $q.defer()
+    allLocalEntries = doc.stash.getAll()
+    historyEntry = allLocalEntries[revisionId]
 
-    switch revisionId
-      when 3
-        $timeout =>
-          revisionPromise.resolve(
-            new Document
-              id: documentId
-              title: 'Test Story Original'
-              revisionNumber: 3
-              updatedAt: new Date()
-              data:
-                "content": [
-                  "identifier": "livingmaps.column"
-                  "containers":
-                    "default": [
-                      @_getMockedSwissMap()
-                    ]
-                ]
-          )
-      when 2
-        $timeout =>
-          revisionPromise.resolve(
-            new Document
-              id: documentId
-              title: 'Test Story Original'
-              revisionNumber: 2
-              updatedAt: new Date()
-              data:
-                "content": [
-                  "identifier": "livingmaps.column"
-                  "containers":
-                    "default": [
-                      @_getMockedSwissMapWithOrthogonal()
-                    ]
-                ]
-
-          )
-      else
-        log.error "unknown revision #{revisionId} for document #{documentId}"
-
+    unless historyEntry
+      log.error "unknown revisionId #{revisionId} for document #{documentId}"
+    else
+      revisionPromise.resolve new Document
+        id: documentId
+        revisionNumber: revisionId
+        title: 'Test Story'
+        data: historyEntry.document
+        updatedAt: new Date(historyEntry.date)
     revisionPromise.promise
 
 
   get: (id) ->
     documentPromise = $q.defer()
+    if JSON.parse(doc.stash.list()).length > 0
+      docs[id] ||= new Document
+        id: id
+        title: 'Demo Page'
+        revisionNumber: JSON.parse(doc.stash.list()).length
+        updatedAt: new Date()
+        data: doc.stash.get()
+      documentPromise.resolve(docs[id])
+    else
+      @getDemoPage().then (demoPage) ->
+        docs[id] ||= new Document
+          id: id
+          title: 'Demo Page'
+          revisionNumber: 0
+          updatedAt: new Date()
+          data: demoPage.data
+        documentPromise.resolve(docs[id])
+    documentPromise.promise
 
-    docs[id] ||= new Document
+
+  getDemoPage: ->
+    $http.get('data/demo-page.json')
+
+
+  getStubbedDocument: (id) ->
+    new Document
       id: id
       title: 'Test Story'
-      revisionNumber: 4
+      revisionNumber: 0
       updatedAt: new Date()
       data:
         "content": [
@@ -83,59 +101,70 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
             "identifier": "livingmaps.column"
             "containers":
               "default": [
-                #@_getMockedSwissMap()
-                "identifier": "livingmaps.map"
-                "content":
-                  "title": "Holy crap this is an interactive map"
-              ]
-          },
-          {
-           "identifier": "livingmaps.mainAndSidebar"
-           "containers":
-             "main": [
-               "identifier": "livingmaps.title"
-               "content":
-                 "title": "The livingdocs.io manifesto"
-              ,
                 @_getMockedSwissMap()
-              ,
-               "identifier": "livingmaps.text"
-               "content":
-                 "text": "Shortly after its inception, the web was used by scientists at the major US universities to exchange and review papers and ideas. A web citizen was someone writing to the web and reading from the web."
-              ,
-               "identifier": "livingmaps.text"
-               "content":
-                 "text": "About 30 years and billions of dollars later this description holds true for less than 1 percent of web citizens. The spread of infrastructure to support the Internet world-wide is unprecedented. Yet for most people the primary means of producing content is still offline (e.g. Microsoft Word). This has serious implications: The expression of over 99 percent of people on the web is marginalized to Tweets and Facebook Status messages."
-              ,
-               "identifier": "livingmaps.text"
-               "content":
-                 "text": "Twitter is great (Facebook isn’t). Yet we wouldn’t readily accept the prospect of publishing our ideas solely on short messages (SMS). Let us continue to use Twitter for short messages. But more importantly: let us develop an open web publishing platform that everybody can use for all the other messages we have for the world."
-              ,
-               "identifier": "livingmaps.text"
-               "content":
-                 "text": "An open publishing platform is a way for people to publish documents on the web. Not PDF’s, real web documents. The tech talk of this is HTML, CSS, Javascript. The implications are interactive, expressive documents in the browser. The difference is that we want to enable the 99 percent of web citizens without adequate possibility to express themselves on the web to use nothing less than the most recent technology available to web browsers. Data Journalism, long-form articles, responsive design, you name it!"
-              ,
-               "identifier": "livingmaps.text"
-               "content":
-                 "text": "This is quite a mouthful. Livingdocs starts today at http://www.livingdocs.io . It’s to early to say where this journey will lead. But if you care about our vision then follow us @upfrontIO and we will send you short messages that hopefully one day will enable us to host your long messages."
-             ],
-             "sidebar": [
-              "identifier": "livingmaps.image"
-             ]
+              ]
           }
+
+          # {
+          #   "identifier": "livingmaps.column"
+          #   "containers":
+          #     "default": [
+          #       #@_getMockedSwissMap()
+          #       "identifier": "livingmaps.map"
+          #       "content":
+          #         "title": "Holy crap this is an interactive map"
+          #     ]
+          # },
+          # {
+          #  "identifier": "livingmaps.mainAndSidebar"
+          #  "containers":
+          #    "main": [
+          #      "identifier": "livingmaps.title"
+          #      "content":
+          #        "title": "The livingdocs.io manifesto"
+          #     ,
+          #       @_getMockedSwissMap()
+          #     ,
+          #      "identifier": "livingmaps.text"
+          #      "content":
+          #        "text": "Shortly after its inception, the web was used by scientists at the major US universities to exchange and review papers and ideas. A web citizen was someone writing to the web and reading from the web."
+          #     ,
+          #      "identifier": "livingmaps.text"
+          #      "content":
+          #        "text": "About 30 years and billions of dollars later this description holds true for less than 1 percent of web citizens. The spread of infrastructure to support the Internet world-wide is unprecedented. Yet for most people the primary means of producing content is still offline (e.g. Microsoft Word). This has serious implications: The expression of over 99 percent of people on the web is marginalized to Tweets and Facebook Status messages."
+          #     ,
+          #      "identifier": "livingmaps.text"
+          #      "content":
+          #        "text": "Twitter is great (Facebook isn’t). Yet we wouldn’t readily accept the prospect of publishing our ideas solely on short messages (SMS). Let us continue to use Twitter for short messages. But more importantly: let us develop an open web publishing platform that everybody can use for all the other messages we have for the world."
+          #     ,
+          #      "identifier": "livingmaps.text"
+          #      "content":
+          #        "text": "An open publishing platform is a way for people to publish documents on the web. Not PDF’s, real web documents. The tech talk of this is HTML, CSS, Javascript. The implications are interactive, expressive documents in the browser. The difference is that we want to enable the 99 percent of web citizens without adequate possibility to express themselves on the web to use nothing less than the most recent technology available to web browsers. Data Journalism, long-form articles, responsive design, you name it!"
+          #     ,
+          #      "identifier": "livingmaps.text"
+          #      "content":
+          #        "text": "This is quite a mouthful. Livingdocs starts today at http://www.livingdocs.io . It’s to early to say where this journey will lead. But if you care about our vision then follow us @upfrontIO and we will send you short messages that hopefully one day will enable us to host your long messages."
+          #    ],
+          #    "sidebar": [
+          #     "identifier": "livingmaps.image"
+          #    ]
+          # }
 
         ]
         "meta": {}
 
 
-    documentPromise.resolve(docs[id])
-    documentPromise.promise
+  saveDocument: (document) ->
+    document.revisionNumber = document.revisionNumber + 1
+    doc.stash.snapshot()
 
 
   save: (document) ->
     deferred = $q.defer()
-    document.revisionNumber = document.revision + 1
-    deferred.resolve(document)
+    if @saveDocument(document)
+      deferred.resolve(document)
+    else
+      deferred.reject('Save failed: the document is too large for your Browsers localstorage')
 
     deferred.promise
 
@@ -152,3 +181,24 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout) ->
     map = @_getMockedSwissMap()
     map.data.projection = 'orthographic'
     map
+
+
+  _recursiveSearch: (snippetJson, searchedSnippetId) ->
+    searchedSnippetJson = undefined
+    if snippetJson.hasOwnProperty('containers')
+      for container of snippetJson.containers
+        containerJson = snippetJson.containers[container]
+        for childSnippetJson in containerJson
+          searchedSnippetJson ||= @_recursiveSearch(childSnippetJson, searchedSnippetId)
+    else
+      if snippetJson.id == searchedSnippetId
+        return snippetJson
+      else
+        return undefined
+
+    return searchedSnippetJson
+
+
+  _isEqualChoropleth: (a, b) ->
+    _.every ['projection', 'data', 'map', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'colorSteps'], (definingProperty) ->
+      _.isEqual(a[definingProperty], b[definingProperty])
