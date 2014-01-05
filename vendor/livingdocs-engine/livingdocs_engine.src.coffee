@@ -428,28 +428,55 @@ class LimitedLocalstore
     @index = undefined
 
 
+  compress: (obj) ->
+    if typeof obj == 'object'
+      str = JSON.stringify(obj)
+    else
+      str = obj
+    LZString.compress(str)
+
+
+  decompress: (obj) ->
+    str = LZString.decompress(obj)
+    try
+      JSON.parse(str)
+    catch e
+      str
+
+
   push: (obj) ->
     reference =
       key: @nextKey()
       date: Date.now()
 
     index = @getIndex()
-    index.push(reference)
-
-    while index.length > @limit
+    while index.length + 1 > @limit
       removeRef = index[0]
       index.splice(0, 1)
       localstore.remove(removeRef.key)
 
-    localstore.set(reference.key, obj)
-    localstore.set("#{ @key }--index", index)
+    try
+      localstore.set(reference.key, @compress(obj))
+      # update index when entering worked
+      index.push(reference)
+      localstore.set("#{ @key }--index", index)
+    catch e
+      if index.length > 1 # leave at least one revision
+        removeRef = index[0]
+        index.splice(0, 1)
+        localstore.remove(removeRef.key)
+        return @push(obj) # try again
+      else
+        log 'The document is too large to be stored in localstorage'
+        return false # failure
 
+    return true # success
 
   pop: ->
     index = @getIndex()
     if index && index.length
       reference = index.pop()
-      value = localstore.get(reference.key)
+      value = @decompress(localstore.get(reference.key))
       localstore.remove(reference.key)
       @setIndex()
       value
@@ -460,9 +487,9 @@ class LimitedLocalstore
   get: (num) ->
     index = @getIndex()
     if index && index.length
-      num ||= index.length - 1
+      num ?= index.length - 1
       reference = index[num]
-      value = localstore.get(reference.key)
+      value = @decompress(localstore.get(reference.key))
     else
       undefined
 
@@ -639,6 +666,10 @@ class Semaphore
       @callbacks.push(callback)
 
 
+  isReady: ->
+    @wasFired
+
+
   start: ->
     assert not @started,
       "Unable to start Semaphore once started."
@@ -691,12 +722,26 @@ stash = do ->
     document.reset()
 
 
+  clear: ->
+    @store.clear()
+
+
   delete: ->
     @store.pop()
 
 
   get: ->
     @store.get()
+
+
+  getAll: ->
+    allEntries = []
+    index = @store.getIndex()
+    for i in [0..index.length - 1]
+      allEntries.push
+        document: @store.get(i)
+        date: index[i].date
+    allEntries
 
 
   restore: ->
@@ -3416,8 +3461,12 @@ class Renderer
     @readySemaphore.addCallback(callback)
 
 
+  isReady: ->
+    @readySemaphore.isReady()
+
+
   html: ->
-    @render()
+    assert @isReady(), 'Cannot generate html. Renderer is not ready.'
     @renderingContainer.html()
 
 
@@ -3467,8 +3516,6 @@ class Renderer
 
 
   render: ->
-    @$root.empty()
-
     @snippetTree.each (model) =>
       @insertSnippet(model)
 
@@ -4012,8 +4059,10 @@ setupApi = ->
   @stash = $.proxy(stash, 'stash')
   @stash.snapshot = $.proxy(stash, 'snapshot')
   @stash.delete = $.proxy(stash, 'delete')
+  @stash.clear = $.proxy(stash, 'clear')
   @stash.restore = $.proxy(stash, 'restore')
   @stash.get = $.proxy(stash, 'get')
+  @stash.getAll = $.proxy(stash, 'getAll')
   @stash.list = $.proxy(stash, 'list')
 
 

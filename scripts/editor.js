@@ -4914,28 +4914,61 @@ rangy.createModule('SaveRestore', function (api, module) {
       this.limit || (this.limit = 10);
       this.index = void 0;
     }
+    LimitedLocalstore.prototype.compress = function (obj) {
+      var str;
+      if (typeof obj === 'object') {
+        str = JSON.stringify(obj);
+      } else {
+        str = obj;
+      }
+      return LZString.compress(str);
+    };
+    LimitedLocalstore.prototype.decompress = function (obj) {
+      var e, str;
+      str = LZString.decompress(obj);
+      try {
+        return JSON.parse(str);
+      } catch (_error) {
+        e = _error;
+        return str;
+      }
+    };
     LimitedLocalstore.prototype.push = function (obj) {
-      var index, reference, removeRef;
+      var e, index, reference, removeRef;
       reference = {
         key: this.nextKey(),
         date: Date.now()
       };
       index = this.getIndex();
-      index.push(reference);
-      while (index.length > this.limit) {
+      while (index.length + 1 > this.limit) {
         removeRef = index[0];
         index.splice(0, 1);
         localstore.remove(removeRef.key);
       }
-      localstore.set(reference.key, obj);
-      return localstore.set('' + this.key + '--index', index);
+      try {
+        localstore.set(reference.key, this.compress(obj));
+        index.push(reference);
+        localstore.set('' + this.key + '--index', index);
+      } catch (_error) {
+        e = _error;
+        if (index.length > 1) {
+          removeRef = index[0];
+          index.splice(0, 1);
+          localstore.remove(removeRef.key);
+          return this.push(obj);
+        } else {
+          log('The document is too large to be stored in localstorage');
+          return false;
+        }
+      }
+      return true;
     };
     LimitedLocalstore.prototype.pop = function () {
       var index, reference, value;
       index = this.getIndex();
       if (index && index.length) {
         reference = index.pop();
-        value = localstore.get(reference.key);
+        value = this.decompress(localstore.get(reference.key));
         localstore.remove(reference.key);
         this.setIndex();
         return value;
@@ -4947,9 +4980,11 @@ rangy.createModule('SaveRestore', function (api, module) {
       var index, reference, value;
       index = this.getIndex();
       if (index && index.length) {
-        num || (num = index.length - 1);
+        if (num == null) {
+          num = index.length - 1;
+        }
         reference = index[num];
-        return value = localstore.get(reference.key);
+        return value = this.decompress(localstore.get(reference.key));
       } else {
         return void 0;
       }
@@ -5088,6 +5123,9 @@ rangy.createModule('SaveRestore', function (api, module) {
         return this.callbacks.push(callback);
       }
     };
+    Semaphore.prototype.isReady = function () {
+      return this.wasFired;
+    };
     Semaphore.prototype.start = function () {
       assert(!this.started, 'Unable to start Semaphore once started.');
       this.started = true;
@@ -5141,11 +5179,26 @@ rangy.createModule('SaveRestore', function (api, module) {
         this.snapshot();
         return document.reset();
       },
+      clear: function () {
+        return this.store.clear();
+      },
       'delete': function () {
         return this.store.pop();
       },
       get: function () {
         return this.store.get();
+      },
+      getAll: function () {
+        var allEntries, i, index, _i, _ref;
+        allEntries = [];
+        index = this.store.getIndex();
+        for (i = _i = 0, _ref = index.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          allEntries.push({
+            document: this.store.get(i),
+            date: index[i].date
+          });
+        }
+        return allEntries;
       },
       restore: function () {
         var json;
@@ -7835,8 +7888,11 @@ rangy.createModule('SaveRestore', function (api, module) {
     Renderer.prototype.ready = function (callback) {
       return this.readySemaphore.addCallback(callback);
     };
+    Renderer.prototype.isReady = function () {
+      return this.readySemaphore.isReady();
+    };
     Renderer.prototype.html = function () {
-      this.render();
+      assert(this.isReady(), 'Cannot generate html. Renderer is not ready.');
       return this.renderingContainer.html();
     };
     Renderer.prototype.setupSnippetTreeListeners = function () {
@@ -7872,7 +7928,6 @@ rangy.createModule('SaveRestore', function (api, module) {
     };
     Renderer.prototype.render = function () {
       var _this = this;
-      this.$root.empty();
       return this.snippetTree.each(function (model) {
         return _this.insertSnippet(model);
       });
@@ -8415,8 +8470,10 @@ rangy.createModule('SaveRestore', function (api, module) {
     this.stash = $.proxy(stash, 'stash');
     this.stash.snapshot = $.proxy(stash, 'snapshot');
     this.stash['delete'] = $.proxy(stash, 'delete');
+    this.stash.clear = $.proxy(stash, 'clear');
     this.stash.restore = $.proxy(stash, 'restore');
     this.stash.get = $.proxy(stash, 'get');
+    this.stash.getAll = $.proxy(stash, 'getAll');
     this.stash.list = $.proxy(stash, 'list');
     this.words = words;
     return this.fn = SnippetArray.prototype;
@@ -8443,6 +8500,568 @@ rangy.createModule('SaveRestore', function (api, module) {
     return pageReady.call(doc);
   });
 }.call(this));
+var LZString = {
+    _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
+    _f: String.fromCharCode,
+    compressToBase64: function (input) {
+      if (input == null)
+        return '';
+      var output = '';
+      var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+      var i = 0;
+      input = LZString.compress(input);
+      while (i < input.length * 2) {
+        if (i % 2 == 0) {
+          chr1 = input.charCodeAt(i / 2) >> 8;
+          chr2 = input.charCodeAt(i / 2) & 255;
+          if (i / 2 + 1 < input.length)
+            chr3 = input.charCodeAt(i / 2 + 1) >> 8;
+          else
+            chr3 = NaN;
+        } else {
+          chr1 = input.charCodeAt((i - 1) / 2) & 255;
+          if ((i + 1) / 2 < input.length) {
+            chr2 = input.charCodeAt((i + 1) / 2) >> 8;
+            chr3 = input.charCodeAt((i + 1) / 2) & 255;
+          } else
+            chr2 = chr3 = NaN;
+        }
+        i += 3;
+        enc1 = chr1 >> 2;
+        enc2 = (chr1 & 3) << 4 | chr2 >> 4;
+        enc3 = (chr2 & 15) << 2 | chr3 >> 6;
+        enc4 = chr3 & 63;
+        if (isNaN(chr2)) {
+          enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+          enc4 = 64;
+        }
+        output = output + LZString._keyStr.charAt(enc1) + LZString._keyStr.charAt(enc2) + LZString._keyStr.charAt(enc3) + LZString._keyStr.charAt(enc4);
+      }
+      return output;
+    },
+    decompressFromBase64: function (input) {
+      if (input == null)
+        return '';
+      var output = '', ol = 0, output_, chr1, chr2, chr3, enc1, enc2, enc3, enc4, i = 0, f = LZString._f;
+      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+      while (i < input.length) {
+        enc1 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc2 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc3 = LZString._keyStr.indexOf(input.charAt(i++));
+        enc4 = LZString._keyStr.indexOf(input.charAt(i++));
+        chr1 = enc1 << 2 | enc2 >> 4;
+        chr2 = (enc2 & 15) << 4 | enc3 >> 2;
+        chr3 = (enc3 & 3) << 6 | enc4;
+        if (ol % 2 == 0) {
+          output_ = chr1 << 8;
+          if (enc3 != 64) {
+            output += f(output_ | chr2);
+          }
+          if (enc4 != 64) {
+            output_ = chr3 << 8;
+          }
+        } else {
+          output = output + f(output_ | chr1);
+          if (enc3 != 64) {
+            output_ = chr2 << 8;
+          }
+          if (enc4 != 64) {
+            output += f(output_ | chr3);
+          }
+        }
+        ol += 3;
+      }
+      return LZString.decompress(output);
+    },
+    compressToUTF16: function (input) {
+      if (input == null)
+        return '';
+      var output = '', i, c, current, status = 0, f = LZString._f;
+      input = LZString.compress(input);
+      for (i = 0; i < input.length; i++) {
+        c = input.charCodeAt(i);
+        switch (status++) {
+        case 0:
+          output += f((c >> 1) + 32);
+          current = (c & 1) << 14;
+          break;
+        case 1:
+          output += f(current + (c >> 2) + 32);
+          current = (c & 3) << 13;
+          break;
+        case 2:
+          output += f(current + (c >> 3) + 32);
+          current = (c & 7) << 12;
+          break;
+        case 3:
+          output += f(current + (c >> 4) + 32);
+          current = (c & 15) << 11;
+          break;
+        case 4:
+          output += f(current + (c >> 5) + 32);
+          current = (c & 31) << 10;
+          break;
+        case 5:
+          output += f(current + (c >> 6) + 32);
+          current = (c & 63) << 9;
+          break;
+        case 6:
+          output += f(current + (c >> 7) + 32);
+          current = (c & 127) << 8;
+          break;
+        case 7:
+          output += f(current + (c >> 8) + 32);
+          current = (c & 255) << 7;
+          break;
+        case 8:
+          output += f(current + (c >> 9) + 32);
+          current = (c & 511) << 6;
+          break;
+        case 9:
+          output += f(current + (c >> 10) + 32);
+          current = (c & 1023) << 5;
+          break;
+        case 10:
+          output += f(current + (c >> 11) + 32);
+          current = (c & 2047) << 4;
+          break;
+        case 11:
+          output += f(current + (c >> 12) + 32);
+          current = (c & 4095) << 3;
+          break;
+        case 12:
+          output += f(current + (c >> 13) + 32);
+          current = (c & 8191) << 2;
+          break;
+        case 13:
+          output += f(current + (c >> 14) + 32);
+          current = (c & 16383) << 1;
+          break;
+        case 14:
+          output += f(current + (c >> 15) + 32, (c & 32767) + 32);
+          status = 0;
+          break;
+        }
+      }
+      return output + f(current + 32);
+    },
+    decompressFromUTF16: function (input) {
+      if (input == null)
+        return '';
+      var output = '', current, c, status = 0, i = 0, f = LZString._f;
+      while (i < input.length) {
+        c = input.charCodeAt(i) - 32;
+        switch (status++) {
+        case 0:
+          current = c << 1;
+          break;
+        case 1:
+          output += f(current | c >> 14);
+          current = (c & 16383) << 2;
+          break;
+        case 2:
+          output += f(current | c >> 13);
+          current = (c & 8191) << 3;
+          break;
+        case 3:
+          output += f(current | c >> 12);
+          current = (c & 4095) << 4;
+          break;
+        case 4:
+          output += f(current | c >> 11);
+          current = (c & 2047) << 5;
+          break;
+        case 5:
+          output += f(current | c >> 10);
+          current = (c & 1023) << 6;
+          break;
+        case 6:
+          output += f(current | c >> 9);
+          current = (c & 511) << 7;
+          break;
+        case 7:
+          output += f(current | c >> 8);
+          current = (c & 255) << 8;
+          break;
+        case 8:
+          output += f(current | c >> 7);
+          current = (c & 127) << 9;
+          break;
+        case 9:
+          output += f(current | c >> 6);
+          current = (c & 63) << 10;
+          break;
+        case 10:
+          output += f(current | c >> 5);
+          current = (c & 31) << 11;
+          break;
+        case 11:
+          output += f(current | c >> 4);
+          current = (c & 15) << 12;
+          break;
+        case 12:
+          output += f(current | c >> 3);
+          current = (c & 7) << 13;
+          break;
+        case 13:
+          output += f(current | c >> 2);
+          current = (c & 3) << 14;
+          break;
+        case 14:
+          output += f(current | c >> 1);
+          current = (c & 1) << 15;
+          break;
+        case 15:
+          output += f(current | c);
+          status = 0;
+          break;
+        }
+        i++;
+      }
+      return LZString.decompress(output);
+    },
+    compress: function (uncompressed) {
+      if (uncompressed == null)
+        return '';
+      var i, value, context_dictionary = {}, context_dictionaryToCreate = {}, context_c = '', context_wc = '', context_w = '', context_enlargeIn = 2, context_dictSize = 3, context_numBits = 2, context_data_string = '', context_data_val = 0, context_data_position = 0, ii, f = LZString._f;
+      for (ii = 0; ii < uncompressed.length; ii += 1) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
+          context_dictionary[context_c] = context_dictSize++;
+          context_dictionaryToCreate[context_c] = true;
+        }
+        context_wc = context_w + context_c;
+        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
+          context_w = context_wc;
+        } else {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+            if (context_w.charCodeAt(0) < 256) {
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = context_data_val << 1;
+                if (context_data_position == 15) {
+                  context_data_position = 0;
+                  context_data_string += f(context_data_val);
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 8; i++) {
+                context_data_val = context_data_val << 1 | value & 1;
+                if (context_data_position == 15) {
+                  context_data_position = 0;
+                  context_data_string += f(context_data_val);
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            } else {
+              value = 1;
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = context_data_val << 1 | value;
+                if (context_data_position == 15) {
+                  context_data_position = 0;
+                  context_data_string += f(context_data_val);
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = 0;
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 16; i++) {
+                context_data_val = context_data_val << 1 | value & 1;
+                if (context_data_position == 15) {
+                  context_data_position = 0;
+                  context_data_string += f(context_data_val);
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) {
+              context_enlargeIn = Math.pow(2, context_numBits);
+              context_numBits++;
+            }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = context_data_val << 1 | value & 1;
+              if (context_data_position == 15) {
+                context_data_position = 0;
+                context_data_string += f(context_data_val);
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          context_dictionary[context_wc] = context_dictSize++;
+          context_w = String(context_c);
+        }
+      }
+      if (context_w !== '') {
+        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+          if (context_w.charCodeAt(0) < 256) {
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = context_data_val << 1;
+              if (context_data_position == 15) {
+                context_data_position = 0;
+                context_data_string += f(context_data_val);
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+            }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 8; i++) {
+              context_data_val = context_data_val << 1 | value & 1;
+              if (context_data_position == 15) {
+                context_data_position = 0;
+                context_data_string += f(context_data_val);
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          } else {
+            value = 1;
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = context_data_val << 1 | value;
+              if (context_data_position == 15) {
+                context_data_position = 0;
+                context_data_string += f(context_data_val);
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = 0;
+            }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 16; i++) {
+              context_data_val = context_data_val << 1 | value & 1;
+              if (context_data_position == 15) {
+                context_data_position = 0;
+                context_data_string += f(context_data_val);
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          delete context_dictionaryToCreate[context_w];
+        } else {
+          value = context_dictionary[context_w];
+          for (i = 0; i < context_numBits; i++) {
+            context_data_val = context_data_val << 1 | value & 1;
+            if (context_data_position == 15) {
+              context_data_position = 0;
+              context_data_string += f(context_data_val);
+              context_data_val = 0;
+            } else {
+              context_data_position++;
+            }
+            value = value >> 1;
+          }
+        }
+        context_enlargeIn--;
+        if (context_enlargeIn == 0) {
+          context_enlargeIn = Math.pow(2, context_numBits);
+          context_numBits++;
+        }
+      }
+      value = 2;
+      for (i = 0; i < context_numBits; i++) {
+        context_data_val = context_data_val << 1 | value & 1;
+        if (context_data_position == 15) {
+          context_data_position = 0;
+          context_data_string += f(context_data_val);
+          context_data_val = 0;
+        } else {
+          context_data_position++;
+        }
+        value = value >> 1;
+      }
+      while (true) {
+        context_data_val = context_data_val << 1;
+        if (context_data_position == 15) {
+          context_data_string += f(context_data_val);
+          break;
+        } else
+          context_data_position++;
+      }
+      return context_data_string;
+    },
+    decompress: function (compressed) {
+      if (compressed == null)
+        return '';
+      if (compressed == '')
+        return null;
+      var dictionary = [], next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = '', result = '', i, w, bits, resb, maxpower, power, c, f = LZString._f, data = {
+          string: compressed,
+          val: compressed.charCodeAt(0),
+          position: 32768,
+          index: 1
+        };
+      for (i = 0; i < 3; i += 1) {
+        dictionary[i] = i;
+      }
+      bits = 0;
+      maxpower = Math.pow(2, 2);
+      power = 1;
+      while (power != maxpower) {
+        resb = data.val & data.position;
+        data.position >>= 1;
+        if (data.position == 0) {
+          data.position = 32768;
+          data.val = data.string.charCodeAt(data.index++);
+        }
+        bits |= (resb > 0 ? 1 : 0) * power;
+        power <<= 1;
+      }
+      switch (next = bits) {
+      case 0:
+        bits = 0;
+        maxpower = Math.pow(2, 8);
+        power = 1;
+        while (power != maxpower) {
+          resb = data.val & data.position;
+          data.position >>= 1;
+          if (data.position == 0) {
+            data.position = 32768;
+            data.val = data.string.charCodeAt(data.index++);
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power <<= 1;
+        }
+        c = f(bits);
+        break;
+      case 1:
+        bits = 0;
+        maxpower = Math.pow(2, 16);
+        power = 1;
+        while (power != maxpower) {
+          resb = data.val & data.position;
+          data.position >>= 1;
+          if (data.position == 0) {
+            data.position = 32768;
+            data.val = data.string.charCodeAt(data.index++);
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power <<= 1;
+        }
+        c = f(bits);
+        break;
+      case 2:
+        return '';
+      }
+      dictionary[3] = c;
+      w = result = c;
+      while (true) {
+        if (data.index > data.string.length) {
+          return '';
+        }
+        bits = 0;
+        maxpower = Math.pow(2, numBits);
+        power = 1;
+        while (power != maxpower) {
+          resb = data.val & data.position;
+          data.position >>= 1;
+          if (data.position == 0) {
+            data.position = 32768;
+            data.val = data.string.charCodeAt(data.index++);
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power <<= 1;
+        }
+        switch (c = bits) {
+        case 0:
+          bits = 0;
+          maxpower = Math.pow(2, 8);
+          power = 1;
+          while (power != maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position == 0) {
+              data.position = 32768;
+              data.val = data.string.charCodeAt(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          dictionary[dictSize++] = f(bits);
+          c = dictSize - 1;
+          enlargeIn--;
+          break;
+        case 1:
+          bits = 0;
+          maxpower = Math.pow(2, 16);
+          power = 1;
+          while (power != maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position == 0) {
+              data.position = 32768;
+              data.val = data.string.charCodeAt(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          dictionary[dictSize++] = f(bits);
+          c = dictSize - 1;
+          enlargeIn--;
+          break;
+        case 2:
+          return result;
+        }
+        if (enlargeIn == 0) {
+          enlargeIn = Math.pow(2, numBits);
+          numBits++;
+        }
+        if (dictionary[c]) {
+          entry = dictionary[c];
+        } else {
+          if (c === dictSize) {
+            entry = w + w.charAt(0);
+          } else {
+            return null;
+          }
+        }
+        result += entry;
+        dictionary[dictSize++] = w + entry.charAt(0);
+        enlargeIn--;
+        w = entry;
+        if (enlargeIn == 0) {
+          enlargeIn = Math.pow(2, numBits);
+          numBits++;
+        }
+      }
+    }
+  };
+if (typeof module !== 'undefined' && module != null) {
+  module.exports = LZString;
+}
 (function () {
   var MODULE_NAME, SLIDER_TAG, angularize, bindHtml, gap, halfWidth, hide, inputEvents, module, offset, offsetLeft, pixelize, qualifiedDirectiveDefinition, roundStep, show, sliderDirective, width;
   MODULE_NAME = 'uiSlider';
@@ -8469,6 +9088,9 @@ rangy.createModule('SaveRestore', function (api, module) {
     return element[0].offsetLeft;
   };
   width = function (element) {
+    console.log(element[0].offsetWidth);
+    console.log($(element[0]).width());
+    console.log(element[0]);
     return element[0].offsetWidth;
   };
   gap = function (element1, element2) {
@@ -8518,6 +9140,7 @@ rangy.createModule('SaveRestore', function (api, module) {
       },
       template: '<span class="bar"></span><span class="bar selection"></span><span class="pointer"></span><span class="pointer"></span><span class="bubble selection"></span><span ng-bind-html-unsafe="translate({value: floor})" class="bubble limit"></span><span ng-bind-html-unsafe="translate({value: ceiling})" class="bubble limit"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>',
       compile: function (element, attributes) {
+        console.log('COMPILE');
         var ceilBub, cmbBub, e, flrBub, fullBar, highBub, lowBub, maxPtr, minPtr, range, refHigh, refLow, selBar, selBub, watchables, _i, _len, _ref, _ref1;
         if (attributes.translate) {
           attributes.$set('translate', '' + attributes.translate + '(value)');
@@ -8525,7 +9148,9 @@ rangy.createModule('SaveRestore', function (api, module) {
         range = attributes.ngModel == null && (attributes.ngModelLow != null && attributes.ngModelHigh != null);
         _ref = function () {
           var _i, _len, _ref, _results;
-          _ref = element.children();
+          console.log(element);
+          _ref = $(element).children();
+          console.log(_ref);
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             e = _ref[_i];
@@ -8743,6 +9368,10 @@ rangy.createModule('SaveRestore', function (api, module) {
               w = watchables[_j];
               scope.$watch(w, updateDOM);
             }
+            scope.$on('modalOpened', function () {
+              console.log('in angular slider redraw');
+              updateDOM();
+            });
             return window.addEventListener('resize', updateDOM);
           }
         };
@@ -12322,73 +12951,1926 @@ angular.module('ui.bootstrap.modal', []).factory('$$stackedMap', function () {
     }
   ]);
 }(window, jQuery));
-var leafletDirective = angular.module('leaflet-directive', []);
-leafletDirective.directive('leaflet', [
-  '$http',
-  '$log',
-  '$parse',
-  '$rootScope',
-  function ($http, $log, $parse, $rootScope) {
-    var defaults = {
-        maxZoom: 16,
-        minZoom: 1,
-        doubleClickZoom: true,
-        scrollWheelZoom: true,
-        tileLayer: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        tileLayerOptions: { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
-        icon: {
-          url: 'http://cdn.leafletjs.com/leaflet-0.5.1/images/marker-icon.png',
-          retinaUrl: 'http://cdn.leafletjs.com/leaflet-0.5.1/images/marker-icon@2x.png',
-          size: [
-            25,
-            41
-          ],
-          anchor: [
-            12,
-            40
-          ],
-          popup: [
-            0,
-            -40
-          ],
-          shadow: {
-            url: 'http://cdn.leafletjs.com/leaflet-0.5.1/images/marker-shadow.png',
-            retinaUrl: 'http://cdn.leafletjs.com/leaflet-0.5.1/images/marker-shadow.png',
-            size: [
-              41,
-              41
-            ],
-            anchor: [
-              12,
-              40
-            ]
+(function () {
+  'use strict';
+  angular.module('leaflet-directive', []).directive('leaflet', [
+    '$q',
+    'leafletData',
+    'leafletMapDefaults',
+    'leafletHelpers',
+    'leafletEvents',
+    function ($q, leafletData, leafletMapDefaults, leafletHelpers, leafletEvents) {
+      var _leafletMap;
+      return {
+        restrict: 'EA',
+        replace: true,
+        scope: {
+          center: '=center',
+          defaults: '=defaults',
+          maxBounds: '=maxbounds',
+          bounds: '=bounds',
+          markers: '=markers',
+          legend: '=legend',
+          geojson: '=geojson',
+          paths: '=paths',
+          tiles: '=tiles',
+          layers: '=layers',
+          controls: '=controls',
+          eventBroadcast: '=eventBroadcast'
+        },
+        template: '<div class="angular-leaflet-map"></div>',
+        controller: [
+          '$scope',
+          function ($scope) {
+            _leafletMap = $q.defer();
+            this.getMap = function () {
+              return _leafletMap.promise;
+            };
+            this.getLeafletScope = function () {
+              return $scope;
+            };
           }
-        },
-        path: {
-          weight: 10,
-          opacity: 1,
-          color: '#0000ff'
-        },
-        center: {
-          lat: 0,
-          lng: 0,
-          zoom: 10
+        ],
+        link: function (scope, element, attrs) {
+          var isDefined = leafletHelpers.isDefined, defaults = leafletMapDefaults.setDefaults(scope.defaults, attrs.id), genDispatchMapEvent = leafletEvents.genDispatchMapEvent, mapEvents = leafletEvents.getAvailableMapEvents();
+          if (isDefined(scope.maxBounds)) {
+            defaults.minZoom = undefined;
+          }
+          if (isDefined(attrs.width)) {
+            if (isNaN(attrs.width)) {
+              element.css('width', attrs.width);
+            } else {
+              element.css('width', attrs.width + 'px');
+            }
+          }
+          if (isDefined(attrs.height)) {
+            if (isNaN(attrs.height)) {
+              element.css('height', attrs.height);
+            } else {
+              element.css('height', attrs.height + 'px');
+            }
+          }
+          var map = new L.Map(element[0], leafletMapDefaults.getMapCreationDefaults(attrs.id));
+          _leafletMap.resolve(map);
+          if (!isDefined(attrs.center)) {
+            map.setView([
+              defaults.center.lat,
+              defaults.center.lng
+            ], defaults.center.zoom);
+          }
+          if (!isDefined(attrs.tiles) && !isDefined(attrs.layers)) {
+            var tileLayerObj = L.tileLayer(defaults.tileLayer, defaults.tileLayerOptions);
+            tileLayerObj.addTo(map);
+            leafletData.setTiles(tileLayerObj);
+          }
+          if (isDefined(map.zoomControl) && isDefined(defaults.zoomControlPosition)) {
+            map.zoomControl.setPosition(defaults.zoomControlPosition);
+          }
+          if (isDefined(map.zoomControl) && defaults.zoomControl === false) {
+            map.zoomControl.removeFrom(map);
+          }
+          if (isDefined(map.zoomsliderControl) && isDefined(defaults.zoomsliderControl) && defaults.zoomsliderControl === false) {
+            map.zoomsliderControl.removeFrom(map);
+          }
+          if (!isDefined(attrs.eventBroadcast)) {
+            var logic = 'broadcast';
+            for (var i = 0; i < mapEvents.length; i++) {
+              var eventName = mapEvents[i];
+              map.on(eventName, genDispatchMapEvent(scope, eventName, logic), { eventName: eventName });
+            }
+          }
+          map.whenReady(function () {
+            leafletData.setMap(map, attrs.id);
+          });
         }
       };
-    var LeafletIcon = L.Icon.extend({
-        options: {
-          iconUrl: defaults.icon.url,
-          iconRetinaUrl: defaults.icon.retinaUrl,
-          iconSize: defaults.icon.size,
-          iconAnchor: defaults.icon.anchor,
-          popupAnchor: defaults.icon.popup,
-          shadowUrl: defaults.icon.shadow.url,
-          shadowRetinaUrl: defaults.icon.shadow.retinaUrl,
-          shadowSize: defaults.icon.shadow.size,
-          shadowAnchor: defaults.icon.shadow.anchor
+    }
+  ]);
+  angular.module('leaflet-directive').directive('center', [
+    '$log',
+    '$parse',
+    'leafletMapDefaults',
+    'leafletHelpers',
+    function ($log, $parse, leafletMapDefaults, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isDefined = leafletHelpers.isDefined, safeApply = leafletHelpers.safeApply, isValidCenter = leafletHelpers.isValidCenter, leafletScope = controller.getLeafletScope(), center = leafletScope.center;
+          controller.getMap().then(function (map) {
+            var defaults = leafletMapDefaults.getDefaults(attrs.id);
+            if (!isDefined(center)) {
+              map.setView([
+                defaults.center.lat,
+                defaults.center.lng
+              ], defaults.center.zoom);
+              return;
+            }
+            if (center.autoDiscover === true) {
+              map.locate({
+                setView: true,
+                maxZoom: defaults.maxZoom
+              });
+            }
+            var centerModel = {
+                lat: $parse('center.lat'),
+                lng: $parse('center.lng'),
+                zoom: $parse('center.zoom')
+              };
+            var movingMap = false;
+            leafletScope.$watch('center', function (center) {
+              if (!isValidCenter(center)) {
+                $log.warn('[AngularJS - Leaflet] invalid \'center\'');
+                map.setView([
+                  defaults.center.lat,
+                  defaults.center.lng
+                ], defaults.center.zoom);
+                return;
+              }
+              if (movingMap) {
+                return;
+              }
+              map.setView([
+                center.lat,
+                center.lng
+              ], center.zoom);
+            }, true);
+            map.on('movestart', function () {
+              movingMap = true;
+            });
+            map.on('moveend', function () {
+              movingMap = false;
+              safeApply(leafletScope, function (scope) {
+                if (centerModel) {
+                  centerModel.lat.assign(scope, map.getCenter().lat);
+                  centerModel.lng.assign(scope, map.getCenter().lng);
+                  centerModel.zoom.assign(scope, map.getZoom());
+                }
+              });
+            });
+          });
         }
-      });
-    var Helpers = {
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('tiles', [
+    '$log',
+    'leafletData',
+    'leafletMapDefaults',
+    'leafletHelpers',
+    function ($log, leafletData, leafletMapDefaults, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isDefined = leafletHelpers.isDefined, leafletScope = controller.getLeafletScope(), tiles = leafletScope.tiles;
+          if (!isDefined(tiles) && !isDefined(tiles.url)) {
+            $log.warn('[AngularJS - Leaflet] The \'tiles\' definition doesn\'t have the \'url\' property.');
+            return;
+          }
+          controller.getMap().then(function (map) {
+            var defaults = leafletMapDefaults.getDefaults(attrs.id);
+            var tileLayerObj;
+            leafletScope.$watch('tiles', function (tiles) {
+              var tileLayerOptions = defaults.tileLayerOptions;
+              var tileLayerUrl = defaults.tileLayer;
+              if (!isDefined(tiles.url) && isDefined(tileLayerObj)) {
+                map.removeLayer(tileLayerObj);
+                return;
+              }
+              if (!isDefined(tileLayerObj)) {
+                if (isDefined(tiles.options)) {
+                  angular.copy(tiles.options, tileLayerOptions);
+                }
+                if (isDefined(tiles.url)) {
+                  tileLayerUrl = tiles.url;
+                }
+                tileLayerObj = L.tileLayer(tileLayerUrl, tileLayerOptions);
+                tileLayerObj.addTo(map);
+                leafletData.setTiles(tileLayerObj, attrs.id);
+                return;
+              }
+              if (isDefined(tiles.url) && isDefined(tiles.options) && !angular.equals(tiles.options, tileLayerOptions)) {
+                map.removeLayer(tileLayerObj);
+                tileLayerOptions = defaults.tileLayerOptions;
+                angular.copy(tiles.options, tileLayerOptions);
+                tileLayerUrl = tiles.url;
+                tileLayerObj = L.tileLayer(tileLayerUrl, tileLayerOptions);
+                tileLayerObj.addTo(map);
+                leafletData.setTiles(tileLayerObj, attrs.id);
+                return;
+              }
+              if (isDefined(tiles.url)) {
+                tileLayerObj.setUrl(tiles.url);
+              }
+            }, true);
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('legend', [
+    '$log',
+    'leafletHelpers',
+    function ($log, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isArray = leafletHelpers.isArray, leafletScope = controller.getLeafletScope(), legend = leafletScope.legend;
+          controller.getMap().then(function (map) {
+            if (!isArray(legend.colors) || !isArray(legend.labels) || legend.colors.length !== legend.labels.length) {
+              $log.warn('[AngularJS - Leaflet] legend.colors and legend.labels must be set.');
+            } else {
+              var legendClass = legend.legendClass ? legend.legendClass : 'legend';
+              var position = legend.position || 'bottomright';
+              var leafletLegend = L.control({ position: position });
+              leafletLegend.onAdd = function () {
+                var div = L.DomUtil.create('div', legendClass);
+                for (var i = 0; i < legend.colors.length; i++) {
+                  div.innerHTML += '<div><i style="background:' + legend.colors[i] + '"></i>' + legend.labels[i] + '</div>';
+                }
+                return div;
+              };
+              leafletLegend.addTo(map);
+            }
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('geojson', [
+    '$log',
+    '$rootScope',
+    'leafletData',
+    'leafletHelpers',
+    function ($log, $rootScope, leafletData, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var safeApply = leafletHelpers.safeApply, isDefined = leafletHelpers.isDefined, leafletScope = controller.getLeafletScope(), leafletGeoJSON = {};
+          controller.getMap().then(function (map) {
+            leafletScope.$watch('geojson', function (geojson) {
+              if (isDefined(leafletGeoJSON) && map.hasLayer(leafletGeoJSON)) {
+                map.removeLayer(leafletGeoJSON);
+              }
+              if (!(isDefined(geojson) && isDefined(geojson.data))) {
+                return;
+              }
+              var resetStyleOnMouseout = geojson.resetStyleOnMouseout, onEachFeature = geojson.onEachFeature;
+              if (!onEachFeature) {
+                onEachFeature = function (feature, layer) {
+                  if (leafletHelpers.LabelPlugin.isLoaded() && isDefined(geojson.label)) {
+                    layer.bindLabel(feature.properties.description);
+                  }
+                  layer.on({
+                    mouseover: function (e) {
+                      safeApply(leafletScope, function () {
+                        geojson.selected = feature;
+                        $rootScope.$broadcast('leafletDirectiveMap.geojsonMouseover', e);
+                      });
+                    },
+                    mouseout: function (e) {
+                      if (resetStyleOnMouseout) {
+                        leafletGeoJSON.resetStyle(e.target);
+                      }
+                      safeApply(leafletScope, function () {
+                        geojson.selected = undefined;
+                        $rootScope.$broadcast('leafletDirectiveMap.geojsonMouseout', e);
+                      });
+                    },
+                    click: function (e) {
+                      safeApply(leafletScope, function () {
+                        $rootScope.$broadcast('leafletDirectiveMap.geojsonClick', geojson.selected, e);
+                      });
+                    }
+                  });
+                };
+              }
+              geojson.options = {
+                style: geojson.style,
+                onEachFeature: onEachFeature
+              };
+              leafletGeoJSON = L.geoJson(geojson.data, geojson.options);
+              leafletData.setGeoJSON(leafletGeoJSON);
+              leafletGeoJSON.addTo(map);
+            });
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('layers', [
+    '$log',
+    '$q',
+    'leafletData',
+    'leafletHelpers',
+    'leafletMapDefaults',
+    'leafletLayerHelpers',
+    function ($log, $q, leafletData, leafletHelpers, leafletMapDefaults, leafletLayerHelpers) {
+      var _leafletLayers;
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        controller: function () {
+          _leafletLayers = $q.defer();
+          this.getLayers = function () {
+            return _leafletLayers.promise;
+          };
+        },
+        link: function (scope, element, attrs, controller) {
+          var isDefined = leafletHelpers.isDefined, leafletLayers = {}, leafletScope = controller.getLeafletScope(), layers = leafletScope.layers, createLayer = leafletLayerHelpers.createLayer;
+          controller.getMap().then(function (map) {
+            var defaults = leafletMapDefaults.getDefaults(attrs.id);
+            if (!isDefined(layers) || !isDefined(layers.baselayers) || Object.keys(layers.baselayers).length === 0) {
+              $log.error('[AngularJS - Leaflet] At least one baselayer has to be defined');
+              return;
+            }
+            _leafletLayers.resolve(leafletLayers);
+            leafletData.setLayers(leafletLayers, attrs.id);
+            leafletLayers.baselayers = {};
+            leafletLayers.controls = {};
+            leafletLayers.controls.layers = new L.control.layers();
+            leafletLayers.controls.layers.setPosition(defaults.controlLayersPosition);
+            var top = false;
+            for (var layerName in layers.baselayers) {
+              var newBaseLayer = createLayer(layers.baselayers[layerName]);
+              if (!isDefined(newBaseLayer)) {
+                delete layers.baselayers[layerName];
+                continue;
+              }
+              leafletLayers.baselayers[layerName] = newBaseLayer;
+              if (layers.baselayers[layerName].top === true) {
+                map.addLayer(leafletLayers.baselayers[layerName]);
+                top = true;
+              }
+              leafletLayers.controls.layers.addBaseLayer(leafletLayers.baselayers[layerName], layers.baselayers[layerName].name);
+            }
+            if (Object.keys(layers.baselayers).length > 1) {
+              leafletLayers.controls.layers.addTo(map);
+            }
+            if (!top && Object.keys(leafletLayers.baselayers).length > 0) {
+              map.addLayer(leafletLayers.baselayers[Object.keys(layers.baselayers)[0]]);
+            }
+            leafletLayers.overlays = {};
+            for (layerName in layers.overlays) {
+              var newOverlayLayer = createLayer(layers.overlays[layerName]);
+              if (isDefined(newOverlayLayer)) {
+                leafletLayers.overlays[layerName] = newOverlayLayer;
+                if (layers.overlays[layerName].visible === true) {
+                  map.addLayer(leafletLayers.overlays[layerName]);
+                }
+                leafletLayers.controls.layers.addOverlay(leafletLayers.overlays[layerName], layers.overlays[layerName].name);
+              }
+            }
+            leafletScope.$watch('layers.baselayers', function (newBaseLayers) {
+              for (var name in leafletLayers.baselayers) {
+                if (!isDefined(newBaseLayers[name])) {
+                  leafletLayers.controls.layers.removeLayer(leafletLayers.baselayers[name]);
+                  if (map.hasLayer(leafletLayers.baselayers[name])) {
+                    map.removeLayer(leafletLayers.baselayers[name]);
+                  }
+                  delete leafletLayers.baselayers[name];
+                }
+              }
+              for (var new_name in newBaseLayers) {
+                if (!isDefined(leafletLayers.baselayers[new_name])) {
+                  var testBaseLayer = createLayer(newBaseLayers[new_name]);
+                  if (isDefined(testBaseLayer)) {
+                    leafletLayers.baselayers[new_name] = testBaseLayer;
+                    if (newBaseLayers[new_name].top === true) {
+                      map.addLayer(leafletLayers.baselayers[new_name]);
+                    }
+                    leafletLayers.controls.layers.addBaseLayer(leafletLayers.baselayers[new_name], newBaseLayers[new_name].name);
+                  }
+                }
+              }
+              if (Object.keys(leafletLayers.baselayers).length === 0) {
+                $log.error('[AngularJS - Leaflet] At least one baselayer has to be defined');
+                return;
+              }
+              var found = false;
+              for (var key in leafletLayers.baselayers) {
+                if (map.hasLayer(leafletLayers.baselayers[key])) {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                map.addLayer(leafletLayers.baselayers[Object.keys(layers.baselayers)[0]]);
+              }
+            }, true);
+            var overLayersNotVisible = {};
+            leafletScope.$watch('layers.overlays', function (newOverlayLayers) {
+              for (var name in leafletLayers.overlays) {
+                if (!isDefined(newOverlayLayers[name])) {
+                  leafletLayers.controls.layers.removeLayer(leafletLayers.overlays[name]);
+                  if (map.hasLayer(leafletLayers.overlays[name])) {
+                    map.removeLayer(leafletLayers.overlays[name]);
+                  }
+                  delete leafletLayers.overlays[name];
+                }
+              }
+              for (var new_name in newOverlayLayers) {
+                if (!isDefined(leafletLayers.overlays[new_name])) {
+                  var testOverlayLayer = createLayer(newOverlayLayers[new_name]);
+                  if (isDefined(testOverlayLayer)) {
+                    leafletLayers.overlays[new_name] = testOverlayLayer;
+                    leafletLayers.controls.layers.addOverlay(leafletLayers.overlays[new_name], newOverlayLayers[new_name].name);
+                    if (newOverlayLayers[new_name].visible === true) {
+                      map.addLayer(leafletLayers.overlays[new_name]);
+                    }
+                  }
+                }
+                if (newOverlayLayers[new_name].visible && !map.hasLayer(leafletLayers.overlays[new_name])) {
+                  if (overLayersNotVisible[new_name]) {
+                    map.addLayer(overLayersNotVisible[new_name]);
+                  } else {
+                    leafletLayers.controls.layers.addOverlay(leafletLayers.overlays[new_name], newOverlayLayers[new_name].name);
+                    map.addLayer(leafletLayers.overlays[new_name]);
+                  }
+                } else if (newOverlayLayers[new_name].visible === false && map.hasLayer(leafletLayers.overlays[new_name])) {
+                  overLayersNotVisible[new_name] = leafletLayers.overlays[new_name];
+                  map.removeLayer(leafletLayers.overlays[new_name]);
+                }
+              }
+            }, true);
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('bounds', [
+    '$log',
+    'leafletHelpers',
+    function ($log, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isDefined = leafletHelpers.isDefined, createLeafletBounds = leafletHelpers.createLeafletBounds, leafletScope = controller.getLeafletScope();
+          controller.getMap().then(function (map) {
+            function updateBoundsInScope() {
+              if (!leafletScope.bounds) {
+                return;
+              }
+              var mapBounds = map.getBounds();
+              var newScopeBounds = {
+                  northEast: {
+                    lat: mapBounds.getNorthEast().lat,
+                    lng: mapBounds.getNorthEast().lng
+                  },
+                  southWest: {
+                    lat: mapBounds.getSouthWest().lat,
+                    lng: mapBounds.getSouthWest().lng
+                  }
+                };
+              if (!angular.equals(leafletScope.bounds, newScopeBounds)) {
+                leafletScope.bounds = newScopeBounds;
+              }
+            }
+            function boundsListener(newBounds) {
+              if (!isDefined(newBounds)) {
+                $log.error('[AngularJS - Leaflet] Invalid bounds');
+                return;
+              }
+              var leafletBounds = createLeafletBounds(newBounds);
+              if (leafletBounds && !map.getBounds().equals(leafletBounds)) {
+                map.fitBounds(leafletBounds);
+              }
+            }
+            map.on('moveend', updateBoundsInScope);
+            map.on('dragend', updateBoundsInScope);
+            map.on('zoomend', updateBoundsInScope);
+            map.whenReady(function () {
+              leafletScope.$watch('bounds', boundsListener, true);
+            });
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('markers', [
+    '$log',
+    '$rootScope',
+    '$q',
+    'leafletData',
+    'leafletHelpers',
+    'leafletMapDefaults',
+    'leafletMarkerHelpers',
+    function ($log, $rootScope, $q, leafletData, leafletHelpers, leafletMapDefaults, leafletMarkerHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: [
+          'leaflet',
+          '?layers'
+        ],
+        link: function (scope, element, attrs, controller) {
+          var mapController = controller[0], isDefined = leafletHelpers.isDefined, leafletScope = mapController.getLeafletScope(), markers = leafletScope.markers, deleteMarker = leafletMarkerHelpers.deleteMarker, createMarker = leafletMarkerHelpers.createMarker;
+          mapController.getMap().then(function (map) {
+            var leafletMarkers = {}, groups = {}, getLayers;
+            if (isDefined(controller[1])) {
+              getLayers = controller[1].getLayers;
+            } else {
+              getLayers = function () {
+                var deferred = $q.defer();
+                deferred.resolve();
+                return deferred.promise;
+              };
+            }
+            if (!isDefined(markers)) {
+              $log.error('[AngularJS - Leaflet] Received an empty "markers" variable.');
+              return;
+            }
+            var shouldWatch = !isDefined(attrs.watchMarkers) || attrs.watchMarkers === 'true';
+            getLayers().then(function (layers) {
+              leafletData.setMarkers(leafletMarkers, attrs.id);
+              leafletScope.$watch('markers', function (newMarkers) {
+                for (var name in leafletMarkers) {
+                  if (!isDefined(newMarkers) || !isDefined(newMarkers[name])) {
+                    deleteMarker(map, leafletMarkers, layers, groups, name);
+                  }
+                }
+                for (var new_name in newMarkers) {
+                  if (!isDefined(leafletMarkers[new_name])) {
+                    var newMarker = createMarker('markers.' + new_name, newMarkers[new_name], leafletScope, map, layers, groups, shouldWatch);
+                    if (isDefined(newMarker)) {
+                      leafletMarkers[new_name] = newMarker;
+                    }
+                  }
+                }
+              }, shouldWatch);
+            });
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('paths', [
+    '$log',
+    'leafletData',
+    'leafletMapDefaults',
+    'leafletHelpers',
+    function ($log, leafletData, leafletMapDefaults, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isDefined = leafletHelpers.isDefined, leafletScope = controller.getLeafletScope(), paths = leafletScope.paths, convertToLeafletLatLng = leafletHelpers.convertToLeafletLatLng, convertToLeafletLatLngs = leafletHelpers.convertToLeafletLatLngs, convertToLeafletMultiLatLngs = leafletHelpers.convertToLeafletMultiLatLngs;
+          controller.getMap().then(function (map) {
+            var defaults = leafletMapDefaults.getDefaults(attrs.id);
+            if (!isDefined(paths)) {
+              return;
+            }
+            var leafletPaths = {};
+            leafletData.setPaths(leafletPaths, attrs.id);
+            scope.$watch('paths', function (newPaths) {
+              for (var new_name in newPaths) {
+                if (!isDefined(leafletPaths[new_name])) {
+                  leafletPaths[new_name] = createPath(new_name, newPaths[new_name], map, defaults);
+                }
+              }
+              for (var name in leafletPaths) {
+                if (!isDefined(newPaths[name])) {
+                  delete leafletPaths[name];
+                }
+              }
+            }, true);
+            function createPath(name, scopePath, map, defaults) {
+              var path;
+              var options = {
+                  weight: defaults.path.weight,
+                  color: defaults.path.color,
+                  opacity: defaults.path.opacity
+                };
+              if (isDefined(scopePath.stroke)) {
+                options.stroke = scopePath.stroke;
+              }
+              if (isDefined(scopePath.fill)) {
+                options.fill = scopePath.fill;
+              }
+              if (isDefined(scopePath.fillColor)) {
+                options.fillColor = scopePath.fillColor;
+              }
+              if (isDefined(scopePath.fillOpacity)) {
+                options.fillOpacity = scopePath.fillOpacity;
+              }
+              if (isDefined(scopePath.smoothFactor)) {
+                options.smoothFactor = scopePath.smoothFactor;
+              }
+              if (isDefined(scopePath.noClip)) {
+                options.noClip = scopePath.noClip;
+              }
+              if (!isDefined(scopePath.type)) {
+                scopePath.type = 'polyline';
+              }
+              function setPathOptions(data) {
+                if (isDefined(data.latlngs)) {
+                  switch (data.type) {
+                  default:
+                  case 'polyline':
+                  case 'polygon':
+                    path.setLatLngs(convertToLeafletLatLngs(data.latlngs));
+                    break;
+                  case 'multiPolyline':
+                  case 'multiPolygon':
+                    path.setLatLngs(convertToLeafletMultiLatLngs(data.latlngs));
+                    break;
+                  case 'rectangle':
+                    path.setBounds(new L.LatLngBounds(convertToLeafletLatLngs(data.latlngs)));
+                    break;
+                  case 'circle':
+                  case 'circleMarker':
+                    path.setLatLng(convertToLeafletLatLng(data.latlngs));
+                    if (isDefined(data.radius)) {
+                      path.setRadius(data.radius);
+                    }
+                    break;
+                  }
+                }
+                if (isDefined(data.weight)) {
+                  path.setStyle({ weight: data.weight });
+                }
+                if (isDefined(data.color)) {
+                  path.setStyle({ color: data.color });
+                }
+                if (isDefined(data.opacity)) {
+                  path.setStyle({ opacity: data.opacity });
+                }
+              }
+              switch (scopePath.type) {
+              default:
+              case 'polyline':
+                path = new L.Polyline([], options);
+                break;
+              case 'multiPolyline':
+                path = new L.multiPolyline([[
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ]
+                  ]], options);
+                break;
+              case 'polygon':
+                path = new L.Polygon([], options);
+                break;
+              case 'multiPolygon':
+                path = new L.MultiPolygon([[
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      0,
+                      1
+                    ]
+                  ]], options);
+                break;
+              case 'rectangle':
+                path = new L.Rectangle([
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ], options);
+                break;
+              case 'circle':
+                path = new L.Circle([
+                  0,
+                  0
+                ], 1, options);
+                break;
+              case 'circleMarker':
+                path = new L.CircleMarker([
+                  0,
+                  0
+                ], options);
+                break;
+              }
+              map.addLayer(path);
+              var clearWatch = scope.$watch('paths.' + name, function (data) {
+                  if (!isDefined(data)) {
+                    map.removeLayer(path);
+                    clearWatch();
+                    return;
+                  }
+                  setPathOptions(data);
+                }, true);
+              return path;
+            }
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('controls', [
+    '$log',
+    'leafletHelpers',
+    function ($log, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: '?^leaflet',
+        link: function (scope, element, attrs, controller) {
+          if (!controller) {
+            return;
+          }
+          var isDefined = leafletHelpers.isDefined, leafletScope = controller.getLeafletScope(), controls = leafletScope.controls;
+          controller.getMap().then(function (map) {
+            if (isDefined(L.Control.Draw) && isDefined(controls.draw)) {
+              var drawControl = new L.Control.Draw(controls.draw.options);
+              map.addControl(drawControl);
+            }
+            if (isDefined(controls.custom)) {
+              for (var i = 0; i < controls.custom.length; i++) {
+                map.addControl(controls.custom[i]);
+              }
+            }
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('eventBroadcast', [
+    '$log',
+    '$rootScope',
+    'leafletHelpers',
+    'leafletEvents',
+    function ($log, $rootScope, leafletHelpers, leafletEvents) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var isObject = leafletHelpers.isObject, leafletScope = controller.getLeafletScope(), eventBroadcast = leafletScope.eventBroadcast, availableMapEvents = leafletEvents.getAvailableMapEvents(), genDispatchMapEvent = leafletEvents.genDispatchMapEvent;
+          controller.getMap().then(function (map) {
+            var mapEvents = [];
+            var i;
+            var eventName;
+            var logic = 'broadcast';
+            if (isObject(eventBroadcast)) {
+              if (eventBroadcast.map === undefined || eventBroadcast.map === null) {
+                mapEvents = availableMapEvents;
+              } else if (typeof eventBroadcast.map !== 'object') {
+                $log.warn('[AngularJS - Leaflet] event-broadcast.map must be an object check your model.');
+              } else {
+                if (eventBroadcast.map.logic !== undefined && eventBroadcast.map.logic !== null) {
+                  if (eventBroadcast.map.logic !== 'emit' && eventBroadcast.map.logic !== 'broadcast') {
+                    $log.warn('[AngularJS - Leaflet] Available event propagation logic are: \'emit\' or \'broadcast\'.');
+                  } else if (eventBroadcast.map.logic === 'emit') {
+                    logic = 'emit';
+                  }
+                }
+                var mapEventsEnable = false, mapEventsDisable = false;
+                if (eventBroadcast.map.enable !== undefined && eventBroadcast.map.enable !== null) {
+                  if (typeof eventBroadcast.map.enable === 'object') {
+                    mapEventsEnable = true;
+                  }
+                }
+                if (eventBroadcast.map.disable !== undefined && eventBroadcast.map.disable !== null) {
+                  if (typeof eventBroadcast.map.disable === 'object') {
+                    mapEventsDisable = true;
+                  }
+                }
+                if (mapEventsEnable && mapEventsDisable) {
+                  $log.warn('[AngularJS - Leaflet] can not enable and disable events at the time');
+                } else if (!mapEventsEnable && !mapEventsDisable) {
+                  $log.warn('[AngularJS - Leaflet] must enable or disable events');
+                } else {
+                  if (mapEventsEnable) {
+                    for (i = 0; i < eventBroadcast.map.enable.length; i++) {
+                      eventName = eventBroadcast.map.enable[i];
+                      if (mapEvents.indexOf(eventName) !== -1) {
+                        $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' is already enabled');
+                      } else {
+                        if (availableMapEvents.indexOf(eventName) === -1) {
+                          $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' does not exist');
+                        } else {
+                          mapEvents.push(eventName);
+                        }
+                      }
+                    }
+                  } else {
+                    mapEvents = availableMapEvents;
+                    for (i = 0; i < eventBroadcast.map.disable.length; i++) {
+                      eventName = eventBroadcast.map.disable[i];
+                      var index = mapEvents.indexOf(eventName);
+                      if (index === -1) {
+                        $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' does not exist or has been already disabled');
+                      } else {
+                        mapEvents.splice(index, 1);
+                      }
+                    }
+                  }
+                }
+              }
+              for (i = 0; i < mapEvents.length; i++) {
+                eventName = mapEvents[i];
+                map.on(eventName, genDispatchMapEvent(leafletScope, eventName, logic), { eventName: eventName });
+              }
+            } else {
+              $log.warn('[AngularJS - Leaflet] event-broadcast must be an object, check your model.');
+            }
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').directive('maxbounds', [
+    '$log',
+    'leafletMapDefaults',
+    'leafletHelpers',
+    function ($log, leafletMapDefaults, leafletHelpers) {
+      return {
+        restrict: 'A',
+        scope: false,
+        replace: false,
+        require: 'leaflet',
+        link: function (scope, element, attrs, controller) {
+          var leafletScope = controller.getLeafletScope(), isValidBounds = leafletHelpers.isValidBounds;
+          controller.getMap().then(function (map) {
+            leafletScope.$watch('maxBounds', function (maxBounds) {
+              if (!isValidBounds(maxBounds)) {
+                map.setMaxBounds();
+                return;
+              }
+              map.setMaxBounds(new L.LatLngBounds(new L.LatLng(maxBounds.southWest.lat, maxBounds.southWest.lng), new L.LatLng(maxBounds.northEast.lat, maxBounds.northEast.lng)), maxBounds.options);
+            });
+          });
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').service('leafletData', [
+    '$log',
+    '$q',
+    'leafletHelpers',
+    function ($log, $q, leafletHelpers) {
+      var getDefer = leafletHelpers.getDefer, getUnresolvedDefer = leafletHelpers.getUnresolvedDefer, setResolvedDefer = leafletHelpers.setResolvedDefer;
+      var maps = {};
+      var tiles = {};
+      var layers = {};
+      var paths = {};
+      var markers = {};
+      var geoJSON = {};
+      this.setMap = function (leafletMap, scopeId) {
+        var defer = getUnresolvedDefer(maps, scopeId);
+        defer.resolve(leafletMap);
+        setResolvedDefer(maps, scopeId);
+      };
+      this.getMap = function (scopeId) {
+        var defer = getDefer(maps, scopeId);
+        return defer.promise;
+      };
+      this.getPaths = function (scopeId) {
+        var defer = getDefer(paths, scopeId);
+        return defer.promise;
+      };
+      this.setPaths = function (leafletPaths, scopeId) {
+        var defer = getUnresolvedDefer(paths, scopeId);
+        defer.resolve(leafletPaths);
+        setResolvedDefer(paths, scopeId);
+      };
+      this.getMarkers = function (scopeId) {
+        var defer = getDefer(markers, scopeId);
+        return defer.promise;
+      };
+      this.setMarkers = function (leafletMarkers, scopeId) {
+        var defer = getUnresolvedDefer(markers, scopeId);
+        defer.resolve(leafletMarkers);
+        setResolvedDefer(markers, scopeId);
+      };
+      this.getLayers = function (scopeId) {
+        var defer = getDefer(layers, scopeId);
+        return defer.promise;
+      };
+      this.setLayers = function (leafletLayers, scopeId) {
+        var defer = getUnresolvedDefer(layers, scopeId);
+        defer.resolve(leafletLayers);
+        setResolvedDefer(layers, scopeId);
+      };
+      this.setTiles = function (leafletTiles, scopeId) {
+        var defer = getUnresolvedDefer(tiles, scopeId);
+        defer.resolve(leafletTiles);
+        setResolvedDefer(tiles, scopeId);
+      };
+      this.getTiles = function (scopeId) {
+        var defer = getDefer(tiles, scopeId);
+        return defer.promise;
+      };
+      this.setGeoJSON = function (leafletGeoJSON, scopeId) {
+        var defer = getUnresolvedDefer(geoJSON, scopeId);
+        defer.resolve(leafletGeoJSON);
+        setResolvedDefer(geoJSON, scopeId);
+      };
+      this.getGeoJSON = function (scopeId) {
+        var defer = getDefer(geoJSON, scopeId);
+        return defer.promise;
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').factory('leafletMapDefaults', [
+    'leafletHelpers',
+    function (leafletHelpers) {
+      function _getDefaults() {
+        return {
+          keyboard: true,
+          dragging: true,
+          worldCopyJump: false,
+          doubleClickZoom: true,
+          scrollWheelZoom: true,
+          zoomControl: true,
+          zoomsliderControl: false,
+          zoomControlPosition: 'topleft',
+          attributionControl: true,
+          layercontrol: {
+            position: 'topright',
+            control: L.control.layers,
+            collapsed: true
+          },
+          controlLayersPosition: 'topright',
+          crs: L.CRS.EPSG3857,
+          tileLayer: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          tileLayerOptions: { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+          path: {
+            weight: 10,
+            opacity: 1,
+            color: '#0000ff'
+          },
+          center: {
+            lat: 0,
+            lng: 0,
+            zoom: 1
+          }
+        };
+      }
+      var isDefined = leafletHelpers.isDefined, obtainEffectiveMapId = leafletHelpers.obtainEffectiveMapId, defaults = {};
+      return {
+        getDefaults: function (scopeId) {
+          var mapId = obtainEffectiveMapId(defaults, scopeId);
+          return defaults[mapId];
+        },
+        getMapCreationDefaults: function (scopeId) {
+          var mapId = obtainEffectiveMapId(defaults, scopeId);
+          var d = defaults[mapId];
+          var mapDefaults = {
+              maxZoom: d.maxZoom,
+              minZoom: d.minZoom,
+              keyboard: d.keyboard,
+              dragging: d.dragging,
+              zoomControl: d.zoomControl,
+              doubleClickZoom: d.doubleClickZoom,
+              scrollWheelZoom: d.scrollWheelZoom,
+              attributionControl: d.attributionControl,
+              worldCopyJump: d.worldCopyJump,
+              crs: d.crs
+            };
+          if (isDefined(d.zoomAnimation)) {
+            mapDefaults.zoomAnimation = d.zoomAnimation;
+          }
+          if (isDefined(d.fadeAnimation)) {
+            mapDefaults.fadeAnimation = d.fadeAnimation;
+          }
+          if (isDefined(d.markerZoomAnimation)) {
+            mapDefaults.markerZoomAnimation = d.markerZoomAnimation;
+          }
+          return mapDefaults;
+        },
+        setDefaults: function (userDefaults, scopeId) {
+          var newDefaults = _getDefaults();
+          if (isDefined(userDefaults)) {
+            newDefaults.doubleClickZoom = isDefined(userDefaults.doubleClickZoom) ? userDefaults.doubleClickZoom : newDefaults.doubleClickZoom;
+            newDefaults.scrollWheelZoom = isDefined(userDefaults.scrollWheelZoom) ? userDefaults.scrollWheelZoom : newDefaults.doubleClickZoom;
+            newDefaults.zoomControl = isDefined(userDefaults.zoomControl) ? userDefaults.zoomControl : newDefaults.zoomControl;
+            newDefaults.zoomsliderControl = isDefined(userDefaults.zoomsliderControl) ? userDefaults.zoomsliderControl : newDefaults.zoomsliderControl;
+            newDefaults.attributionControl = isDefined(userDefaults.attributionControl) ? userDefaults.attributionControl : newDefaults.attributionControl;
+            newDefaults.tileLayer = isDefined(userDefaults.tileLayer) ? userDefaults.tileLayer : newDefaults.tileLayer;
+            newDefaults.zoomControlPosition = isDefined(userDefaults.zoomControlPosition) ? userDefaults.zoomControlPosition : newDefaults.zoomControlPosition;
+            newDefaults.keyboard = isDefined(userDefaults.keyboard) ? userDefaults.keyboard : newDefaults.keyboard;
+            newDefaults.dragging = isDefined(userDefaults.dragging) ? userDefaults.dragging : newDefaults.dragging;
+            newDefaults.controlLayersPosition = isDefined(userDefaults.controlLayersPosition) ? userDefaults.controlLayersPosition : newDefaults.controlLayersPosition;
+            if (isDefined(userDefaults.crs) && isDefined(L.CRS[userDefaults.crs])) {
+              newDefaults.crs = L.CRS[userDefaults.crs];
+            }
+            if (isDefined(userDefaults.tileLayerOptions)) {
+              angular.copy(userDefaults.tileLayerOptions, newDefaults.tileLayerOptions);
+            }
+            if (isDefined(userDefaults.maxZoom)) {
+              newDefaults.maxZoom = userDefaults.maxZoom;
+            }
+            if (isDefined(userDefaults.minZoom)) {
+              newDefaults.minZoom = userDefaults.minZoom;
+            }
+            if (isDefined(userDefaults.zoomAnimation)) {
+              newDefaults.zoomAnimation = userDefaults.zoomAnimation;
+            }
+            if (isDefined(userDefaults.fadeAnimation)) {
+              newDefaults.fadeAnimation = userDefaults.fadeAnimation;
+            }
+            if (isDefined(userDefaults.markerZoomAnimation)) {
+              newDefaults.markerZoomAnimation = userDefaults.markerZoomAnimation;
+            }
+            if (isDefined(userDefaults.worldCopyJump)) {
+              newDefaults.worldCopyJump = userDefaults.worldCopyJump;
+            }
+          }
+          var mapId = obtainEffectiveMapId(defaults, scopeId);
+          defaults[mapId] = newDefaults;
+          return newDefaults;
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').factory('leafletEvents', [
+    '$rootScope',
+    '$q',
+    'leafletHelpers',
+    function ($rootScope, $q, leafletHelpers) {
+      var safeApply = leafletHelpers.safeApply;
+      return {
+        getAvailableMapEvents: function () {
+          return [
+            'click',
+            'dblclick',
+            'mousedown',
+            'mouseup',
+            'mouseover',
+            'mouseout',
+            'mousemove',
+            'contextmenu',
+            'focus',
+            'blur',
+            'preclick',
+            'load',
+            'unload',
+            'viewreset',
+            'movestart',
+            'move',
+            'moveend',
+            'dragstart',
+            'drag',
+            'dragend',
+            'zoomstart',
+            'zoomend',
+            'zoomlevelschange',
+            'resize',
+            'autopanstart',
+            'layeradd',
+            'layerremove',
+            'baselayerchange',
+            'overlayadd',
+            'overlayremove',
+            'locationfound',
+            'locationerror',
+            'popupopen',
+            'popupclose'
+          ];
+        },
+        genDispatchMapEvent: function (scope, eventName, logic) {
+          return function (e) {
+            var broadcastName = 'leafletDirectiveMap.' + eventName;
+            safeApply(scope, function (scope) {
+              if (logic === 'emit') {
+                scope.$emit(broadcastName, { leafletEvent: e });
+              } else if (logic === 'broadcast') {
+                $rootScope.$broadcast(broadcastName, { leafletEvent: e });
+              }
+            });
+          };
+        },
+        getAvailableMarkerEvents: function () {
+          return [
+            'click',
+            'dblclick',
+            'mousedown',
+            'mouseover',
+            'mouseout',
+            'contextmenu',
+            'dragstart',
+            'drag',
+            'dragend',
+            'move',
+            'remove',
+            'popupopen',
+            'popupclose'
+          ];
+        },
+        genDispatchMarkerEvent: function (scope, eventName, logic, markerName) {
+          return function (e) {
+            var broadcastName = 'leafletDirectiveMarker.' + eventName;
+            safeApply(scope, function (scope) {
+              if (logic === 'emit') {
+                scope.$emit(broadcastName, {
+                  leafletEvent: e,
+                  markerName: markerName
+                });
+              } else if (logic === 'broadcast') {
+                $rootScope.$broadcast(broadcastName, {
+                  leafletEvent: e,
+                  markerName: markerName
+                });
+              }
+            });
+          };
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').factory('leafletLayerHelpers', [
+    '$rootScope',
+    '$log',
+    'leafletHelpers',
+    function ($rootScope, $log, leafletHelpers) {
+      var Helpers = leafletHelpers, isString = leafletHelpers.isString, isObject = leafletHelpers.isObject, isDefined = leafletHelpers.isDefined;
+      var layerTypes = {
+          xyz: {
+            mustHaveUrl: true,
+            createLayer: function (params) {
+              return L.tileLayer(params.url, params.options);
+            }
+          },
+          wms: {
+            mustHaveUrl: true,
+            createLayer: function (params) {
+              return L.tileLayer.wms(params.url, params.options);
+            }
+          },
+          wfs: {
+            mustHaveUrl: true,
+            mustHaveLayer: true,
+            createLayer: function (params) {
+              if (!Helpers.WFSLayerPlugin.isLoaded()) {
+                return;
+              }
+              var options = angular.copy(params.options);
+              if (options.crs && 'string' === typeof options.crs) {
+                options.crs = eval(options.crs);
+              }
+              return new L.GeoJSON.WFS(params.url, params.layer, options);
+            }
+          },
+          group: {
+            mustHaveUrl: false,
+            createLayer: function () {
+              return L.layerGroup();
+            }
+          },
+          google: {
+            mustHaveUrl: false,
+            createLayer: function (params) {
+              var type = params.type || 'SATELLITE';
+              if (!Helpers.GoogleLayerPlugin.isLoaded()) {
+                return;
+              }
+              return new L.Google(type, params.options);
+            }
+          },
+          ags: {
+            mustHaveUrl: true,
+            createLayer: function (params) {
+              if (!Helpers.AGSLayerPlugin.isLoaded()) {
+                return;
+              }
+              var options = angular.copy(params.options);
+              angular.extend(options, { url: params.url });
+              var layer = new lvector.AGS(options);
+              layer.onAdd = function (map) {
+                this.setMap(map);
+              };
+              layer.onRemove = function () {
+                this.setMap(null);
+              };
+              return layer;
+            }
+          },
+          dynamic: {
+            mustHaveUrl: true,
+            createLayer: function (params) {
+              if (!Helpers.DynamicMapLayerPlugin.isLoaded()) {
+                return;
+              }
+              return L.esri.dynamicMapLayer(params.url, params.options);
+            }
+          },
+          markercluster: {
+            mustHaveUrl: false,
+            createLayer: function (params) {
+              if (!Helpers.MarkerClusterPlugin.isLoaded()) {
+                return;
+              }
+              return new L.MarkerClusterGroup(params.options);
+            }
+          },
+          bing: {
+            mustHaveUrl: true,
+            createLayer: function (params) {
+              if (!Helpers.BingLayerPlugin.isLoaded()) {
+                return;
+              }
+              return new L.BingLayer(params.key, params.options);
+            }
+          },
+          imageOverlay: {
+            mustHaveUrl: true,
+            mustHaveBounds: true,
+            createLayer: function (params) {
+              return L.imageOverlay(params.url, params.bounds, params.options);
+            }
+          }
+        };
+      function isValidLayerType(layerDefinition) {
+        if (!isString(layerDefinition.type)) {
+          return false;
+        }
+        if (Object.keys(layerTypes).indexOf(layerDefinition.type) === -1) {
+          $log.error('[AngularJS - Leaflet] A layer must have a valid type: ' + Object.keys(layerTypes));
+          return false;
+        }
+        if (layerTypes[layerDefinition.type].mustHaveUrl && !isString(layerDefinition.url)) {
+          $log.error('[AngularJS - Leaflet] A base layer must have an url');
+          return false;
+        }
+        if (layerTypes[layerDefinition.type].mustHaveLayer && !isDefined(layerDefinition.layer)) {
+          $log.error('[AngularJS - Leaflet] The type of layer ' + layerDefinition.type + ' must have an layer defined');
+          return false;
+        }
+        if (layerTypes[layerDefinition.type].mustHaveBounds && !isDefined(layerDefinition.bounds)) {
+          $log.error('[AngularJS - Leaflet] The type of layer ' + layerDefinition.type + ' must have bounds defined');
+          return false;
+        }
+        return true;
+      }
+      return {
+        createLayer: function (layerDefinition) {
+          if (!isValidLayerType(layerDefinition)) {
+            return;
+          }
+          if (!isString(layerDefinition.name)) {
+            $log.error('[AngularJS - Leaflet] A base layer must have a name');
+            return;
+          }
+          if (!isObject(layerDefinition.layerParams)) {
+            layerDefinition.layerParams = {};
+          }
+          if (!isObject(layerDefinition.layerOptions)) {
+            layerDefinition.layerOptions = {};
+          }
+          for (var attrname in layerDefinition.layerParams) {
+            layerDefinition.layerOptions[attrname] = layerDefinition.layerParams[attrname];
+          }
+          var params = {
+              url: layerDefinition.url,
+              options: layerDefinition.layerOptions,
+              layer: layerDefinition.layer,
+              type: layerDefinition.layerType,
+              bounds: layerDefinition.bounds,
+              key: layerDefinition.key
+            };
+          return layerTypes[layerDefinition.type].createLayer(params);
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').factory('leafletMarkerHelpers', [
+    '$rootScope',
+    'leafletHelpers',
+    '$log',
+    'leafletEvents',
+    function ($rootScope, leafletHelpers, $log, leafletEvents) {
+      var isDefined = leafletHelpers.isDefined, Helpers = leafletHelpers, MarkerClusterPlugin = leafletHelpers.MarkerClusterPlugin, isString = leafletHelpers.isString, isNumber = leafletHelpers.isNumber, isObject = leafletHelpers.isObject, safeApply = leafletHelpers.safeApply, availableMarkerEvents = leafletEvents.getAvailableMarkerEvents();
+      var LeafletDefaultIcon = L.Icon.extend({
+          options: {
+            iconUrl: 'http://cdn.leafletjs.com/leaflet-0.7/images/marker-icon.png',
+            iconRetinaUrl: 'http://cdn.leafletjs.com/leaflet-0.7/images/marker-icon-2x.png',
+            iconSize: [
+              25,
+              41
+            ],
+            iconAnchor: [
+              12,
+              40
+            ],
+            labelAnchor: [
+              10,
+              -20
+            ],
+            popupAnchor: [
+              0,
+              -40
+            ],
+            shadow: {
+              url: 'http://cdn.leafletjs.com/leaflet-0.7/images/marker-shadow.png',
+              retinaUrl: 'http://cdn.leafletjs.com/leaflet-0.7/images/marker-shadow.png',
+              size: [
+                41,
+                41
+              ],
+              anchor: [
+                12,
+                40
+              ]
+            }
+          }
+        });
+      var getLeafletIcon = function (data) {
+        return new LeafletDefaultIcon(data);
+      };
+      var buildMarker = function (data) {
+        if (!isDefined(data)) {
+          return;
+        }
+        var micon = null;
+        if (data.icon) {
+          micon = data.icon;
+        } else {
+          micon = getLeafletIcon();
+        }
+        var moptions = {
+            icon: micon,
+            draggable: data.draggable ? true : false,
+            clickable: isDefined(data.clickable) ? data.clickable : true,
+            riseOnHover: isDefined(data.riseOnHover) ? data.riseOnHover : false
+          };
+        if (data.title) {
+          moptions.title = data.title;
+        }
+        var marker = new L.marker(data, moptions);
+        if (data.message) {
+          marker.bindPopup(data.message);
+        }
+        if (Helpers.LabelPlugin.isLoaded() && isDefined(data.label) && isDefined(data.label.message)) {
+          marker.bindLabel(data.label.message, data.label.options);
+        }
+        return marker;
+      };
+      var genDispatchEventCB = function (eventName, logic, scope_watch_name, leafletScope, marker, marker_data) {
+        return function (e) {
+          var broadcastName = 'leafletDirectiveMarker.' + eventName;
+          var markerName = scope_watch_name.replace('markers.', '');
+          if (eventName === 'click') {
+            safeApply(leafletScope, function () {
+              $rootScope.$broadcast('leafletDirectiveMarkersClick', markerName);
+            });
+          } else if (eventName === 'dragend') {
+            safeApply(leafletScope, function () {
+              marker_data.lat = marker.getLatLng().lat;
+              marker_data.lng = marker.getLatLng().lng;
+            });
+            if (marker_data.message) {
+              if (marker_data.focus === true) {
+                marker.openPopup();
+              }
+            }
+          }
+          safeApply(leafletScope, function (scope) {
+            if (logic === 'emit') {
+              scope.$emit(broadcastName, {
+                markerName: markerName,
+                leafletEvent: e
+              });
+            } else {
+              $rootScope.$broadcast(broadcastName, {
+                markerName: markerName,
+                leafletEvent: e
+              });
+            }
+          });
+        };
+      };
+      return {
+        getLeafletIcon: getLeafletIcon,
+        deleteMarker: function (map, leafletMarkers, layers, groups, name) {
+          var marker = leafletMarkers[name];
+          if (isDefined(layers) && isDefined(layers.overlays)) {
+            for (var key in layers.overlays) {
+              if (layers.overlays[key] instanceof L.LayerGroup) {
+                if (layers.overlays[key].hasLayer(marker)) {
+                  layers.overlays[key].removeLayer(marker);
+                }
+              }
+            }
+          }
+          if (isDefined(groups)) {
+            for (var groupKey in groups) {
+              if (groups[groupKey].hasLayer(marker)) {
+                groups[groupKey].removeLayer(marker);
+              }
+            }
+          }
+          map.removeLayer(marker);
+          delete leafletMarkers[name];
+        },
+        createMarker: function (scope_watch_name, marker_data, leafletScope, map, layers, groups, shouldWatch) {
+          var marker = buildMarker(marker_data);
+          if (!isDefined(marker)) {
+            return;
+          }
+          if (isDefined(marker_data.layer) && !isString(marker_data.layer)) {
+            $log.error('[AngularJS - Leaflet] A layername must be a string');
+            return;
+          }
+          if (!isDefined(marker_data.layer)) {
+            if (isDefined(marker_data.group)) {
+              if (!MarkerClusterPlugin.isLoaded()) {
+                $log.error('[AngularJS - Leaflet] The MarkerCluster plugin is not loaded.');
+                return;
+              }
+              if (!isDefined(groups[marker_data.group])) {
+                groups[marker_data.group] = new L.MarkerClusterGroup();
+                map.addLayer(groups[marker_data.group]);
+              }
+              groups[marker_data.group].addLayer(marker);
+            } else {
+              map.addLayer(marker);
+            }
+            if (Helpers.LabelPlugin.isLoaded() && isDefined(marker_data.label) && isDefined(marker_data.label.options) && marker_data.label.options.noHide === true) {
+              marker.showLabel();
+            }
+            if (marker_data.focus === true) {
+              marker.openPopup();
+            }
+          } else {
+            if (!isDefined(layers)) {
+              $log.error('[AngularJS - Leaflet] You must add layers to the directive if used in a marker');
+              return;
+            }
+            if (!isDefined(layers.overlays)) {
+              $log.error('[AngularJS - Leaflet] You must add layers overlays to the directive if used in a marker');
+              return;
+            }
+            if (!isDefined(layers.overlays[marker_data.layer])) {
+              $log.error('[AngularJS - Leaflet] You must use a name of an existing layer');
+              return;
+            }
+            var layerGroup = layers.overlays[marker_data.layer];
+            if (!(layerGroup instanceof L.LayerGroup)) {
+              $log.error('[AngularJS - Leaflet] A marker can only be added to a layer of type "group"');
+              return;
+            }
+            layerGroup.addLayer(marker);
+            if (map.hasLayer(marker) && marker_data.focus === true) {
+              marker.openPopup();
+            }
+          }
+          var markerEvents = [];
+          var i;
+          var eventName;
+          var logic = 'broadcast';
+          if (!isDefined(leafletScope.eventBroadcast)) {
+            markerEvents = availableMarkerEvents;
+          } else if (typeof leafletScope.eventBroadcast !== 'object') {
+            $log.warn('[AngularJS - Leaflet] event-broadcast must be an object check your model.');
+          } else {
+            if (!isDefined(leafletScope.eventBroadcast.marker)) {
+              markerEvents = availableMarkerEvents;
+            } else if (isObject(leafletScope.eventBroadcast.marker)) {
+              $log.warn('[AngularJS - Leaflet] event-broadcast.marker must be an object check your model.');
+            } else {
+              if (leafletScope.eventBroadcast.marker.logic !== undefined && leafletScope.eventBroadcast.marker.logic !== null) {
+                if (leafletScope.eventBroadcast.marker.logic !== 'emit' && leafletScope.eventBroadcast.marker.logic !== 'broadcast') {
+                  $log.warn('[AngularJS - Leaflet] Available event propagation logic are: \'emit\' or \'broadcast\'.');
+                } else if (leafletScope.eventBroadcast.marker.logic === 'emit') {
+                  logic = 'emit';
+                }
+              }
+              var markerEventsEnable = false, markerEventsDisable = false;
+              if (leafletScope.eventBroadcast.marker.enable !== undefined && leafletScope.eventBroadcast.marker.enable !== null) {
+                if (typeof leafletScope.eventBroadcast.marker.enable === 'object') {
+                  markerEventsEnable = true;
+                }
+              }
+              if (leafletScope.eventBroadcast.marker.disable !== undefined && leafletScope.eventBroadcast.marker.disable !== null) {
+                if (typeof leafletScope.eventBroadcast.marker.disable === 'object') {
+                  markerEventsDisable = true;
+                }
+              }
+              if (markerEventsEnable && markerEventsDisable) {
+                $log.warn('[AngularJS - Leaflet] can not enable and disable events at the same time');
+              } else if (!markerEventsEnable && !markerEventsDisable) {
+                $log.warn('[AngularJS - Leaflet] must enable or disable events');
+              } else {
+                if (markerEventsEnable) {
+                  for (i = 0; i < leafletScope.eventBroadcast.marker.enable.length; i++) {
+                    eventName = leafletScope.eventBroadcast.marker.enable[i];
+                    if (markerEvents.indexOf(eventName) !== -1) {
+                      $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' is already enabled');
+                    } else {
+                      if (availableMarkerEvents.indexOf(eventName) === -1) {
+                        $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' does not exist');
+                      } else {
+                        markerEvents.push(eventName);
+                      }
+                    }
+                  }
+                } else {
+                  markerEvents = availableMarkerEvents;
+                  for (i = 0; i < leafletScope.eventBroadcast.marker.disable.length; i++) {
+                    eventName = leafletScope.eventBroadcast.marker.disable[i];
+                    var index = markerEvents.indexOf(eventName);
+                    if (index === -1) {
+                      $log.warn('[AngularJS - Leaflet] This event ' + eventName + ' does not exist or has been already disabled');
+                    } else {
+                      markerEvents.splice(index, 1);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          for (i = 0; i < markerEvents.length; i++) {
+            eventName = markerEvents[i];
+            marker.on(eventName, genDispatchEventCB(eventName, logic, scope_watch_name, leafletScope, marker, marker_data), {
+              eventName: eventName,
+              scope_watch_name: scope_watch_name
+            });
+          }
+          if (shouldWatch) {
+            var clearWatch = leafletScope.$watch(scope_watch_name, function (data, old_data) {
+                if (!isDefined(data)) {
+                  marker.closePopup();
+                  if (isDefined(layers)) {
+                    if (isDefined(layers.overlays)) {
+                      for (var key in layers.overlays) {
+                        if (layers.overlays[key] instanceof L.LayerGroup) {
+                          if (layers.overlays[key].hasLayer(marker)) {
+                            layers.overlays[key].removeLayer(marker);
+                          }
+                        }
+                      }
+                    }
+                  }
+                  map.removeLayer(marker);
+                  clearWatch();
+                  return;
+                }
+                if (isDefined(old_data)) {
+                  if (!isString(data.layer)) {
+                    if (isString(old_data.layer)) {
+                      if (isDefined(layers.overlays[old_data.layer])) {
+                        if (layers.overlays[old_data.layer].hasLayer(marker)) {
+                          layers.overlays[old_data.layer].removeLayer(marker);
+                          marker.closePopup();
+                        }
+                      }
+                      if (!map.hasLayer(marker)) {
+                        map.addLayer(marker);
+                      }
+                    }
+                  } else if (isDefined(old_data.layer) || old_data.layer !== data.layer) {
+                    if (typeof old_data.layer === 'string') {
+                      if (layers.overlays[old_data.layer] !== undefined) {
+                        if (layers.overlays[old_data.layer].hasLayer(marker)) {
+                          layers.overlays[old_data.layer].removeLayer(marker);
+                        }
+                      }
+                    }
+                    marker.closePopup();
+                    if (map.hasLayer(marker)) {
+                      map.removeLayer(marker);
+                    }
+                    if (layers.overlays[data.layer] !== undefined) {
+                      var layerGroup = layers.overlays[data.layer];
+                      if (layerGroup instanceof L.LayerGroup) {
+                        layerGroup.addLayer(marker);
+                        if (map.hasLayer(marker)) {
+                          if (data.focus === true) {
+                            marker.openPopup();
+                          }
+                        }
+                      } else {
+                        $log.error('[AngularJS - Leaflet] A marker can only be added to a layer of type "group"');
+                      }
+                    } else {
+                      $log.error('[AngularJS - Leaflet] You must use a name of an existing layer');
+                    }
+                  } else {
+                  }
+                  if (data.draggable === undefined || data.draggable === null || data.draggable !== true) {
+                    if (old_data.draggable !== undefined && old_data.draggable !== null && old_data.draggable === true) {
+                      if (marker.dragging) {
+                        marker.dragging.disable();
+                      }
+                    }
+                  } else if (old_data.draggable === undefined || old_data.draggable === null || old_data.draggable !== true) {
+                    if (marker.dragging) {
+                      marker.dragging.enable();
+                    } else {
+                      if (L.Handler.MarkerDrag) {
+                        marker.dragging = new L.Handler.MarkerDrag(marker);
+                        marker.options.draggable = true;
+                        marker.dragging.enable();
+                      }
+                    }
+                  }
+                  if (data.icon === undefined || data.icon === null || typeof data.icon !== 'object') {
+                    if (old_data.icon !== undefined && old_data.icon !== null && typeof old_data.icon === 'object') {
+                      marker.setIcon(getLeafletIcon());
+                      marker.closePopup();
+                      marker.unbindPopup();
+                      if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                        marker.bindPopup(data.message);
+                      }
+                    }
+                  } else if (old_data.icon === undefined || old_data.icon === null || typeof old_data.icon !== 'object') {
+                    var dragA = false;
+                    if (marker.dragging) {
+                      dragA = marker.dragging.enabled();
+                    }
+                    if (Helpers.AwesomeMarkersPlugin.is(data.icon)) {
+                      marker.setIcon(data.icon);
+                    } else if (Helpers.Leaflet.DivIcon.is(data.icon) || Helpers.Leaflet.Icon.is(data.icon)) {
+                      marker.setIcon(data.icon);
+                    } else {
+                      marker.setIcon(getLeafletIcon(data.icon));
+                    }
+                    if (dragA) {
+                      marker.dragging.enable();
+                    }
+                    marker.closePopup();
+                    marker.unbindPopup();
+                    if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                      marker.bindPopup(data.message);
+                    }
+                  } else {
+                    if (Helpers.AwesomeMarkersPlugin.is(data.icon)) {
+                      if (!Helpers.AwesomeMarkersPlugin.equal(data.icon, old_data.icon)) {
+                        var dragD = false;
+                        if (marker.dragging) {
+                          dragD = marker.dragging.enabled();
+                        }
+                        marker.setIcon(data.icon);
+                        if (dragD) {
+                          marker.dragging.enable();
+                        }
+                        marker.closePopup();
+                        marker.unbindPopup();
+                        if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                          marker.bindPopup(data.message);
+                        }
+                      }
+                    } else if (Helpers.Leaflet.DivIcon.is(data.icon)) {
+                      if (!Helpers.Leaflet.DivIcon.equal(data.icon, old_data.icon)) {
+                        var dragE = false;
+                        if (marker.dragging) {
+                          dragE = marker.dragging.enabled();
+                        }
+                        marker.setIcon(data.icon);
+                        if (dragE) {
+                          marker.dragging.enable();
+                        }
+                        marker.closePopup();
+                        marker.unbindPopup();
+                        if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                          marker.bindPopup(data.message);
+                        }
+                      }
+                    } else if (Helpers.Leaflet.Icon.is(data.icon)) {
+                      if (!Helpers.Leaflet.Icon.equal(data.icon, old_data.icon)) {
+                        var dragF = false;
+                        if (marker.dragging) {
+                          dragF = marker.dragging.enabled();
+                        }
+                        marker.setIcon(data.icon);
+                        if (dragF) {
+                          marker.dragging.enable();
+                        }
+                        marker.closePopup();
+                        marker.unbindPopup();
+                        if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                          marker.bindPopup(data.message);
+                        }
+                      }
+                    } else {
+                      if (JSON.stringify(data.icon) !== JSON.stringify(old_data.icon)) {
+                        var dragG = false;
+                        if (marker.dragging) {
+                          dragG = marker.dragging.enabled();
+                        }
+                        marker.setIcon(getLeafletIcon(data.icon));
+                        if (dragG) {
+                          marker.dragging.enable();
+                        }
+                        marker.closePopup();
+                        marker.unbindPopup();
+                        if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
+                          marker.bindPopup(data.message);
+                        }
+                      }
+                    }
+                  }
+                  if (data.message === undefined || data.message === null || typeof data.message !== 'string' || data.message === '') {
+                    if (old_data.message !== undefined && old_data.message !== null && typeof old_data.message === 'string' && old_data.message !== '') {
+                      marker.closePopup();
+                      marker.unbindPopup();
+                    }
+                  } else {
+                    if (old_data.message === undefined || old_data.message === null || typeof old_data.message !== 'string' || old_data.message === '') {
+                      marker.bindPopup(data.message);
+                      if (data.focus === true) {
+                        marker.openPopup();
+                      }
+                    } else if (data.message !== old_data.message) {
+                      marker.setPopupContent(data.message);
+                    }
+                  }
+                  if (data.focus === undefined || data.focus === null || data.focus !== true) {
+                    if (old_data.focus !== undefined && old_data.focus !== null && old_data.focus === true) {
+                      marker.closePopup();
+                    }
+                  } else if (old_data.focus === undefined || old_data.focus === null || old_data.focus !== true) {
+                    marker.openPopup();
+                  } else if (old_data.focus === true && data.focus === true) {
+                    marker.openPopup();
+                  }
+                  if (!(isNumber(data.lat) && isNumber(data.lng))) {
+                    $log.warn('There are problems with lat-lng data, please verify your marker model');
+                    if (isDefined(layers)) {
+                      if (isDefined(layers.overlays)) {
+                        for (var olname in layers.overlays) {
+                          if (layers.overlays[olname] instanceof L.LayerGroup || Helpers.MarkerClusterPlugin.is(layers.overlays[olname])) {
+                            if (layers.overlays[olname].hasLayer(marker)) {
+                              layers.overlays[olname].removeLayer(marker);
+                            }
+                          }
+                        }
+                      }
+                    }
+                    map.removeLayer(marker);
+                  } else {
+                    var cur_latlng = marker.getLatLng();
+                    if (cur_latlng.lat !== data.lat || cur_latlng.lng !== data.lng) {
+                      var isCluster = false;
+                      if (isString(data.layer)) {
+                        if (Helpers.MarkerClusterPlugin.is(layers.overlays[data.layer])) {
+                          layers.overlays[data.layer].removeLayer(marker);
+                          isCluster = true;
+                        }
+                      }
+                      try {
+                        marker.setLatLng([
+                          data.lat,
+                          data.lng
+                        ]);
+                        if (isCluster) {
+                          layers.overlays[data.layer].addLayer(marker);
+                        }
+                      } catch (e) {
+                      }
+                    }
+                  }
+                }
+              }, true);
+          }
+          return marker;
+        }
+      };
+    }
+  ]);
+  angular.module('leaflet-directive').factory('leafletHelpers', [
+    '$q',
+    '$log',
+    function ($q, $log) {
+      function _obtainEffectiveMapId(d, mapId) {
+        var id, i;
+        if (!angular.isDefined(mapId)) {
+          if (Object.keys(d).length === 1) {
+            for (i in d) {
+              if (d.hasOwnProperty(i)) {
+                id = i;
+              }
+            }
+          } else if (Object.keys(d).length === 0) {
+            id = 'main';
+          } else {
+            $log.error('[AngularJS - Leaflet] - You have more than 1 map on the DOM, you must provide the map ID to the leafletData.getXXX call');
+          }
+        } else {
+          id = mapId;
+        }
+        return id;
+      }
+      function _isValidBounds(bounds) {
+        return angular.isDefined(bounds) && angular.isDefined(bounds.southWest) && angular.isDefined(bounds.northEast) && angular.isNumber(bounds.southWest.lat) && angular.isNumber(bounds.southWest.lng) && angular.isNumber(bounds.northEast.lat) && angular.isNumber(bounds.northEast.lng);
+      }
+      function _getUnresolvedDefer(d, mapId) {
+        var id = _obtainEffectiveMapId(d, mapId), defer;
+        if (!angular.isDefined(d[id]) || d[id].resolvedDefer === true) {
+          defer = $q.defer();
+          d[id] = {
+            defer: defer,
+            resolvedDefer: false
+          };
+        } else {
+          defer = d[id].defer;
+        }
+        return defer;
+      }
+      function _convertToLeafletLatLngs(latlngs) {
+        return latlngs.filter(function (latlng) {
+          return !!latlng.lat && !!latlng.lng;
+        }).map(function (latlng) {
+          return new L.LatLng(latlng.lat, latlng.lng);
+        });
+      }
+      return {
+        isDefined: function (value) {
+          return angular.isDefined(value) && value !== null;
+        },
+        isNumber: function (value) {
+          return angular.isNumber(value);
+        },
+        isString: function (value) {
+          return angular.isString(value);
+        },
+        isArray: function (value) {
+          return angular.isArray(value);
+        },
+        isObject: function (value) {
+          return angular.isObject(value);
+        },
+        equals: function (o1, o2) {
+          return angular.equals(o1, o2);
+        },
+        isValidCenter: function (center) {
+          return angular.isDefined(center) && angular.isNumber(center.lat) && angular.isNumber(center.lng) && angular.isNumber(center.zoom);
+        },
+        isValidBounds: _isValidBounds,
+        createLeafletBounds: function (bounds) {
+          if (_isValidBounds(bounds)) {
+            return L.latLngBounds([
+              bounds.southWest.lat,
+              bounds.southWest.lng
+            ], [
+              bounds.northEast.lat,
+              bounds.northEast.lng
+            ]);
+          } else {
+            return false;
+          }
+        },
+        convertToLeafletLatLngs: _convertToLeafletLatLngs,
+        convertToLeafletLatLng: function (latlng) {
+          return new L.LatLng(latlng.lat, latlng.lng);
+        },
+        convertToLeafletMultiLatLngs: function (paths) {
+          return paths.map(function (latlngs) {
+            return _convertToLeafletLatLngs(latlngs);
+          });
+        },
+        safeApply: function ($scope, fn) {
+          var phase = $scope.$root.$$phase;
+          if (phase === '$apply' || phase === '$digest') {
+            $scope.$eval(fn);
+          } else {
+            $scope.$apply(fn);
+          }
+        },
+        obtainEffectiveMapId: _obtainEffectiveMapId,
+        getDefer: function (d, mapId) {
+          var id = _obtainEffectiveMapId(d, mapId), defer;
+          if (!angular.isDefined(d[id]) || d[id].resolvedDefer === false) {
+            defer = _getUnresolvedDefer(d, mapId);
+          } else {
+            defer = d[id].defer;
+          }
+          return defer;
+        },
+        getUnresolvedDefer: _getUnresolvedDefer,
+        setResolvedDefer: function (d, mapId) {
+          var id = _obtainEffectiveMapId(d, mapId);
+          d[id].resolvedDefer = true;
+        },
         AwesomeMarkersPlugin: {
           isLoaded: function () {
             if (L.AwesomeMarkers !== undefined) {
@@ -12405,12 +14887,23 @@ leafletDirective.directive('leaflet', [
             }
           },
           equal: function (iconA, iconB) {
-            if (!this.isLoaded) {
-              $log.error('[AngularJS - Leaflet] AwesomeMarkers Plugin not Loaded');
+            if (!this.isLoaded()) {
               return false;
             }
-            if (this.is(iconA) && this.is(iconB)) {
-              return iconA.options.icon === iconB.options.icon && iconA.options.iconColor === iconB.options.iconColor && iconA.options.color === iconB.options.color && iconA.options.iconSize[0] === iconB.options.iconSize[0] && iconA.options.iconSize[1] === iconB.options.iconSize[1] && iconA.options.iconAnchor[0] === iconB.options.iconAnchor[0] && iconA.options.iconAnchor[1] === iconB.options.iconAnchor[1] && iconA.options.popupAnchor[0] === iconB.options.popupAnchor[0] && iconA.options.popupAnchor[1] === iconB.options.popupAnchor[1] && iconA.options.shadowAnchor[0] === iconB.options.shadowAnchor[0] && iconA.options.shadowAnchor[1] === iconB.options.shadowAnchor[1] && iconA.options.shadowSize[0] === iconB.options.shadowSize[0] && iconA.options.shadowSize[1] === iconB.options.shadowSize[1];
+            if (this.is(iconA)) {
+              return angular.equals(iconA, iconB);
+            } else {
+              return false;
+            }
+          }
+        },
+        LabelPlugin: {
+          isLoaded: function () {
+            return angular.isDefined(L.Label);
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof L.MarkerClusterGroup;
             } else {
               return false;
             }
@@ -12418,11 +14911,71 @@ leafletDirective.directive('leaflet', [
         },
         MarkerClusterPlugin: {
           isLoaded: function () {
-            return L.MarkerClusterGroup !== undefined;
+            return angular.isDefined(L.MarkerClusterGroup);
           },
           is: function (layer) {
             if (this.isLoaded()) {
               return layer instanceof L.MarkerClusterGroup;
+            } else {
+              return false;
+            }
+          }
+        },
+        GoogleLayerPlugin: {
+          isLoaded: function () {
+            return angular.isDefined(L.Google);
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof L.Google;
+            } else {
+              return false;
+            }
+          }
+        },
+        BingLayerPlugin: {
+          isLoaded: function () {
+            return angular.isDefined(L.BingLayer);
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof L.BingLayer;
+            } else {
+              return false;
+            }
+          }
+        },
+        WFSLayerPlugin: {
+          isLoaded: function () {
+            return L.GeoJSON.WFS !== undefined;
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof L.GeoJSON.WFS;
+            } else {
+              return false;
+            }
+          }
+        },
+        AGSLayerPlugin: {
+          isLoaded: function () {
+            return lvector !== undefined && lvector.AGS !== undefined;
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof lvector.AGS;
+            } else {
+              return false;
+            }
+          }
+        },
+        DynamicMapLayerPlugin: {
+          isLoaded: function () {
+            return L.esri !== undefined && L.esri.dynamicMapLayer !== undefined;
+          },
+          is: function (layer) {
+            if (this.isLoaded()) {
+              return layer instanceof L.esri.dynamicMapLayer;
             } else {
               return false;
             }
@@ -12434,8 +14987,8 @@ leafletDirective.directive('leaflet', [
               return icon instanceof L.DivIcon;
             },
             equal: function (iconA, iconB) {
-              if (this.is(iconA) && this.is(iconB)) {
-                return iconA.options.html === iconB.options.html && iconA.options.iconSize[0] === iconB.options.iconSize[0] && iconA.options.iconSize[1] === iconB.options.iconSize[1] && iconA.options.iconAnchor[0] === iconB.options.iconAnchor[0] && iconA.options.iconAnchor[1] === iconB.options.iconAnchor[1];
+              if (this.is(iconA)) {
+                return angular.equals(iconA, iconB);
               } else {
                 return false;
               }
@@ -12446,8 +14999,8 @@ leafletDirective.directive('leaflet', [
               return icon instanceof L.Icon;
             },
             equal: function (iconA, iconB) {
-              if (this.is(iconA) && this.is(iconB)) {
-                return iconA.options.iconUrl === iconB.options.iconUrl && iconA.options.iconRetinaUrl === iconB.options.iconRetinaUrl && iconA.options.iconSize[0] === iconB.options.iconSize[0] && iconA.options.iconSize[1] === iconB.options.iconSize[1] && iconA.options.iconAnchor[0] === iconB.options.iconAnchor[0] && iconA.options.iconAnchor[1] === iconB.options.iconAnchor[1] && iconA.options.shadowUrl === iconB.options.shadowUrl && iconA.options.shadowRetinaUrl === iconB.options.shadowRetinaUrl && iconA.options.shadowSize[0] === iconB.options.shadowSize[0] && iconA.options.shadowSize[1] === iconB.options.shadowSize[1] && iconA.options.shadowAnchor[0] === iconB.options.shadowAnchor[0] && iconA.options.shadowAnchor[1] === iconB.options.shadowAnchor[1] && iconA.options.popupAnchor[0] === iconB.options.popupAnchor[0] && iconA.options.popupAnchor[1] === iconB.options.popupAnchor[1];
+              if (this.is(iconA)) {
+                return angular.equals(iconA, iconB);
               } else {
                 return false;
               }
@@ -12455,971 +15008,9 @@ leafletDirective.directive('leaflet', [
           }
         }
       };
-    var str_inspect_hint = 'Add testing="testing" to <leaflet> tag to inspect this object';
-    return {
-      restrict: 'E',
-      replace: true,
-      transclude: true,
-      scope: {
-        center: '=center',
-        maxBounds: '=maxbounds',
-        bounds: '=bounds',
-        marker: '=marker',
-        markers: '=markers',
-        legend: '=legend',
-        geojson: '=geojson',
-        defaults: '=defaults',
-        paths: '=paths',
-        tiles: '=tiles',
-        events: '=events',
-        layers: '=layers',
-        customControls: '=customControls'
-      },
-      template: '<div class="angular-leaflet-map"></div>',
-      link: function ($scope, element, attrs) {
-        if (attrs.width) {
-          element.css('width', attrs.width);
-        }
-        if (attrs.height) {
-          element.css('height', attrs.height);
-        }
-        $scope.leaflet = {};
-        $scope.leaflet.maxZoom = !!(attrs.defaults && $scope.defaults && $scope.defaults.maxZoom) ? parseInt($scope.defaults.maxZoom, 10) : defaults.maxZoom;
-        $scope.leaflet.minZoom = !!(attrs.defaults && $scope.defaults && $scope.defaults.minZoom) ? parseInt($scope.defaults.minZoom, 10) : defaults.minZoom;
-        $scope.leaflet.doubleClickZoom = !!(attrs.defaults && $scope.defaults && typeof $scope.defaults.doubleClickZoom === 'boolean') ? $scope.defaults.doubleClickZoom : defaults.doubleClickZoom;
-        $scope.leaflet.scrollWheelZoom = !!(attrs.defaults && $scope.defaults && typeof $scope.defaults.scrollWheelZoom === 'boolean') ? $scope.defaults.scrollWheelZoom : defaults.scrollWheelZoom;
-        var map = new L.Map(element[0], {
-            maxZoom: $scope.leaflet.maxZoom,
-            minZoom: $scope.leaflet.minZoom,
-            doubleClickZoom: $scope.leaflet.doubleClickZoom,
-            scrollWheelZoom: $scope.leaflet.scrollWheelZoom
-          });
-        var layers = null;
-        map.setView([
-          defaults.center.lat,
-          defaults.center.lng
-        ], defaults.center.zoom);
-        $scope.leaflet.map = !!attrs.testing ? map : str_inspect_hint;
-        setupControls();
-        setupCustomControls();
-        setupLayers();
-        setupCenter();
-        setupMaxBounds();
-        setupBounds();
-        setupMainMarker();
-        setupMarkers();
-        setupPaths();
-        setupLegend();
-        setupMapEventBroadcasting();
-        setupMapEventCallbacks();
-        setupGeojson();
-        $scope.$on('leafletDirectiveSetMap', function (event, message) {
-          var meth = message.shift();
-          map[meth].apply(map, message);
-        });
-        function _isSafeToApply() {
-          var phase = $scope.$root.$$phase;
-          return !(phase === '$apply' || phase === '$digest');
-        }
-        function safeApply(fn) {
-          if (!_isSafeToApply()) {
-            $scope.$eval(fn);
-          } else {
-            $scope.$apply(fn);
-          }
-        }
-        function setupMapEventBroadcasting() {
-          function genDispatchMapEvent(eventName) {
-            return function (e) {
-              var broadcastName = 'leafletDirectiveMap.' + eventName;
-              safeApply(function (scope) {
-                $rootScope.$broadcast(broadcastName, { leafletEvent: e });
-              });
-            };
-          }
-          var mapEvents = [
-              'click',
-              'dblclick',
-              'mousedown',
-              'mouseup',
-              'mouseover',
-              'mouseout',
-              'mousemove',
-              'contextmenu',
-              'focus',
-              'blur',
-              'preclick',
-              'load',
-              'unload',
-              'viewreset',
-              'movestart',
-              'move',
-              'moveend',
-              'dragstart',
-              'drag',
-              'dragend',
-              'zoomstart',
-              'zoomend',
-              'zoomlevelschange',
-              'resize',
-              'autopanstart',
-              'layeradd',
-              'layerremove',
-              'baselayerchange',
-              'overlayadd',
-              'overlayremove',
-              'locationfound',
-              'locationerror',
-              'popupopen',
-              'popupclose'
-            ];
-          for (var i = 0; i < mapEvents.length; i++) {
-            var eventName = mapEvents[i];
-            map.on(eventName, genDispatchMapEvent(eventName), { eventName: eventName });
-          }
-        }
-        function setupMapEventCallbacks() {
-          if (typeof $scope.events !== 'object') {
-            return false;
-          } else {
-            for (var bind_to in $scope.events) {
-              map.on(bind_to, $scope.events[bind_to]);
-            }
-          }
-        }
-        function setupLayers() {
-          if ($scope.layers === undefined || $scope.layers === null) {
-            setupTiles();
-          } else {
-            if ($scope.layers.baselayers === undefined || $scope.layers.baselayers === null || typeof $scope.layers.baselayers !== 'object') {
-              $log.error('[AngularJS - Leaflet] At least one baselayer has to be defined');
-              $scope.leaflet.layers = !!attrs.testing ? layers : str_inspect_hint;
-              return;
-            } else if (Object.keys($scope.layers.baselayers).length <= 0) {
-              $log.error('[AngularJS - Leaflet] At least one baselayer has to be defined');
-              $scope.leaflet.layers = !!attrs.testing ? layers : str_inspect_hint;
-              return;
-            }
-            layers = {};
-            layers.baselayers = {};
-            layers.controls = {};
-            layers.controls.layers = new L.control.layers().addTo(map);
-            var top = false;
-            for (var layerName in $scope.layers.baselayers) {
-              var newBaseLayer = createLayer($scope.layers.baselayers[layerName]);
-              if (newBaseLayer !== null) {
-                layers.baselayers[layerName] = newBaseLayer;
-                if ($scope.layers.baselayers[layerName].top === true) {
-                  map.addLayer(layers.baselayers[layerName]);
-                  top = true;
-                }
-                layers.controls.layers.addBaseLayer(layers.baselayers[layerName], $scope.layers.baselayers[layerName].name);
-              }
-            }
-            if (!top && Object.keys(layers.baselayers).length > 0) {
-              map.addLayer(layers.baselayers[Object.keys($scope.layers.baselayers)[0]]);
-            }
-            layers.overlays = {};
-            for (layerName in $scope.layers.overlays) {
-              var newOverlayLayer = createLayer($scope.layers.overlays[layerName]);
-              if (newOverlayLayer !== null) {
-                layers.overlays[layerName] = newOverlayLayer;
-                if ($scope.layers.overlays[layerName].visible === true) {
-                  map.addLayer(layers.overlays[layerName]);
-                }
-                layers.controls.layers.addOverlay(layers.overlays[layerName], $scope.layers.overlays[layerName].name);
-              }
-            }
-            $scope.$watch('layers.baselayers', function (newBaseLayers) {
-              var deleted = false;
-              for (var name in layers.baselayers) {
-                if (newBaseLayers[name] === undefined) {
-                  layers.controls.layers.removeLayer(layers.baselayers[name]);
-                  if (map.hasLayer(layers.baselayers[name])) {
-                    map.removeLayer(layers.baselayers[name]);
-                  }
-                  delete layers.baselayers[name];
-                  deleted = true;
-                }
-              }
-              for (var new_name in newBaseLayers) {
-                if (layers.baselayers[new_name] === undefined) {
-                  var testBaseLayer = createLayer(newBaseLayers[new_name]);
-                  if (testBaseLayer !== null) {
-                    layers.baselayers[new_name] = testBaseLayer;
-                    if (newBaseLayers[new_name].top === true) {
-                      map.addLayer(layers.baselayers[new_name]);
-                    }
-                    layers.controls.layers.addBaseLayer(layers.baselayers[new_name], newBaseLayers[new_name].name);
-                  }
-                }
-              }
-              if (Object.keys(layers.baselayers).length <= 0) {
-                $log.error('[AngularJS - Leaflet] At least one baselayer has to be defined');
-              } else {
-                var found = false;
-                for (var key in layers.baselayers) {
-                  if (map.hasLayer(layers.baselayers[key])) {
-                    found = true;
-                    break;
-                  }
-                }
-                if (!found) {
-                  map.addLayer(layers.baselayers[Object.keys($scope.layers.baselayers)[0]]);
-                }
-              }
-            }, true);
-            $scope.$watch('layers.overlays', function (newOverlayLayers) {
-              for (var name in layers.overlays) {
-                if (newOverlayLayers[name] === undefined) {
-                  layers.controls.layers.removeLayer(layers.overlays[name]);
-                  if (map.hasLayer(layers.overlays[name])) {
-                    map.removeLayer(layers.overlays[name]);
-                  }
-                  delete layers.overlays[name];
-                }
-              }
-              for (var new_name in newOverlayLayers) {
-                if (layers.overlays[new_name] === undefined) {
-                  var testOverlayLayer = createLayer(newOverlayLayers[new_name]);
-                  if (testOverlayLayer !== null) {
-                    layers.overlays[new_name] = testOverlayLayer;
-                    layers.controls.layers.addOverlay(layers.overlays[new_name], newOverlayLayers[new_name].name);
-                    if (newOverlayLayers[new_name].visible === true) {
-                      map.addLayer(layers.overlays[new_name]);
-                    }
-                  }
-                }
-              }
-            }, true);
-          }
-          $scope.leaflet.layers = !!attrs.testing ? layers : str_inspect_hint;
-        }
-        function createLayer(layerDefinition) {
-          if (layerDefinition.type === undefined || layerDefinition.type === null || typeof layerDefinition.type !== 'string') {
-            $log.error('[AngularJS - Leaflet] A base layer must have a type');
-            return null;
-          } else if (layerDefinition.type !== 'xyz' && layerDefinition.type !== 'wms' && layerDefinition.type !== 'group' && layerDefinition.type !== 'markercluster') {
-            $log.error('[AngularJS - Leaflet] A layer must have a valid type: "xyz, wms, group"');
-            return null;
-          }
-          if (layerDefinition.type === 'xyz' || layerDefinition.type === 'wms') {
-            if (layerDefinition.url === undefined || layerDefinition.url === null || typeof layerDefinition.url !== 'string') {
-              $log.error('[AngularJS - Leaflet] A base layer must have an url');
-              return null;
-            }
-          }
-          if (layerDefinition.name === undefined || layerDefinition.name === null || typeof layerDefinition.name !== 'string') {
-            $log.error('[AngularJS - Leaflet] A base layer must have a name');
-            return null;
-          }
-          if (layerDefinition.layerParams === undefined || layerDefinition.layerParams === null || typeof layerDefinition.layerParams !== 'object') {
-            layerDefinition.layerParams = {};
-          }
-          if (layerDefinition.layerOptions === undefined || layerDefinition.layerOptions === null || typeof layerDefinition.layerOptions !== 'object') {
-            layerDefinition.layerOptions = {};
-          }
-          var layer = null;
-          for (var attrname in layerDefinition.layerParams) {
-            layerDefinition.layerOptions[attrname] = layerDefinition.layerParams[attrname];
-          }
-          switch (layerDefinition.type) {
-          case 'xyz':
-            layer = createXyzLayer(layerDefinition.url, layerDefinition.layerOptions);
-            break;
-          case 'wms':
-            layer = createWmsLayer(layerDefinition.url, layerDefinition.layerOptions);
-            break;
-          case 'group':
-            layer = createGroupLayer();
-            break;
-          case 'markercluster':
-            layer = createMarkerClusterLayer(layerDefinition.layerOptions);
-            break;
-          default:
-            layer = null;
-          }
-          return layer;
-        }
-        function createXyzLayer(url, options) {
-          var layer = L.tileLayer(url, options);
-          return layer;
-        }
-        function createWmsLayer(url, options) {
-          var layer = L.tileLayer.wms(url, options);
-          return layer;
-        }
-        function createGroupLayer() {
-          var layer = L.layerGroup();
-          return layer;
-        }
-        function createMarkerClusterLayer(options) {
-          if (Helpers.MarkerClusterPlugin.isLoaded()) {
-            var layer = new L.MarkerClusterGroup(options);
-            return layer;
-          } else {
-            return null;
-          }
-        }
-        function setupTiles() {
-          var tileLayerObj, key;
-          $scope.leaflet.tileLayer = !!(attrs.defaults && $scope.defaults && $scope.defaults.tileLayer) ? $scope.defaults.tileLayer : defaults.tileLayer;
-          if ($scope.defaults && $scope.defaults.tileLayerOptions) {
-            for (key in $scope.defaults.tileLayerOptions) {
-              defaults.tileLayerOptions[key] = $scope.defaults.tileLayerOptions[key];
-            }
-          }
-          if (attrs.tiles) {
-            if ($scope.tiles && $scope.tiles.url) {
-              $scope.leaflet.tileLayer = $scope.tiles.url;
-            }
-            if ($scope.tiles && $scope.tiles.options) {
-              for (key in $scope.tiles.options) {
-                defaults.tileLayerOptions[key] = $scope.tiles.options[key];
-              }
-            }
-            $scope.$watch('tiles.url', function (url) {
-              if (!url) {
-                return;
-              }
-              tileLayerObj.setUrl(url);
-            });
-          }
-          tileLayerObj = L.tileLayer($scope.leaflet.tileLayer, defaults.tileLayerOptions);
-          tileLayerObj.addTo(map);
-          $scope.leaflet.tileLayerObj = !!attrs.testing ? tileLayerObj : str_inspect_hint;
-        }
-        function setupLegend() {
-          if ($scope.legend) {
-            if (!$scope.legend.colors || !$scope.legend.labels || $scope.legend.colors.length !== $scope.legend.labels.length) {
-              $log.warn('[AngularJS - Leaflet] legend.colors and legend.labels must be set.');
-            } else {
-              var position = $scope.legend.position || 'bottomright';
-              var legend = L.control({ position: position });
-              legend.onAdd = function (map) {
-                var div = L.DomUtil.create('div', 'info legend');
-                for (var i = 0; i < $scope.legend.colors.length; i++) {
-                  div.innerHTML += '<i style="background:' + $scope.legend.colors[i] + '"></i> ' + $scope.legend.labels[i] + '<br />';
-                }
-                return div;
-              };
-              legend.addTo(map);
-            }
-          }
-        }
-        function setupMaxBounds() {
-          if (!$scope.maxBounds) {
-            return;
-          }
-          if ($scope.maxBounds.southWest && $scope.maxBounds.southWest.lat && $scope.maxBounds.southWest.lng && $scope.maxBounds.northEast && $scope.maxBounds.northEast.lat && $scope.maxBounds.northEast.lng) {
-            map.setMaxBounds(new L.LatLngBounds(new L.LatLng($scope.maxBounds.southWest.lat, $scope.maxBounds.southWest.lng), new L.LatLng($scope.maxBounds.northEast.lat, $scope.maxBounds.northEast.lng)));
-            $scope.$watch('maxBounds', function (maxBounds) {
-              if (maxBounds.southWest && maxBounds.northEast && maxBounds.southWest.lat && maxBounds.southWest.lng && maxBounds.northEast.lat && maxBounds.northEast.lng) {
-                map.setMaxBounds(new L.LatLngBounds(new L.LatLng(maxBounds.southWest.lat, maxBounds.southWest.lng), new L.LatLng(maxBounds.northEast.lat, maxBounds.northEast.lng)));
-              }
-            });
-          }
-        }
-        function tryFitBounds(bounds) {
-          if (!bounds) {
-            return;
-          }
-          var southWest = bounds.southWest;
-          var northEast = bounds.northEast;
-          if (southWest && northEast && southWest.lat && southWest.lng && northEast.lat && northEast.lng) {
-            var sw_latlng = new L.LatLng(southWest.lat, southWest.lng);
-            var ne_latlng = new L.LatLng(northEast.lat, northEast.lng);
-            map.fitBounds(new L.LatLngBounds(sw_latlng, ne_latlng));
-          }
-        }
-        function setupBounds() {
-          if (!$scope.bounds) {
-            return;
-          }
-          $scope.$watch('bounds', function (new_bounds) {
-            tryFitBounds(new_bounds);
-          });
-        }
-        function setupCenter() {
-          if (!$scope.center) {
-            $log.warn('[AngularJS - Leaflet] \'center\' is undefined in the current scope, did you forget to initialize it?');
-            map.setView([
-              defaults.center.lat,
-              defaults.center.lng
-            ], defaults.center.zoom);
-            return;
-          } else {
-            if ($scope.center.lat !== undefined && $scope.center.lat !== null && typeof $scope.center.lat === 'number' && $scope.center.lng !== undefined && $scope.center.lng !== null && typeof $scope.center.lng === 'number' && $scope.center.zoom !== undefined && $scope.center.zoom !== null && typeof $scope.center.zoom === 'number') {
-              map.setView([
-                $scope.center.lat,
-                $scope.center.lng
-              ], $scope.center.zoom);
-            } else if (attrs.center.autoDiscover === true) {
-              map.locate({
-                setView: true,
-                maxZoom: $scope.leaflet.maxZoom
-              });
-            } else {
-              $log.warn('[AngularJS - Leaflet] \'center\' is incorrect');
-              map.setView([
-                defaults.center.lat,
-                defaults.center.lng
-              ], defaults.center.zoom);
-            }
-          }
-          var centerModel = {
-              lat: $parse('center.lat'),
-              lng: $parse('center.lng'),
-              zoom: $parse('center.zoom')
-            };
-          $scope.$watch('center', function (center, old_center) {
-            if (!center) {
-              $log.warn('[AngularJS - Leaflet] \'center\' have been removed?');
-              map.setView([
-                defaults.center.lat,
-                defaults.center.lng
-              ], defaults.center.zoom);
-              return;
-            }
-            if (old_center) {
-              if (center.lat !== undefined && center.lat !== null && typeof center.lat === 'number' && center.lng !== undefined && center.lng !== null && typeof center.lng === 'number' && center.zoom !== undefined && center.zoom !== null && typeof center.zoom === 'number') {
-                if (old_center.lat !== undefined && old_center.lat !== null && typeof old_center.lat === 'number' && old_center.lng !== undefined && old_center.lng !== null && typeof old_center.lng === 'number' && old_center.zoom !== undefined && old_center.zoom !== null && typeof old_center.zoom === 'number') {
-                  if (center.lat !== old_center.lat || center.lng !== old_center.lng || center.zoom !== old_center.zoom) {
-                    map.setView([
-                      center.lat,
-                      center.lng
-                    ], center.zoom);
-                  }
-                } else {
-                  map.setView([
-                    center.lat,
-                    center.lng
-                  ], center.zoom);
-                }
-              } else {
-                if (center.autoDiscover === true && old_center.autoDiscover !== true) {
-                  map.locate({
-                    setView: true,
-                    maxZoom: $scope.leaflet.maxZoom
-                  });
-                } else if (center.autoDiscover === undefined || center.autoDiscover === null) {
-                  $log.warn('[AngularJS - Leaflet] \'center\' is incorrect');
-                  map.setView([
-                    defaults.center.lat,
-                    defaults.center.lng
-                  ], defaults.center.zoom);
-                }
-              }
-            }
-          }, true);
-          map.on('moveend', function () {
-            safeApply(function (scope) {
-              if (centerModel) {
-                centerModel.lat.assign(scope, map.getCenter().lat);
-                centerModel.lng.assign(scope, map.getCenter().lng);
-                centerModel.zoom.assign(scope, map.getZoom());
-              }
-            });
-          });
-        }
-        function setupGeojson() {
-          $scope.$watch('geojson', function (geojson) {
-            if (!geojson) {
-              return;
-            }
-            if ($scope.leaflet.geojson) {
-              map.removeLayer($scope.leaflet.geojson);
-            }
-            if (geojson.hasOwnProperty('data')) {
-              var resetStyleOnMouseout = $scope.geojson.resetStyleOnMouseout;
-              $scope.leaflet.geojson = L.geoJson($scope.geojson.data, {
-                style: $scope.geojson.style,
-                onEachFeature: function (feature, layer) {
-                  layer.on({
-                    mouseover: function (e) {
-                      safeApply(function () {
-                        geojson.selected = feature;
-                        $rootScope.$broadcast('leafletDirectiveMap.geojsonMouseover', e);
-                      });
-                    },
-                    mouseout: function (e) {
-                      if (resetStyleOnMouseout) {
-                        $scope.leaflet.geojson.resetStyle(e.target);
-                      }
-                      safeApply(function () {
-                        geojson.selected = undefined;
-                        $rootScope.$broadcast('leafletDirectiveMap.geojsonMouseout', e);
-                      });
-                    },
-                    click: function (e) {
-                      safeApply(function () {
-                        $rootScope.$broadcast('leafletDirectiveMap.geojsonClick', geojson.selected, e);
-                      });
-                    }
-                  });
-                  if (geojson.hasOwnProperty('popupContentProperty')) {
-                    if (feature.properties && $scope.geojson.popupContentProperty) {
-                      layer.bindPopup(feature.properties[$scope.geojson.popupContentProperty]);
-                    } else {
-                      layer.unbindPopup();
-                    }
-                  }
-                }
-              }).addTo(map);
-            }
-          });
-        }
-        function setupMainMarker() {
-          var main_marker;
-          if (!$scope.marker) {
-            return;
-          }
-          main_marker = createMarker('marker', $scope.marker, map);
-          $scope.leaflet.marker = !!attrs.testing ? main_marker : str_inspect_hint;
-          main_marker.on('click', function (e) {
-            safeApply(function () {
-              $rootScope.$broadcast('leafletDirectiveMainMarkerClick');
-            });
-          });
-        }
-        function setupMarkers() {
-          var markers = {};
-          if (!$scope.markers) {
-            return;
-          }
-          for (var name in $scope.markers) {
-            var newMarker = createMarker('markers.' + name, $scope.markers[name], map);
-            if (newMarker !== null) {
-              markers[name] = newMarker;
-            }
-          }
-          $scope.$watch('markers', function (newMarkers) {
-            for (var name in markers) {
-              if (newMarkers[name] === undefined) {
-                markers[name].closePopup();
-                if (layers !== undefined && layers !== null) {
-                  if (layers.overlays !== undefined) {
-                    for (var key in layers.overlays) {
-                      if (layers.overlays[key] instanceof L.LayerGroup) {
-                        if (layers.overlays[key].hasLayer(markers[name])) {
-                          layers.overlays[key].removeLayer(markers[name]);
-                        }
-                      }
-                    }
-                  }
-                }
-                map.removeLayer(markers[name]);
-                delete markers[name];
-              }
-            }
-            for (var new_name in newMarkers) {
-              if (markers[new_name] === undefined) {
-                var newMarker = createMarker('markers.' + new_name, $scope.markers[new_name], map);
-                if (newMarker !== null) {
-                  markers[new_name] = newMarker;
-                }
-              }
-            }
-          }, true);
-          $scope.leaflet.markers = !!attrs.testing ? markers : str_inspect_hint;
-        }
-        function createMarker(scope_watch_name, marker_data, map) {
-          var marker = buildMarker(marker_data);
-          if (marker_data.layer === undefined) {
-            map.addLayer(marker);
-            if (marker_data.focus === true) {
-              marker.openPopup();
-            }
-          } else if (typeof marker_data.layer === 'string') {
-            if (layers.overlays[marker_data.layer] !== undefined) {
-              var layerGroup = layers.overlays[marker_data.layer];
-              if (layerGroup instanceof L.LayerGroup) {
-                layerGroup.addLayer(marker);
-                if (map.hasLayer(marker)) {
-                  if (marker_data.focus === true) {
-                    marker.openPopup();
-                  }
-                }
-              } else {
-                $log.error('[AngularJS - Leaflet] A marker can only be added to a layer of type "group"');
-                return null;
-              }
-            } else {
-              $log.error('[AngularJS - Leaflet] You must use a name of an existing layer');
-              return null;
-            }
-          } else {
-            $log.error('[AngularJS - Leaflet] A layername must be a string');
-            return null;
-          }
-          function genDispatchEventCB(eventName) {
-            return function (e) {
-              var broadcastName = 'leafletDirectiveMarker.' + eventName;
-              var markerName = scope_watch_name.replace('markers.', '');
-              if (eventName === 'click') {
-                safeApply(function () {
-                  $rootScope.$broadcast('leafletDirectiveMarkersClick', markerName);
-                });
-              } else if (eventName === 'dragend') {
-                safeApply(function () {
-                  marker_data.lat = marker.getLatLng().lat;
-                  marker_data.lng = marker.getLatLng().lng;
-                });
-                if (marker_data.message) {
-                  if (marker_data.focus === true) {
-                    marker.openPopup();
-                  }
-                }
-              }
-              safeApply(function () {
-                $rootScope.$broadcast(broadcastName, {
-                  markerName: markerName,
-                  leafletEvent: e
-                });
-              });
-            };
-          }
-          var markerEvents = [
-              'click',
-              'dblclick',
-              'mousedown',
-              'mouseover',
-              'mouseout',
-              'contextmenu',
-              'dragstart',
-              'drag',
-              'dragend',
-              'move',
-              'remove',
-              'popupopen',
-              'popupclose'
-            ];
-          for (var i = 0; i < markerEvents.length; i++) {
-            var eventName = markerEvents[i];
-            marker.on(eventName, genDispatchEventCB(eventName), {
-              eventName: eventName,
-              scope_watch_name: scope_watch_name
-            });
-          }
-          var clearWatch = $scope.$watch(scope_watch_name, function (data, old_data) {
-              if (!data) {
-                marker.closePopup();
-                if (layers !== undefined && layers !== null) {
-                  if (layers.overlays !== undefined) {
-                    for (var key in layers.overlays) {
-                      if (layers.overlays[key] instanceof L.LayerGroup) {
-                        if (layers.overlays[key].hasLayer(marker)) {
-                          layers.overlays[key].removeLayer(marker);
-                        }
-                      }
-                    }
-                  }
-                }
-                map.removeLayer(marker);
-                clearWatch();
-                return;
-              }
-              if (old_data) {
-                if (data.layer === undefined || data.layer === null || typeof data.layer !== 'string') {
-                  if (old_data.layer !== undefined && old_data.layer !== null && typeof old_data.layer === 'string') {
-                    if (layers.overlays[old_data.layer] !== undefined) {
-                      if (layers.overlays[old_data.layer].hasLayer(marker)) {
-                        layers.overlays[old_data.layer].removeLayer(marker);
-                        marker.closePopup();
-                      }
-                    }
-                    if (!map.hasLayer(marker)) {
-                      map.addLayer(marker);
-                    }
-                  }
-                } else if (old_data.layer === undefined || old_data.layer === null || old_data.layer !== data.layer) {
-                  if (typeof old_data.layer === 'string') {
-                    if (layers.overlays[old_data.layer] !== undefined) {
-                      if (layers.overlays[old_data.layer].hasLayer(marker)) {
-                        layers.overlays[old_data.layer].removeLayer(marker);
-                      }
-                    }
-                  }
-                  marker.closePopup();
-                  if (map.hasLayer(marker)) {
-                    map.removeLayer(marker);
-                  }
-                  if (layers.overlays[data.layer] !== undefined) {
-                    var layerGroup = layers.overlays[data.layer];
-                    if (layerGroup instanceof L.LayerGroup) {
-                      layerGroup.addLayer(marker);
-                      if (map.hasLayer(marker)) {
-                        if (data.focus === true) {
-                          marker.openPopup();
-                        }
-                      }
-                    } else {
-                      $log.error('[AngularJS - Leaflet] A marker can only be added to a layer of type "group"');
-                    }
-                  } else {
-                    $log.error('[AngularJS - Leaflet] You must use a name of an existing layer');
-                  }
-                } else {
-                }
-                if (data.draggable === undefined || data.draggable === null || data.draggable !== true) {
-                  if (old_data.draggable !== undefined && old_data.draggable !== null && old_data.draggable === true) {
-                    marker.dragging.disable();
-                  }
-                } else if (old_data.draggable === undefined || old_data.draggable === null || old_data.draggable !== true) {
-                  marker.dragging.enable();
-                }
-                if (data.icon === undefined || data.icon === null || typeof data.icon !== 'object') {
-                  if (old_data.icon !== undefined && old_data.icon !== null && typeof old_data.icon === 'object') {
-                    marker.setIcon(new LeafletIcon());
-                    marker.closePopup();
-                    marker.unbindPopup();
-                    if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                      marker.bindPopup(data.message);
-                    }
-                  }
-                } else if (old_data.icon === undefined || old_data.icon === null || typeof old_data.icon !== 'object') {
-                  var dragA = marker.dragging.enabled();
-                  if (Helpers.AwesomeMarkersPlugin.is(data.icon)) {
-                    marker.setIcon(data.icon);
-                  } else if (Helpers.Leaflet.DivIcon.is(data.icon) || Helpers.Leaflet.Icon.is(data.icon)) {
-                    marker.setIcon(data.icon);
-                  } else {
-                    marker.setIcon(new LeafletIcon(data.icon));
-                  }
-                  if (dragA) {
-                    marker.dragging.enable();
-                  }
-                  marker.closePopup();
-                  marker.unbindPopup();
-                  if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                    marker.bindPopup(data.message);
-                  }
-                } else {
-                  if (Helpers.AwesomeMarkersPlugin.is(data.icon)) {
-                    if (!Helpers.AwesomeMarkersPlugin.equal(data.icon, old_data.icon)) {
-                      var dragD = marker.dragging.enabled();
-                      marker.setIcon(data.icon);
-                      if (dragD) {
-                        marker.dragging.enable();
-                      }
-                      marker.closePopup();
-                      marker.unbindPopup();
-                      if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                        marker.bindPopup(data.message);
-                      }
-                    }
-                  } else if (Helpers.Leaflet.DivIcon.is(data.icon)) {
-                    if (!Helpers.Leaflet.DivIcon.equal(data.icon, old_data.icon)) {
-                      var dragE = marker.dragging.enabled();
-                      marker.setIcon(data.icon);
-                      if (dragE) {
-                        marker.dragging.enable();
-                      }
-                      marker.closePopup();
-                      marker.unbindPopup();
-                      if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                        marker.bindPopup(data.message);
-                      }
-                    }
-                  } else if (Helpers.Leaflet.Icon.is(data.icon)) {
-                    if (!Helpers.Leaflet.Icon.equal(data.icon, old_data.icon)) {
-                      var dragF = marker.dragging.enabled();
-                      marker.setIcon(data.icon);
-                      if (dragF) {
-                        marker.dragging.enable();
-                      }
-                      marker.closePopup();
-                      marker.unbindPopup();
-                      if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                        marker.bindPopup(data.message);
-                      }
-                    }
-                  } else {
-                    if (JSON.stringify(data.icon) !== JSON.stringify(old_data.icon)) {
-                      var dragG = marker.dragging.enabled();
-                      marker.setIcon(new LeafletIcon(data.icon));
-                      if (dragG) {
-                        marker.dragging.enable();
-                      }
-                      marker.closePopup();
-                      marker.unbindPopup();
-                      if (data.message !== undefined && data.message !== null && typeof data.message === 'string' && data.message !== '') {
-                        marker.bindPopup(data.message);
-                      }
-                    }
-                  }
-                }
-                if (data.message === undefined || data.message === null || typeof data.message !== 'string' || data.message === '') {
-                  if (old_data.message !== undefined && old_data.message !== null && typeof old_data.message === 'string' && old_data.message !== '') {
-                    marker.closePopup();
-                    marker.unbindPopup();
-                  }
-                } else {
-                  if (old_data.message === undefined || old_data.message === null || typeof old_data.message !== 'string' || old_data.message === '') {
-                    marker.bindPopup(data.message);
-                    if (data.focus === true) {
-                      marker.openPopup();
-                    }
-                  } else if (data.message !== old_data.message) {
-                    marker.setPopupContent(data.message);
-                  }
-                }
-                if (data.focus === undefined || data.focus === null || data.focus !== true) {
-                  if (old_data.focus !== undefined && old_data.focus !== null && old_data.focus === true) {
-                    marker.closePopup();
-                  }
-                } else if (old_data.focus === undefined || old_data.focus === null || old_data.focus !== true) {
-                  marker.openPopup();
-                }
-                if (data.lat === undefined || data.lat === null || isNaN(data.lat) || typeof data.lat !== 'number' || data.lng === undefined || data.lng === null || isNaN(data.lng) || typeof data.lng !== 'number') {
-                  $log.warn('There are problems with lat-lng data, please verify your marker model');
-                  if (layers !== undefined) {
-                    if (layers.overlays !== undefined) {
-                      for (var olname in layers.overlays) {
-                        if (layers.overlays[olname] instanceof L.LayerGroup) {
-                          if (layers.overlays[olname].hasLayer(marker)) {
-                            layers.overlays[olname].removeLayer(marker);
-                          }
-                        }
-                      }
-                    }
-                  }
-                  map.removeLayer(marker);
-                } else {
-                  var cur_latlng = marker.getLatLng();
-                  if (cur_latlng.lat !== data.lat || cur_latlng.lng !== data.lng) {
-                    var isCluster = false;
-                    if (data.layer !== undefined && data.layer !== null && typeof data.layer === 'string') {
-                      if (Helpers.MarkerClusterPlugin.is(layers.overlays[data.layer])) {
-                        layers.overlays[data.layer].removeLayer(marker);
-                        isCluster = true;
-                      }
-                    }
-                    marker.setLatLng([
-                      data.lat,
-                      data.lng
-                    ]);
-                    if (isCluster) {
-                      layers.overlays[data.layer].addLayer(marker);
-                    }
-                  }
-                }
-              }
-            }, true);
-          return marker;
-        }
-        function buildMarker(data) {
-          var micon = null;
-          if (data.icon) {
-            micon = data.icon;
-          } else {
-            micon = new LeafletIcon();
-          }
-          var moptions = {
-              icon: micon,
-              draggable: data.draggable ? true : false
-            };
-          if (data.title) {
-            moptions.title = data.title;
-          }
-          var marker = new L.marker(data, moptions);
-          if (data.message) {
-            marker.bindPopup(data.message);
-          }
-          return marker;
-        }
-        function setupPaths() {
-          var paths = {};
-          $scope.leaflet.paths = !!attrs.testing ? paths : str_inspect_hint;
-          if (!$scope.paths) {
-            return;
-          }
-          $log.warn('[AngularJS - Leaflet] Creating polylines and adding them to the map will break the directive\'s scope\'s inspection in AngularJS Batarang');
-          for (var name in $scope.paths) {
-            paths[name] = createPath(name, $scope.paths[name], map);
-          }
-          $scope.$watch('paths', function (newPaths) {
-            for (var new_name in newPaths) {
-              if (paths[new_name] === undefined) {
-                paths[new_name] = createPath(new_name, newPaths[new_name], map);
-              }
-            }
-            for (var name in paths) {
-              if (newPaths[name] === undefined) {
-                delete paths[name];
-              }
-            }
-          }, true);
-        }
-        function createPath(name, scopePath, map) {
-          var polyline = new L.Polyline([], {
-              weight: defaults.path.weight,
-              color: defaults.path.color,
-              opacity: defaults.path.opacity
-            });
-          if (scopePath.latlngs !== undefined) {
-            var latlngs = convertToLeafletLatLngs(scopePath.latlngs);
-            polyline.setLatLngs(latlngs);
-          }
-          if (scopePath.weight !== undefined) {
-            polyline.setStyle({ weight: scopePath.weight });
-          }
-          if (scopePath.color !== undefined) {
-            polyline.setStyle({ color: scopePath.color });
-          }
-          if (scopePath.opacity !== undefined) {
-            polyline.setStyle({ opacity: scopePath.opacity });
-          }
-          map.addLayer(polyline);
-          var clearWatch = $scope.$watch('paths.' + name, function (data, oldData) {
-              if (!data) {
-                map.removeLayer(polyline);
-                clearWatch();
-                return;
-              }
-              if (oldData) {
-                if (data.latlngs !== undefined && data.latlngs !== oldData.latlngs) {
-                  var latlngs = convertToLeafletLatLngs(data.latlngs);
-                  polyline.setLatLngs(latlngs);
-                }
-                if (data.weight !== undefined && data.weight !== oldData.weight) {
-                  polyline.setStyle({ weight: data.weight });
-                }
-                if (data.color !== undefined && data.color !== oldData.color) {
-                  polyline.setStyle({ color: data.color });
-                }
-                if (data.opacity !== undefined && data.opacity !== oldData.opacity) {
-                  polyline.setStyle({ opacity: data.opacity });
-                }
-              }
-            }, true);
-          return polyline;
-        }
-        function convertToLeafletLatLngs(latlngs) {
-          var leafletLatLngs = latlngs.filter(function (latlng) {
-              return !!latlng.lat && !!latlng.lng;
-            }).map(function (latlng) {
-              return new L.LatLng(latlng.lat, latlng.lng);
-            });
-          return leafletLatLngs;
-        }
-        function setupControls() {
-          if ($scope.defaults && $scope.defaults.zoomControlPosition) {
-            map.zoomControl.setPosition($scope.defaults.zoomControlPosition);
-          }
-        }
-        function setupCustomControls() {
-          if (!$scope.customControls) {
-            return;
-          }
-          for (var i = 0, count = $scope.customControls.length; i < count; i++) {
-            map.addControl(new $scope.customControls[i]());
-          }
-        }
-      }
-    };
-  }
-]);
+    }
+  ]);
+}());
 angular.module('ngProgress.provider', ['ngProgress.directive']).provider('ngProgress', function () {
   'use strict';
   this.autoStyle = true;
@@ -13590,8 +15181,45 @@ angular.module('ngProgress', [
   'ngProgress.directive',
   'ngProgress.provider'
 ]);
+angular.module('truncate', []).filter('characters', function () {
+  return function (input, chars, breakOnWord) {
+    if (isNaN(chars))
+      return input;
+    if (chars <= 0)
+      return '';
+    if (input && input.length >= chars) {
+      input = input.substring(0, chars);
+      if (!breakOnWord) {
+        var lastspace = input.lastIndexOf(' ');
+        if (lastspace !== -1) {
+          input = input.substr(0, lastspace);
+        }
+      } else {
+        while (input.charAt(input.length - 1) == ' ') {
+          input = input.substr(0, input.length - 1);
+        }
+      }
+      return input + '...';
+    }
+    return input;
+  };
+}).filter('words', function () {
+  return function (input, words) {
+    if (isNaN(words))
+      return input;
+    if (words <= 0)
+      return '';
+    if (input) {
+      var inputWords = input.split(/\s+/);
+      if (inputWords.length > words) {
+        input = inputWords.slice(0, words).join(' ') + '...';
+      }
+    }
+    return input;
+  };
+});
 (function () {
-  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, Map, MapController, MergeController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, htmlTemplates, log, __slice = [].slice;
+  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, MapKickstartModalController, MergeController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, WebMap, WebMapController, WebMapFormController, htmlTemplates, log, __slice = [].slice;
   this.angularHelpers = function () {
     var injector;
     injector = null;
@@ -13667,6 +15295,16 @@ angular.module('ngProgress', [
       return notify(message, 'error');
     };
   }());
+  this.livingmapsUid = function () {
+    return {
+      guid: function () {
+        return livingmapsUid.s4() + livingmapsUid.s4() + '-' + livingmapsUid.s4() + '-' + livingmapsUid.s4() + '-' + livingmapsUid.s4() + '-' + livingmapsUid.s4() + livingmapsUid.s4() + livingmapsUid.s4();
+      },
+      s4: function () {
+        return Math.floor((1 + Math.random()) * 65536).toString(16).substring(1);
+      }
+    };
+  }();
   this.livingmapsWords = function () {
     return {
       snakeCase: function (str) {
@@ -13692,7 +15330,8 @@ angular.module('ngProgress', [
     'leaflet-directive',
     'ngProgress',
     'uiSlider',
-    'ngGrid'
+    'ngGrid',
+    'truncate'
   ]).config([
     '$httpProvider',
     '$locationProvider',
@@ -14094,13 +15733,15 @@ angular.module('ngProgress', [
       });
     };
     ChoroplethMapController.prototype.initColorScheme = function () {
-      if (this.choroplethMapInstance.getValueType() === 'numerical') {
-        return this.snippetModel.data({
-          colorScheme: 'OrRd',
-          colorSteps: 9
-        });
-      } else {
-        return this.snippetModel.data({ colorScheme: 'Paired' });
+      if (!this.snippetModel.data('colorScheme')) {
+        if (this.choroplethMapInstance.getValueType() === 'numerical') {
+          return this.snippetModel.data({
+            colorScheme: 'OrRd',
+            colorSteps: 9
+          });
+        } else {
+          return this.snippetModel.data({ colorScheme: 'Paired' });
+        }
       }
     };
     ChoroplethMapController.prototype.initScope = function () {
@@ -14251,9 +15892,16 @@ angular.module('ngProgress', [
     return DataModalController;
   }());
   angular.module('ldEditor').controller('DocumentPanelController', DocumentPanelController = function () {
-    function DocumentPanelController($scope, editorService) {
-      $scope.document = editorService.currentDocument;
+    function DocumentPanelController($scope, editorService, documentService) {
+      this.editorService = editorService;
+      this.documentService = documentService;
+      $scope.document = this.editorService.currentDocument;
+      $scope.resetStory = $.proxy(this.resetStory, this);
     }
+    DocumentPanelController.prototype.resetStory = function () {
+      doc.stash.clear();
+      return window.location = '/';
+    };
     return DocumentPanelController;
   }());
   angular.module('ldEditor').controller('EditorController', EditorController = function () {
@@ -14478,39 +16126,218 @@ angular.module('ngProgress', [
     };
     return ImageEmbedController;
   }());
-  angular.module('ldEditor').controller('MapController', MapController = function () {
-    function MapController($scope, mapMediatorService) {
+  angular.module('ldEditor').controller('MapKickstartModalController', MapKickstartModalController = function () {
+    function MapKickstartModalController($scope, $modalInstance, data, leafletData, $timeout, leafletEvents) {
       this.$scope = $scope;
-      this.mapMediatorService = mapMediatorService;
-      this.$scope.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
-      this.snippetModel = this.$scope.snippetModel;
-      this.$scope.center = {
-        lat: 47.388778,
-        lng: 8.541971,
-        zoom: 12
-      };
-      this.setupListeners();
+      this.$modalInstance = $modalInstance;
+      this.data = data;
+      this.leafletData = leafletData;
+      this.$timeout = $timeout;
+      this.leafletEvents = leafletEvents;
+      this.$scope.close = $.proxy(this.close, this);
+      this.$scope.highlightMarker = $.proxy(this.highlightMarker, this);
+      this.$scope.unHighlightMarker = $.proxy(this.unHighlightMarker, this);
+      this.$scope.toggleMarker = $.proxy(this.toggleMarker, this);
+      this.$scope.hasMarkers = $.proxy(this.hasMarkers, this);
+      this.$scope.kickstart = $.proxy(this.kickstart, this);
+      this.initMarkers();
+      this.initMarkerStyles();
+      if (this.$scope.markers.length > 0) {
+        this.initMap();
+      }
+      if (this.$scope.markers.length > 0) {
+        this.setupMarkerEvents();
+      }
+      this.setupGlobalProperties();
     }
-    MapController.prototype.setupListeners = function () {
-      var _this = this;
-      this.$scope.$watch('snippetModel.data("dataIdentifier")', function (newVal) {
-        return _this.populateData();
-      });
-      return this.$scope.$watch('snippetModel.data("popupContentProperty")', function (newVal) {
-        return _this.populateData();
-      });
+    MapKickstartModalController.prototype.initMarkers = function () {
+      var feature, featureTextProperties, idx, property, _i, _len, _ref, _ref1, _results;
+      this.$scope.markers = [];
+      this.$scope.globalTextProperties = [];
+      _ref = this.data.features;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        feature = _ref[_i];
+        if (feature.type === 'Feature' && ((_ref1 = feature.geometry) != null ? _ref1.type : void 0) === 'Point') {
+          this.$scope.markers.push({
+            selected: true,
+            uuid: livingmapsUid.guid(),
+            geojson: feature,
+            textProperties: this.getTextProperties(feature)
+          });
+          if (this.$scope.globalTextProperties.length === 0) {
+            _results.push(this.$scope.globalTextProperties = this.getTextProperties(feature));
+          } else {
+            featureTextProperties = this.getTextProperties(feature);
+            _results.push(function () {
+              var _j, _len1, _ref2, _results1;
+              _ref2 = this.$scope.globalTextProperties;
+              _results1 = [];
+              for (idx = _j = 0, _len1 = _ref2.length; _j < _len1; idx = ++_j) {
+                property = _ref2[idx];
+                if (featureTextProperties.indexOf(property) === -1) {
+                  _results1.push(this.$scope.globalTextProperties.splice(idx, 1));
+                } else {
+                  _results1.push(void 0);
+                }
+              }
+              return _results1;
+            }.call(this));
+          }
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
     };
-    MapController.prototype.populateData = function () {
-      var newData;
-      newData = this.snippetModel.data('geojson');
-      if (newData) {
-        return this.$scope.geojson = {
-          data: newData,
-          popupContentProperty: this.snippetModel.data('popupContentProperty')
-        };
+    MapKickstartModalController.prototype.highlightMarker = function (index) {
+      if (this.$scope.previewMarkers[index].icon === this.removedMarker) {
+        return this.$scope.previewMarkers[index].icon = this.addMarker;
+      } else {
+        return this.$scope.previewMarkers[index].icon = this.removeMarker;
       }
     };
-    return MapController;
+    MapKickstartModalController.prototype.unHighlightMarker = function (index) {
+      if (this.$scope.markers[index].selected) {
+        return this.$scope.previewMarkers[index].icon = this.addedMarker;
+      } else {
+        return this.$scope.previewMarkers[index].icon = this.removedMarker;
+      }
+    };
+    MapKickstartModalController.prototype.toggleMarker = function (marker, index) {
+      marker.selected = !marker.selected;
+      if (marker.selected) {
+        return this.$scope.previewMarkers[index].icon = this.addedMarker;
+      } else {
+        return this.$scope.previewMarkers[index].icon = this.removedMarker;
+      }
+    };
+    MapKickstartModalController.prototype.initMarkerStyles = function () {
+      this.addedMarker = L.AwesomeMarkers.icon({
+        icon: 'fa-check',
+        markerColor: 'darkgreen',
+        prefix: 'fa'
+      });
+      this.addMarker = L.AwesomeMarkers.icon({
+        icon: 'fa-plus',
+        markerColor: 'green',
+        prefix: 'fa'
+      });
+      this.removeMarker = L.AwesomeMarkers.icon({
+        icon: 'fa-minus',
+        markerColor: 'red',
+        prefix: 'fa'
+      });
+      return this.removedMarker = L.AwesomeMarkers.icon({
+        icon: 'fa-times',
+        markerColor: 'cadetblue',
+        prefix: 'fa'
+      });
+    };
+    MapKickstartModalController.prototype.initMap = function () {
+      var _this = this;
+      this.$scope.center = {
+        zoom: 8,
+        lat: this.$scope.markers[0].geojson.geometry.coordinates[1],
+        lng: this.$scope.markers[0].geojson.geometry.coordinates[0]
+      };
+      this.$scope.previewMarkers = _.map(this.$scope.markers, function (marker) {
+        return {
+          lat: marker.geojson.geometry.coordinates[1],
+          lng: marker.geojson.geometry.coordinates[0],
+          riseOnHover: true,
+          icon: _this.addedMarker
+        };
+      });
+      return this.$timeout(function () {
+        return _this.leafletData.getMap().then(function (map) {
+          return map.fitBounds(_this.getBounds(_this.$scope.previewMarkers));
+        });
+      }, 100);
+    };
+    MapKickstartModalController.prototype.setupMarkerEvents = function () {
+      var _this = this;
+      this.$scope.events = { markers: { enable: this.leafletEvents.getAvailableMarkerEvents() } };
+      return this.$scope.$on('leafletDirectiveMarker.click', function (e, args) {
+        return _this.toggleMarker(_this.$scope.markers[+args.markerName], +args.markerName);
+      });
+    };
+    MapKickstartModalController.prototype.setupGlobalProperties = function () {
+      var _this = this;
+      this.$scope.globalValues = {};
+      this.$scope.globalValues.textProperty = '';
+      this.$scope.globalValues.selected = true;
+      this.$scope.$watch('globalValues.textProperty', function (newVal, oldVal) {
+        var marker, _i, _len, _ref, _results;
+        _ref = _this.$scope.markers;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          marker = _ref[_i];
+          _results.push(marker.selectedTextProperty = newVal);
+        }
+        return _results;
+      });
+      return this.$scope.$watch('globalValues.selected', function (newVal, oldVal) {
+        var idx, marker, _i, _len, _ref, _results;
+        _ref = _this.$scope.markers;
+        _results = [];
+        for (idx = _i = 0, _len = _ref.length; _i < _len; idx = ++_i) {
+          marker = _ref[idx];
+          if (marker.selected !== newVal) {
+            _results.push(_this.toggleMarker(marker, idx));
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      });
+    };
+    MapKickstartModalController.prototype.kickstart = function (event) {
+      var selectedMarkers;
+      selectedMarkers = _.filter(this.$scope.markers, function (marker) {
+        return marker.selected;
+      });
+      this.$modalInstance.close({
+        action: 'kickstart',
+        markers: _.map(selectedMarkers, function (marker) {
+          return {
+            lat: marker.geojson.geometry.coordinates[1],
+            lng: marker.geojson.geometry.coordinates[0],
+            message: marker.geojson.properties[marker.selectedTextProperty],
+            uuid: marker.uuid
+          };
+        })
+      });
+      return event.stopPropagation();
+    };
+    MapKickstartModalController.prototype.close = function (event) {
+      this.$modalInstance.dismiss('close');
+      return event.stopPropagation();
+    };
+    MapKickstartModalController.prototype.hasMarkers = function () {
+      return _.any(this.$scope.markers, function (marker) {
+        return marker.selected;
+      });
+    };
+    MapKickstartModalController.prototype.getBounds = function (markers) {
+      var maxLat, maxLng, minLat, minLng, northEast, southWest;
+      maxLat = this.getMinOrMax(markers, 'max', 'lat');
+      maxLng = this.getMinOrMax(markers, 'max', 'lng');
+      minLat = this.getMinOrMax(markers, 'min', 'lat');
+      minLng = this.getMinOrMax(markers, 'min', 'lng');
+      southWest = new L.LatLng(minLat, minLng);
+      northEast = new L.LatLng(maxLat, maxLng);
+      return new L.LatLngBounds(southWest, northEast);
+    };
+    MapKickstartModalController.prototype.getMinOrMax = function (markers, minOrMax, latOrLng) {
+      return _[minOrMax](_.map(markers, function (marker) {
+        return marker[latOrLng];
+      }));
+    };
+    MapKickstartModalController.prototype.getTextProperties = function (feature) {
+      return _.keys(feature.properties);
+    };
+    return MapKickstartModalController;
   }());
   angular.module('ldEditor').controller('MergeController', MergeController = function () {
     function MergeController($scope, mapMediatorService) {
@@ -14635,6 +16462,7 @@ angular.module('ngProgress', [
         return _this.registerActivePanel('propertiesPanel');
       };
       this.hideSidebar = $.proxy(this.hide, this);
+      this.sidebarBecameVisible = $.Callbacks();
     }
     SidebarController.prototype.registerActivePanel = function (panel) {
       if (this.uiStateService.state.isActive(panel)) {
@@ -14642,12 +16470,14 @@ angular.module('ngProgress', [
           this.uiStateService.blurCurrentSnippet();
           return this.hide(panel);
         } else {
-          return this.uiStateService.set('sidebar', { foldedOut: true });
+          this.uiStateService.set('sidebar', { foldedOut: true });
+          return this.sidebarBecameVisible.fire();
         }
       } else {
         this.uiStateService.blurCurrentSnippet();
         this.uiStateService.set(panel, {});
-        return this.uiStateService.set('sidebar', { foldedOut: true });
+        this.uiStateService.set('sidebar', { foldedOut: true });
+        return this.sidebarBecameVisible.fire();
       }
     };
     SidebarController.prototype.hide = function (activePanel) {
@@ -14693,6 +16523,234 @@ angular.module('ngProgress', [
       return this.editorService.snippetTemplateClick.fire($event, snippet);
     };
     return SnippetPanelController;
+  }());
+  angular.module('ldEditor').controller('WebMapController', WebMapController = function () {
+    function WebMapController($scope, mapMediatorService) {
+      this.$scope = $scope;
+      this.mapMediatorService = mapMediatorService;
+      this.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
+      this.snippetModel.data({ lastPositioned: new Date().getTime() });
+      this.setupSnippetChangeListener();
+      this.initScope();
+    }
+    WebMapController.prototype.initScope = function () {
+      var property, _i, _len, _ref, _results;
+      this.initDefaults();
+      _ref = [
+        'center',
+        'markers'
+      ];
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        property = _ref[_i];
+        _results.push(this.$scope[property] = this.$scope.snippetModel.data(property));
+      }
+      return _results;
+    };
+    WebMapController.prototype.initDefaults = function () {
+      var markers;
+      this.$scope.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
+      if (!this.$scope.snippetModel.data('center')) {
+        this.$scope.snippetModel.data({
+          center: {
+            lat: 47.388778,
+            lng: 8.541971,
+            zoom: 12
+          }
+        });
+      }
+      markers = this.$scope.snippetModel.data('markers');
+      if (!markers || markers.length === 0) {
+        return this.$scope.snippetModel.data({
+          markers: [{
+              lat: 90,
+              lng: 0,
+              uuid: ''
+            }]
+        });
+      }
+    };
+    WebMapController.prototype.setupSnippetChangeListener = function () {
+      var _this = this;
+      return doc.snippetDataChanged(function (snippet, changedProperties) {
+        if (snippet.id === _this.snippetModel.id) {
+          return _this.changeMapAttrsData(changedProperties);
+        }
+      });
+    };
+    WebMapController.prototype.changeMapAttrsData = function (changedProperties) {
+      var newVal, trackedProperty, _i, _len, _ref, _results;
+      _ref = webMapConfig.trackedProperties;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        trackedProperty = _ref[_i];
+        if (changedProperties.indexOf(trackedProperty) !== -1) {
+          newVal = this.snippetModel.data(trackedProperty);
+          if (typeof newVal !== 'undefined') {
+            _results.push(this.$scope[trackedProperty] = newVal);
+          } else {
+            _results.push(void 0);
+          }
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+    return WebMapController;
+  }());
+  angular.module('ldEditor').controller('WebMapFormController', WebMapFormController = function () {
+    function WebMapFormController($scope, ngProgress, $http, dialogService, mapMediatorService) {
+      this.$scope = $scope;
+      this.ngProgress = ngProgress;
+      this.$http = $http;
+      this.dialogService = dialogService;
+      this.mapMediatorService = mapMediatorService;
+      this.$scope.snippet = this.mapMediatorService.getSnippetModel(this.$scope.snippet.model.id);
+      this.$scope.center = {};
+      $.extend(true, this.$scope.center, this.$scope.snippet.data('center'));
+      this.$scope.markers = [];
+      $.extend(true, this.$scope.markers, this.$scope.snippet.data('markers'));
+      this.$scope.availableZoomLevels = [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ];
+      this.$scope.newMarker = {};
+      this.$scope.addMarker = $.proxy(this.addMarker, this);
+      this.$scope.deleteMarker = $.proxy(this.deleteMarker, this);
+      this.$scope.highlightMarker = $.proxy(this.highlightMarker, this);
+      this.$scope.unHighlightMarker = $.proxy(this.unHighlightMarker, this);
+      this.$scope.kickstartMarkers = $.proxy(this.kickstartMarkers, this);
+      this.initMarkerStyles();
+      this.watchCenter();
+      this.watchMarkers();
+    }
+    WebMapFormController.prototype.initMarkerStyles = function () {
+      return this.hoverMarker = L.AwesomeMarkers.icon({
+        icon: 'fa-cogs',
+        markerColor: 'green',
+        prefix: 'fa'
+      });
+    };
+    WebMapFormController.prototype.highlightMarker = function (index) {
+      return this.$scope.markers[index].icon = this.hoverMarker;
+    };
+    WebMapFormController.prototype.unHighlightMarker = function (index) {
+      return this.$scope.markers[index].icon = void 0;
+    };
+    WebMapFormController.prototype.addMarker = function () {
+      var newValidMarker;
+      if (!this.validateMarkers([this.$scope.newMarker])) {
+        return alert('Please fill out the required fields');
+      } else {
+        newValidMarker = {};
+        $.extend(true, newValidMarker, this.$scope.newMarker);
+        newValidMarker.uuid = livingmapsUid.guid();
+        this.$scope.markers.unshift(newValidMarker);
+        return this.$scope.newMarker = {};
+      }
+    };
+    WebMapFormController.prototype.deleteMarker = function (index) {
+      return this.$scope.markers.splice(index, 1);
+    };
+    WebMapFormController.prototype.kickstartMarkers = function (data, error) {
+      var promise, _this = this;
+      if (error.message) {
+        return alert(error.message);
+      } else {
+        this.ngProgress.start();
+        promise = this.$http.post('http://geojsonlint.com/validate', data);
+        promise.error(function (error) {
+          alert('Could not validate your json with geojsonlint.com. Do you have internet connection?');
+          return _this.ngProgress.complete();
+        });
+        return promise.success(function (response) {
+          if (response.status === 'ok') {
+            _this.dialogService.openMapKickstartModal(data).result.then(function (result) {
+              if (result.action === 'kickstart') {
+                return _this.$scope.markers = result.markers;
+              }
+            });
+          } else {
+            alert('This is not a geojson file. Sorry currently we only have support for geojson.');
+          }
+          return _this.ngProgress.complete();
+        });
+      }
+    };
+    WebMapFormController.prototype.watchCenter = function () {
+      var _this = this;
+      this.$scope.$watch('center.lat', function (newVal, oldVal) {
+        var oldSnippetModelData;
+        if (newVal && $.isNumeric(newVal)) {
+          oldSnippetModelData = _this.$scope.snippet.data('center');
+          return _this.$scope.snippet.data({
+            center: {
+              zoom: oldSnippetModelData.zoom,
+              lng: oldSnippetModelData.lng,
+              lat: newVal
+            }
+          });
+        }
+      });
+      this.$scope.$watch('center.lng', function (newVal, oldVal) {
+        var oldSnippetModelData;
+        if (newVal && $.isNumeric(newVal)) {
+          oldSnippetModelData = _this.$scope.snippet.data('center');
+          return _this.$scope.snippet.data({
+            center: {
+              zoom: oldSnippetModelData.zoom,
+              lng: newVal,
+              lat: oldSnippetModelData.lat
+            }
+          });
+        }
+      });
+      return this.$scope.$watch('center.zoom', function (newVal, oldVal) {
+        var oldSnippetModelData;
+        if (newVal && $.isNumeric(newVal)) {
+          oldSnippetModelData = _this.$scope.snippet.data('center');
+          return _this.$scope.snippet.data({
+            center: {
+              zoom: newVal,
+              lng: oldSnippetModelData.lng,
+              lat: oldSnippetModelData.lat
+            }
+          });
+        }
+      });
+    };
+    WebMapFormController.prototype.watchMarkers = function () {
+      var _this = this;
+      return this.$scope.$watch('markers', function (newVal, oldVal) {
+        var newMarkers;
+        if (newVal && _this.validateMarkers(newVal)) {
+          newMarkers = [];
+          $.extend(true, newMarkers, newVal);
+          return _this.$scope.snippet.data({ markers: newMarkers });
+        }
+      }, true);
+    };
+    WebMapFormController.prototype.validateMarkers = function (markers) {
+      return _.every(markers, function (marker) {
+        return $.isNumeric(marker.lat) && $.isNumeric(marker.lng);
+      });
+    };
+    return WebMapFormController;
   }());
   angular.module('ldEditor').directive('autosave', [
     'pageStateService',
@@ -15319,10 +17377,11 @@ angular.module('ngProgress', [
         controller: PropertiesPanelController,
         require: '^sidebar',
         link: function (scope, element, attrs, SidebarController) {
-          var cleanForm, formElementScopes, renderChoroplethForm, renderData, renderDataSelect, renderPopupPropertySelect, _this = this;
+          var cleanForm, formElementScopes, renderChoroplethForm, renderData, renderDataSelect, renderPopupPropertySelect, renderWebMapForm, _this = this;
           scope.hideSidebar = function () {
             return SidebarController.hideSidebar('propertiesPanel');
           };
+          scope.sidebarBecameVisible = SidebarController.sidebarBecameVisible;
           scope.$watch('snippet', function (newVal, oldVal) {
             if (newVal) {
               return renderData(newVal.data, newVal);
@@ -15403,13 +17462,22 @@ angular.module('ngProgress', [
               return $('.visual-form-placeholder').append(form);
             });
           };
+          renderWebMapForm = function () {
+            var insertScope;
+            insertScope = scope.$new();
+            formElementScopes.push(insertScope);
+            return $compile(htmlTemplates.webmapSidebarForm)(insertScope, function (form, childScope) {
+              childScope.htmlElement = form;
+              return $('.visual-form-placeholder').append(form);
+            });
+          };
           return renderData = function (data, snippet) {
             cleanForm();
             switch (snippet.model.identifier) {
             case 'livingmaps.choropleth':
               return renderChoroplethForm();
             case 'livingmaps.map':
-              return renderDataSelect('Mock Data', dataService.options(), snippet);
+              return renderWebMapForm();
             }
           };
         }
@@ -15431,6 +17499,34 @@ angular.module('ngProgress', [
       };
     }
   ]);
+  angular.module('ldEditor').directive('sidebarRegion', function () {
+    return {
+      restrict: 'A',
+      scope: {
+        'caption': '@',
+        'validityCondition': '@',
+        'checkValidity': '@'
+      },
+      template: htmlTemplates.sidebarRegion,
+      replace: true,
+      transclude: true,
+      link: function (scope, element, attrs) {
+        scope.showContent = true;
+        if (scope.checkValidity) {
+          attrs.$observe('validityCondition', function (value) {
+            if (value) {
+              return scope.iconClass = 'entypo-check upfront-check';
+            } else {
+              return scope.iconClass = 'entypo-attention upfront-important';
+            }
+          });
+        }
+        return scope.toggle = function () {
+          return scope.showContent = !scope.showContent;
+        };
+      }
+    };
+  });
   angular.module('ldEditor').directive('snippetDrag', function () {
     var dragDrop;
     dragDrop = new doc.DragDrop({
@@ -16020,17 +18116,6 @@ angular.module('ngProgress', [
     };
     return Document;
   }();
-  Map = function () {
-    var template;
-    template = '<div ng-controller="MapController">\n  <leaflet center="center" geojson="geojson">\n  </leaflet>\n</div>';
-    function Map(_arg) {
-      _arg;
-    }
-    Map.prototype.getTemplate = function () {
-      return template;
-    };
-    return Map;
-  }();
   SnippetInsertor = function () {
     var insertScopes, snippetToInsert;
     insertScopes = [];
@@ -16106,6 +18191,26 @@ angular.module('ngProgress', [
     };
     return SnippetInsertor;
   }();
+  WebMap = function () {
+    function WebMap(id) {
+      this.id = id;
+      this.mapMediatorService = angularHelpers.inject('mapMediatorService');
+    }
+    WebMap.prototype.getTemplate = function () {
+      return webMapConfig.template;
+    };
+    return WebMap;
+  }();
+  (function () {
+    return this.webMapConfig = {
+      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers">\n  </leaflet>\n</div>',
+      directive: '<leaflet center="center" markers="markers">\n</leaflet>',
+      trackedProperties: [
+        'center',
+        'markers'
+      ]
+    };
+  }());
   angular.module('ldEditor').service('angularTemplateService', [
     '$rootScope',
     '$compile',
@@ -16128,10 +18233,7 @@ angular.module('ngProgress', [
             node = _ref[_i];
             switch ($(node).data('is')) {
             case 'leaflet-map':
-              _results.push(this.loadTemplate($(node), $.proxy(this.insertTemplateInstance, this, snippetModel, $(node), new Map({
-                id: snippetModel.id,
-                mapMediatorService: mapMediatorService
-              }))));
+              _results.push(this.loadTemplate($(node), $.proxy(this.insertTemplateInstance, this, snippetModel, $(node), new WebMap(snippetModel.id))));
               break;
             case 'd3-choropleth':
               _results.push(this.loadTemplate($(node), $.proxy(this.insertTemplateInstance, this, snippetModel, $(node), new ChoroplethMap(snippetModel.id))));
@@ -16259,7 +18361,7 @@ angular.module('ngProgress', [
     '$modal',
     'uiStateService',
     function ($modal, uiStateService) {
-      var dataModalOptions, historyModalOptions;
+      var dataModalOptions, historyModalOptions, mapKickstartModalOptions;
       dataModalOptions = {
         template: htmlTemplates.dataModal,
         controller: 'DataModalController',
@@ -16268,6 +18370,11 @@ angular.module('ngProgress', [
       historyModalOptions = {
         template: htmlTemplates.historyModal,
         controller: 'HistoryModalController',
+        windowClass: 'upfront-modal-full-width'
+      };
+      mapKickstartModalOptions = {
+        template: htmlTemplates.mapKickstartModal,
+        controller: 'MapKickstartModalController',
         windowClass: 'upfront-modal-full-width'
       };
       return {
@@ -16292,6 +18399,14 @@ angular.module('ngProgress', [
             }
           };
           return $modal.open(historyModalOptions);
+        },
+        openMapKickstartModal: function (data) {
+          mapKickstartModalOptions.resolve = {
+            data: function () {
+              return data;
+            }
+          };
+          return $modal.open(mapKickstartModalOptions);
         }
       };
     }
@@ -16408,26 +18523,31 @@ angular.module('ngProgress', [
       };
     }
   ]);
-  angular.module('ldEditor').factory('editorService', function () {
-    return {
-      currentDocument: void 0,
-      snippetTemplateClick: $.Callbacks(),
-      loadDocument: function (document) {
-        this.currentDocument = document;
-        return doc.init({
-          design: design.livingmaps,
-          json: document.data
-        });
-      },
-      getCurrentDocument: function () {
-        return this.currentDocument;
-      },
-      updateDocument: function () {
-        this.currentDocument.data = doc.toJson();
-        return this.currentDocument.html = $('.doc-section').html();
-      }
-    };
-  });
+  angular.module('ldEditor').factory('editorService', [
+    '$q',
+    function ($q) {
+      return {
+        currentDocument: void 0,
+        snippetTemplateClick: $.Callbacks(),
+        documentLoaded: $.Callbacks('once'),
+        loadDocument: function (document) {
+          this.currentDocument = document;
+          doc.init({
+            design: design.livingmaps,
+            json: document.data
+          });
+          return this.documentLoaded.fire();
+        },
+        getCurrentDocument: function () {
+          return this.currentDocument;
+        },
+        updateDocument: function () {
+          this.currentDocument.data = doc.toJson();
+          return this.currentDocument.html = $('.doc-section').html();
+        }
+      };
+    }
+  ]);
   angular.module('ldEditor').factory('livingdocsService', [
     '$rootScope',
     '$timeout',
@@ -16866,25 +18986,29 @@ angular.module('ngProgress', [
   htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" accept=".csv" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>legend</legend>\n        <label>\n          <input type="checkbox" ng-model="hideLegend" /> Hide legend\n        </label>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.diffAddDelEntry = '<div  class="upfront-diff upfront-control"\n      ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}"\n      ng-controller="MergeController">\n\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n\n  {{property.label}} {{property.difference.content}}\n\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertAdd(property)"\n                ng-show="property.difference.type == \'add\'">\n                remove\n        </button>\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n              ng-click="revertDelete(property)"\n              ng-show="property.difference.type == \'delete\'">\n              bring back\n      </button>\n\n</div>';
   htmlTemplates.diffChangeEntry = '<div class="upfront-diff change upfront-control" ng-controller="MergeController">\n  <span class="entypo-flow-parallel"></span>\n    {{property.label}} changed <span ng-show="!property.difference.type == \'blobChange\'">from {{property.difference.previous}} to {{property.difference.after}}</span>\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertChange(property)"\n                ng-hide="isColorStepsWithOrdinalData(property)">\n                revert to previous value\n        </button>\n</div>';
-  htmlTemplates.documentPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    publish if you want\n  </div>\n  <div class="upfront-sidebar-content -js-upfront-sidebar-publish">\n    <button class="upfront-btn upfront-control upfront-btn-primary" type="button">\n      <i class="entypo-upload-cloud"></i>\n      <span>publish</span>\n    </button>\n  </div>\n</div>';
+  htmlTemplates.documentPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <h4>Thank you for trying datablog.io!</h4>\n    <p>\n      This public Test Page allows you to try the features of datablog, in particular choropleths and maps.\n      Your work is stored locally, but not on any server, so when your Browser is reset, the data is lost.\n      If you have any suggestions or ideas concerning datablog I am happy to hear about it at "gabriel(dot)hase(at)gmail(dot)com".\n    </p>\n    <a  href="" class="upfront-btn upfront-btn-danger"\n        ng-click="resetStory()">\n        Reset Test Story\n    </a>\n    <br>\n    <span class="entypo-help" style="font-size: 0.8em"> This clears all changes you have made to the Test Page</span>\n  </div>\n</div>';
   htmlTemplates.editButton = '<div ng-click="editSnippet(snippet, $event)" class="edit-button entypo-cog" ng-style="buttonStyle">\n</div>';
   htmlTemplates.editor = '<div>\n  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>\n\n    <!-- Autosave messages -->\n    <div class=\'top-message\'\n         ng-show="autosave.state"\n         ng-class="autosave.state"\n         ng-animate="{show: \'message-show\'}">\n      {{ autosave.message }}\n    </div>\n\n    <!-- Sidebar -->\n    <div sidebar ng-if="state.isActive(\'sidebar\')" folded-out="state.sidebar.foldedOut">\n      <div document-panel ng-if="state.isActive(\'documentPanel\')"></div>\n      <div snippet-panel ng-if="state.isActive(\'snippetPanel\')"></div>\n      <div properties-panel snippet="state.propertiesPanel.snippet" ng-if="state.isActive(\'propertiesPanel\')"></div>\n    </div>\n\n    <!-- Selected Text Options -->\n    <div popover ng-if="state.isActive(\'flowtextPopover\')" arrow-distance="14" open-condition="state.flowtextPopover" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">\n      <ng-include src="\'flowtext-options.html\'">\n      </ng-include>\n    </div>\n\n    <!-- Selected Image Popover -->\n    <div popover ng-if="state.isActive(\'imagePopover\')" arrow-distance="14" open-condition="state.imagePopover" bounding-box="{{ state.imagePopover.boundingBox }}">\n      <ng-include src="\'image-input.html\'"></ng-include>\n    </div>\n\n  </div>\n</div>';
   htmlTemplates.flowtextOptions = '<div ng-controller=\'FlowtextOptionsController\'>\n  <div class="flowtext-options upfront-btn-group" ng-hide="editableEventsService.selectionIsOnInputField" class=\'upfront-btn-group\'>\n    <a ng-click=\'toggleBold()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isBold}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-bold"></span>\n    </a>\n\n    <a ng-click=\'toggleItalic()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isItalic}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-italic"></span>\n    </a>\n\n    <a ng-click=\'openLinkInput()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isLinked}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-link"></span>\n    </a>\n\n  </div>\n  <div ng-show="editableEventsService.selectionIsOnInputField">\n    <form class="upfront-control upfront-link-editing" ng-submit="setLink(currentSelectionStyles.link, currentSelectionStyles.isLinkExternal)">\n      <input type="submit" class=\'upfront-btn-mini upfront-link-editing_submit\' value="OK">\n      <input  type="text"\n              id="linkInput"\n              class="upfront-link-editing_link-field"\n              placeholder="www.datablog.io"\n              ld-focus="{{editableEventsService.selectionIsOnInputField}}"\n              ng-model="currentSelectionStyles.link">\n\n      <label class="upfront-link-editing_checkbox">\n        <input type="checkbox"\n              ng-model="currentSelectionStyles.isLinkExternal"> In neuem Fenster \xf6ffnen\n      </label>\n    </form>\n  </div>\n</div>';
   htmlTemplates.historyButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-flow-branch" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet yet.\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="width: 76px; left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map hide-legend">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map hide-legend">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties" ng-show="property.difference">\n              <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n                <ng-include src="\'diff-change-entry.html\'"></ng-include>\n              </div>\n              <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
+  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map hide-legend">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map hide-legend">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties" ng-show="property.difference">\n              <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n                <ng-include src="\'diff-change-entry.html\'"></ng-include>\n              </div>\n              <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
   htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>\n      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>\n      <span ng-hide="snippet">Select an element on the page</span>\n    </h3>\n  </div>\n  <div ng-show="snippet">\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.sidebar = '<div class="upfront-sidebar"\n  ng-class="{\'upfront-sidebar-hidden\': !foldedOut}">\n  <div class="upfront-sidebar-nav">\n    <span class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"\n      data-nav="document"\n      ng-click="loadDocument()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'documentPanel\')}"></span>\n    <span class="upfront-sidebar-nav-elem upfront-sidebar-nav-second"\n      data-nav="snippets" style="font-weight:700;"\n      ng-click="loadSnippets()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'snippetPanel\')}">+</span>\n    <span class="entypo-cog upfront-sidebar-nav-elem upfront-sidebar-nav-third"\n       data-nav="properties"\n       ng-click="loadProperties()"\n       ng-show="uiStateService.state.propertiesPanel.snippet"\n       ng-class="{\'active\': uiStateService.state.isActive(\'propertiesPanel\')}"></span>\n  </div>\n\n  <div class="upfront-sidebar-header">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span></span></h3>\n  </div>\n\n  <div class="upfront-sidebar-body" ng-transclude>\n  </div>\n</div>';
+  htmlTemplates.sidebarRegion = '<div class="upfront-sidebar-region clearfix" ng-class="{\'upfront-sidebar-region-closed\': !showContent}">\n  <div class="upfront-sidebar-region-header" ng-click="toggle()">\n    <span ng-class="{\'entypo-down-open-mini\': showContent, \'entypo-right-open-mini\': !showContent}"></span>\n    <div class="upfront-sidebar-region-header-caption">{{caption}}</div>\n    <span class="upfront-sidebar-region-header-icon" ng-class="iconClass"></span>\n  </div>\n  <div class="upfront-sidebar-region-content" ng-show="showContent" ng-transclude></div>\n</div>';
   htmlTemplates.snippetPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Insert Snippets</span></h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    Drag & Drop or click list items\n  </div>\n  <div class="upfront-snippet-wrapper">\n    <ul class="upfront-snippet-list" ng-repeat="group in groups">\n      <li class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>{{ group.title }}</li>\n      <li ng-repeat="snippet in group.templates" class="upfront-snippet-item" ng-class="{selected: group.id + \'.\' + $index==snippetInsertService.selectedSnippet}">\n        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, group.id, $index, snippet)">{{ snippet.title }}</a>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.backdrop = '<div class="modal-backdrop fade" ng-class="{in: animate}" ng-style="{\'z-index\': 1040 + index*10}" ng-click="close($event)">\n</div>';
   htmlTemplates.window = '<div class="{{ windowClass }}" ng-style="{\'z-index\': 1050 + index*10}" ng-transclude>\n</div>';
+  htmlTemplates.mapKickstartModal = '<div class="upfron-modal-full-width-header">\n  <h3>Import data from your geojson file</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)"\n            ng-hide="hasMarkers()">Close kickstart view</button>\n\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Kickstart</button>\n    &nbsp;\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="kickstart($event)">Kickstart Markers</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-show="markers.length == 0">\n    <h3 class="entypo-attention">The geojson file does not contain Point geometries. You can only kickstart markers with Point geometries.</h3>\n  </div>\n  <div ng-if="markers.length > 0">\n    <div style="width: 40%; float: left;">\n      <form class="upfront-form">\n        <table class="table table-bordered">\n          <thead>\n            <tr>\n              <td>#</td>\n              <td><b>Inlcude this pin</b></td>\n              <td>\n                <b>Property for Popover Text</b>\n              </td>\n              <td><b>Popover Text</b></td>\n            </tr>\n          </thead>\n          <tbody>\n            <tr>\n              <td>Global:</td>\n              <td><input type="checkbox" ng-model="globalValues.selected"></td>\n              <td>\n                <select ng-model="globalValues.textProperty" ng-options="property for property in globalTextProperties">\n                  <option value="">-- reset all --</option>\n                </select>\n              </td>\n              <td></td>\n            </tr>\n            <tr ng-repeat="marker in markers"\n                ng-class="{\'success\': marker.selected}"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)"\n                ng-click="toggleMarker(marker, $index)">\n              <td>{{$index}}</td>\n              <td>\n                <input type="checkbox" ng-checked="marker.selected">\n              </td>\n              <td>\n                <select ng-model="marker.selectedTextProperty" ng-options="property for property in marker.textProperties">\n                  <option value="">-- no text initialization --</option>\n                </select>\n              </td>\n              <td>\n                {{marker.geojson.properties[marker.selectedTextProperty] | characters: 40}}\n              </td>\n            </tr>\n          </tbody>\n\n        </table>\n      </form>\n    </div>\n    <div style="width: 40%; position: absolute; right: 10px;">\n      <leaflet center="center" markers="previewMarkers" event-broadcast="events"></leaflet>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="hasMarkers()"\n          class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close kickstart view</button>\n</div>';
+  htmlTemplates.webmapSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="WebMapFormController">\n    <form class="upfront-form" name="webMapForm">\n      <fieldset>\n        <legend>Map Viewbox</legend>\n\n        <label>Select a zoom level</label>\n        <select ng-model="center.zoom" ng-options="zoom for zoom in availableZoomLevels">\n          <option value="">-- choose Zoom Level --</option>\n        </select>\n        <label>Enter a longitude</label>\n        <input  style="width: 80%"\n                type="number" min="-180" max="180"\n                ng-model="center.lng"\n                required>\n        <label>Enter a latitude</label>\n        <input  style="width: 80%"\n                type="number" min="-90" max="90"3\n                ng-model="center.lat"\n                required>\n      </fieldset>\n      <fieldset>\n        <legend>Kickstart</legend>\n        <label>Upload a geojson to kickstart your locations</label>\n        <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>\n      </fieldset>\n      <fieldset>\n        <legend>Markers</legend>\n        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">\n          <label>Location (lng, lat)</label>\n            <input class="half-width left"\n              type="number" min="-180" max="180"\n              ng-model="newMarker.lng"\n              required>\n            <input class="half-width left"\n              type="number" min="-90" max="90"\n              ng-model="newMarker.lat"\n              required>\n            <label>Popover Text</label>\n            <input style="width: 80%"\n                ng-model="newMarker.message">\n            <a  href=""\n                ng-click="addMarker()"\n                class="upfront-btn upfront-btn-success">\n              Add Marker\n            </a>\n        </div>\n        <div sidebar-region caption="All Markers">\n          <ul class="upfront-list">\n            <li ng-repeat="marker in markers"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)">\n              <a  href=""\n                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"\n                  ng-click="deleteMarker($index)">X</a>\n              <label>Location (lng, lat)</label>\n              <input class="half-width left"\n                type="number" min="-180" max="180"\n                ng-model="marker.lng"\n                required>\n              <input class="half-width left"\n                type="number" min="-90" max="90"\n                ng-model="marker.lat"\n                required>\n              <label>Popover Text</label>\n              <input style="width: 80%"\n                ng-model="marker.message">\n            </li>\n          </ul>\n        </div>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   angular.module('ldApi', []).run([
     'authService',
     function (authService) {
     }
   ]);
   angular.module('ldLocalApi', []);
+  angular.module('ldTestApi', []);
   angular.module('ldApi').factory('apiHttp', [
     '$http',
     function ($http) {
@@ -26131,135 +28255,137 @@ angular.module('ngProgress', [
   angular.module('ldLocalApi').factory('documentService', [
     '$q',
     '$timeout',
-    function ($q, $timeout) {
+    '$http',
+    function ($q, $timeout, $http) {
       var docs;
       docs = {};
       return {
+        searchSnippet: function (docJson, searchedSnippetId) {
+          var searchedSnippetJson, snippetJson, _i, _len, _ref;
+          searchedSnippetJson = void 0;
+          _ref = docJson.content;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            snippetJson = _ref[_i];
+            searchedSnippetJson || (searchedSnippetJson = this._recursiveSearch(snippetJson, searchedSnippetId));
+          }
+          return searchedSnippetJson;
+        },
         getHistory: function (documentId, snippetModelId) {
-          var history, historyPromise;
+          var allLocalEntries, history, historyPromise, i, relevantLocalEntries, _i, _len, _ref;
           historyPromise = $q.defer();
-          history = [
-            {
-              revisionId: 3,
-              userId: 8,
-              changeImpact: 3.2,
-              lastChanged: '2013-11-16 22:02:15'
-            },
-            {
-              revisionId: 2,
-              userId: 8,
-              changeImpact: 1.4,
-              lastChanged: '2013-11-01 10:11:32'
-            }
-          ];
+          history = [];
+          allLocalEntries = doc.stash.getAll();
+          if (snippetModelId) {
+            relevantLocalEntries = this.trimHistoryToSnippet(snippetModelId, allLocalEntries);
+          } else {
+            relevantLocalEntries = _.map(allLocalEntries, function (entry, idx) {
+              return idx;
+            });
+          }
+          for (_i = 0, _len = relevantLocalEntries.length; _i < _len; _i++) {
+            i = relevantLocalEntries[_i];
+            history.push({
+              revisionId: i,
+              userId: -1,
+              lastChanged: new Date((_ref = allLocalEntries[i]) != null ? _ref.date : void 0)
+            });
+          }
           historyPromise.resolve(history);
           return historyPromise.promise;
         },
+        trimHistoryToSnippet: function (snippetModelId, history) {
+          var currentJson, indexes, _this = this;
+          currentJson = this.searchSnippet(doc.document.toJson(), snippetModelId);
+          if (!(currentJson != null ? currentJson.data : void 0)) {
+            return [];
+          }
+          indexes = _.map(history, function (historyEntry, idx) {
+            var snippetJson;
+            snippetJson = _this.searchSnippet(historyEntry.document, snippetModelId);
+            if ((snippetJson != null ? snippetJson.data : void 0) && !_this._isEqualChoropleth(snippetJson.data, currentJson.data)) {
+              return idx;
+            } else {
+              return -1;
+            }
+          });
+          return _.filter(indexes, function (entry) {
+            return entry !== -1;
+          });
+        },
         getRevision: function (documentId, revisionId) {
-          var revisionPromise, _this = this;
+          var allLocalEntries, historyEntry, revisionPromise;
           revisionPromise = $q.defer();
-          switch (revisionId) {
-          case 3:
-            $timeout(function () {
-              return revisionPromise.resolve(new Document({
-                id: documentId,
-                title: 'Test Story Original',
-                revisionNumber: 3,
-                updatedAt: new Date(),
-                data: {
-                  'content': [{
-                      'identifier': 'livingmaps.column',
-                      'containers': { 'default': [_this._getMockedSwissMap()] }
-                    }]
-                }
-              }));
-            });
-            break;
-          case 2:
-            $timeout(function () {
-              return revisionPromise.resolve(new Document({
-                id: documentId,
-                title: 'Test Story Original',
-                revisionNumber: 2,
-                updatedAt: new Date(),
-                data: {
-                  'content': [{
-                      'identifier': 'livingmaps.column',
-                      'containers': { 'default': [_this._getMockedSwissMapWithOrthogonal()] }
-                    }]
-                }
-              }));
-            });
-            break;
-          default:
-            log.error('unknown revision ' + revisionId + ' for document ' + documentId);
+          allLocalEntries = doc.stash.getAll();
+          historyEntry = allLocalEntries[revisionId];
+          if (!historyEntry) {
+            log.error('unknown revisionId ' + revisionId + ' for document ' + documentId);
+          } else {
+            revisionPromise.resolve(new Document({
+              id: documentId,
+              revisionNumber: revisionId,
+              title: 'Test Story',
+              data: historyEntry.document,
+              updatedAt: new Date(historyEntry.date)
+            }));
           }
           return revisionPromise.promise;
         },
         get: function (id) {
           var documentPromise;
           documentPromise = $q.defer();
-          docs[id] || (docs[id] = new Document({
+          if (JSON.parse(doc.stash.list()).length > 0) {
+            docs[id] || (docs[id] = new Document({
+              id: id,
+              title: 'Demo Page',
+              revisionNumber: JSON.parse(doc.stash.list()).length,
+              updatedAt: new Date(),
+              data: doc.stash.get()
+            }));
+            documentPromise.resolve(docs[id]);
+          } else {
+            this.getDemoPage().then(function (demoPage) {
+              docs[id] || (docs[id] = new Document({
+                id: id,
+                title: 'Demo Page',
+                revisionNumber: 0,
+                updatedAt: new Date(),
+                data: demoPage.data
+              }));
+              return documentPromise.resolve(docs[id]);
+            });
+          }
+          return documentPromise.promise;
+        },
+        getDemoPage: function () {
+          return $http.get('data/demo-page.json');
+        },
+        getStubbedDocument: function (id) {
+          return new Document({
             id: id,
             title: 'Test Story',
-            revisionNumber: 4,
+            revisionNumber: 0,
             updatedAt: new Date(),
             data: {
-              'content': [
-                {
+              'content': [{
                   'identifier': 'livingmaps.column',
                   'containers': { 'default': [this._getMockedSwissMap()] }
-                },
-                {
-                  'identifier': 'livingmaps.mainAndSidebar',
-                  'containers': {
-                    'main': [
-                      {
-                        'identifier': 'livingmaps.title',
-                        'content': { 'title': 'The livingdocs.io manifesto' }
-                      },
-                      {
-                        'identifier': 'livingmaps.text',
-                        'content': { 'text': 'Shortly after its inception, the web was used by scientists at the major US universities to exchange and review papers and ideas. A web citizen was someone writing to the web and reading from the web.' }
-                      },
-                      {
-                        'identifier': 'livingmaps.text',
-                        'content': { 'text': 'About 30 years and billions of dollars later this description holds true for less than 1 percent of web citizens. The spread of infrastructure to support the Internet world-wide is unprecedented. Yet for most people the primary means of producing content is still offline (e.g. Microsoft Word). This has serious implications: The expression of over 99 percent of people on the web is marginalized to Tweets and Facebook Status messages.' }
-                      },
-                      {
-                        'identifier': 'livingmaps.text',
-                        'content': { 'text': 'Twitter is great (Facebook isn\u2019t). Yet we wouldn\u2019t readily accept the prospect of publishing our ideas solely on short messages (SMS). Let us continue to use Twitter for short messages. But more importantly: let us develop an open web publishing platform that everybody can use for all the other messages we have for the world.' }
-                      },
-                      {
-                        'identifier': 'livingmaps.text',
-                        'content': { 'text': 'An open publishing platform is a way for people to publish documents on the web. Not PDF\u2019s, real web documents. The tech talk of this is HTML, CSS, Javascript. The implications are interactive, expressive documents in the browser. The difference is that we want to enable the 99 percent of web citizens without adequate possibility to express themselves on the web to use nothing less than the most recent technology available to web browsers. Data Journalism, long-form articles, responsive design, you name it!' }
-                      },
-                      {
-                        'identifier': 'livingmaps.text',
-                        'content': { 'text': 'This is quite a mouthful. Livingdocs starts today at http://www.livingdocs.io . It\u2019s to early to say where this journey will lead. But if you care about our vision then follow us @upfrontIO and we will send you short messages that hopefully one day will enable us to host your long messages.' }
-                      }
-                    ],
-                    'sidebar': [
-                      { 'identifier': 'livingmaps.image' },
-                      {
-                        'identifier': 'livingmaps.map',
-                        'content': { 'title': 'Holy crap this is an interactive map' }
-                      }
-                    ]
-                  }
-                }
-              ],
+                }],
               'meta': {}
             }
-          }));
-          documentPromise.resolve(docs[id]);
-          return documentPromise.promise;
+          });
+        },
+        saveDocument: function (document) {
+          document.revisionNumber = document.revisionNumber + 1;
+          return doc.stash.snapshot();
         },
         save: function (document) {
           var deferred;
           deferred = $q.defer();
-          document.revisionNumber = document.revision + 1;
-          deferred.resolve(document);
+          if (this.saveDocument(document)) {
+            deferred.resolve(document);
+          } else {
+            deferred.reject('Save failed: the document is too large for your Browsers localstorage');
+          }
           return deferred.promise;
         },
         publish: function (document) {
@@ -60002,6 +62128,39 @@ angular.module('ngProgress', [
           map = this._getMockedSwissMap();
           map.data.projection = 'orthographic';
           return map;
+        },
+        _recursiveSearch: function (snippetJson, searchedSnippetId) {
+          var childSnippetJson, container, containerJson, searchedSnippetJson, _i, _len;
+          searchedSnippetJson = void 0;
+          if (snippetJson.hasOwnProperty('containers')) {
+            for (container in snippetJson.containers) {
+              containerJson = snippetJson.containers[container];
+              for (_i = 0, _len = containerJson.length; _i < _len; _i++) {
+                childSnippetJson = containerJson[_i];
+                searchedSnippetJson || (searchedSnippetJson = this._recursiveSearch(childSnippetJson, searchedSnippetId));
+              }
+            }
+          } else {
+            if (snippetJson.id === searchedSnippetId) {
+              return snippetJson;
+            } else {
+              return void 0;
+            }
+          }
+          return searchedSnippetJson;
+        },
+        _isEqualChoropleth: function (a, b) {
+          return _.every([
+            'projection',
+            'data',
+            'map',
+            'mappingPropertyOnMap',
+            'valueProperty',
+            'colorScheme',
+            'colorSteps'
+          ], function (definingProperty) {
+            return _.isEqual(a[definingProperty], b[definingProperty]);
+          });
         }
       };
     }
@@ -60126,6 +62285,67 @@ angular.module('ngProgress', [
           }
           deferralsResolver(deferrals)(parsedData);
           return extractPromises(deferrals);
+        }
+      };
+    }
+  ]);
+  angular.module('ldTestApi').factory('dataService', [
+    '$q',
+    '$http',
+    function ($q, $http) {
+      return {
+        get: function (key) {
+          var data;
+          data = $q.defer();
+          data.resolve({});
+          return data.promise;
+        }
+      };
+    }
+  ]);
+  angular.module('ldTestApi').factory('documentService', [
+    '$q',
+    '$timeout',
+    '$http',
+    function ($q, $timeout, $http) {
+      var docs;
+      docs = {};
+      return {
+        get: function (id) {
+          var documentPromise;
+          documentPromise = $q.defer();
+          docs[id] || (docs[id] = this.getStubbedDocument(id));
+          documentPromise.resolve(docs[id]);
+          return documentPromise.promise;
+        },
+        getStubbedDocument: function (id) {
+          return new Document({
+            id: id,
+            title: 'Test Story',
+            revisionNumber: 0,
+            updatedAt: new Date(),
+            data: {
+              'content': [{
+                  'identifier': 'livingmaps.column',
+                  'containers': { 'default': [{ 'identifier': 'livingmaps.title' }] }
+                }],
+              'meta': {}
+            }
+          });
+        },
+        saveDocument: function (document) {
+          document.revisionNumber = document.revisionNumber + 1;
+          return true;
+        },
+        save: function (document) {
+          var deferred;
+          deferred = $q.defer();
+          if (this.saveDocument(document)) {
+            deferred.resolve(document);
+          } else {
+            deferred.reject('Save failed: the document is too large for your Browsers localstorage');
+          }
+          return deferred.promise;
         }
       };
     }
