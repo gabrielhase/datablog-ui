@@ -23,6 +23,7 @@ module.exports = (grunt) ->
   envApis =
     local: 'ldLocalApi'
     livingdocs: 'ldApi'
+    test: 'ldTestApi'
 
   try
     yeomanConfig.app = require('./bower.json').appPath || yeomanConfig.app
@@ -44,6 +45,13 @@ module.exports = (grunt) ->
           dest: '<%= yeoman.app %>/scripts/components/environment/constants.js'
           name: 'envApi'
           deps: [envApis[grunt.option('api')] || envApis['livingdocs']]
+        }
+      ]
+      testApi: [
+        {
+          dest: '<%= yeoman.app %>/scripts/components/environment/constants.js'
+          name: 'envApi'
+          deps: [envApis[grunt.option('api')] || envApis['test']]
         }
       ]
     watch:
@@ -247,6 +255,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask('test', [
     'clean:server'
+    'ngconstant:testApi'
     'karma:unit'
   ])
 

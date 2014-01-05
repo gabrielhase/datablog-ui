@@ -74,7 +74,6 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
         data: doc.stash.get()
       documentPromise.resolve(docs[id])
     else
-      #docs[id] ||= @getStubbedDocument(id)
       @getDemoPage().then (demoPage) ->
         docs[id] ||= new Document
           id: id

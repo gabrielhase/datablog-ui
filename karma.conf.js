@@ -57,8 +57,8 @@ module.exports = function(config) {
       'app/scripts/models/*.coffee',
       'app/scripts/services/*.coffee',
       'app/scripts/templates/*.coffee',
-      'app/scripts/components/**/component.coffee',
-      'app/scripts/components/**/*.coffee',
+      'app/scripts/components/testApi/component.coffee',
+      'app/scripts/components/testApi/*.coffee',
       'test/spec/**/*.coffee'
     ],
 
