@@ -398,26 +398,24 @@
     }
 
     LimitedLocalstore.prototype.compress = function(obj) {
-      var compressedString, str;
+      var str;
       if (typeof obj === 'object') {
         str = JSON.stringify(obj);
       } else {
         str = obj;
       }
-      compressedString = LZString.compress(str);
-      return compressedString;
+      return LZString.compress(str);
     };
 
     LimitedLocalstore.prototype.decompress = function(obj) {
-      var e, res, str;
+      var e, str;
       str = LZString.decompress(obj);
       try {
-        res = JSON.parse(str);
+        return JSON.parse(str);
       } catch (_error) {
         e = _error;
-        res = str;
+        return str;
       }
-      return res;
     };
 
     LimitedLocalstore.prototype.push = function(obj) {

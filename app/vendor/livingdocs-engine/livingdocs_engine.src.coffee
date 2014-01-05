@@ -433,17 +433,15 @@ class LimitedLocalstore
       str = JSON.stringify(obj)
     else
       str = obj
-    compressedString = LZString.compress(str)
-    compressedString
+    LZString.compress(str)
 
 
   decompress: (obj) ->
     str = LZString.decompress(obj)
     try
-      res = JSON.parse(str)
+      JSON.parse(str)
     catch e
-      res = str
-    res
+      str
 
 
   push: (obj) ->
@@ -473,7 +471,6 @@ class LimitedLocalstore
         return false # failure
 
     return true # success
-
 
   pop: ->
     index = @getIndex()
