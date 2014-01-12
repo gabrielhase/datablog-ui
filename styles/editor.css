@@ -3995,15 +3995,15 @@ button.upfront-toolbar-button:hover:after {
   border-width: 0 11px 11px 11px;
 }
 
-.upfront-popover--image {
+.upfront-popover--minimal {
   border: 0;
 }
 
-.upfront-popover--image .upfront-close {
+.upfront-popover--minimal .upfront-close {
   display: none;
 }
 
-.upfront-popover--image .upfront-panel-content {
+.upfront-popover--minimal .upfront-panel-content {
   min-width: 0;
   min-height: 0;
   padding: 0;
