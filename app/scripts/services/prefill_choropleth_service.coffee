@@ -18,3 +18,4 @@ angular.module('ldEditor').service 'prefillChoroplethService', (dataService) ->
               projection: prefilledMap.projection
               mappingPropertyOnMap: prefilledMap.mappingPropertyOnMap
               mappingPropertyOnData: prefilledMap.mappingPropertyOnData
+              valueProperty: prefilledMap.valueProperty

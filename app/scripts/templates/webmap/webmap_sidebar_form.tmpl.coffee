@@ -4,6 +4,12 @@ htmlTemplates.webmapSidebarForm = """
         ng-controller="WebMapFormController">
     <form class="upfront-form" name="webMapForm">
       <fieldset>
+        <a  href="" style="margin-left: 20px;" class="upfront-btn upfront-btn-large upfront-btn-info"
+            ng-click="openFreeformEditor()">
+          Open Freeform Editor
+        </a>
+      </fieldset>
+      <fieldset>
         <legend>Map Viewbox</legend>
 
         <label>Select a zoom level</label>

@@ -18,6 +18,11 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       controller: 'MapKickstartModalController'
       windowClass: 'upfront-modal-full-width'
 
+    mapEditModalOptions =
+      template: htmlTemplates.mapEditModal
+      controller: 'MapEditModalController'
+      windowClass: 'upfront-modal-full-width'
+
     # Service
     # -------
 
@@ -45,3 +50,14 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
         data: ->
           data
       $modal.open(mapKickstartModalOptions)
+
+
+    openMapEditModal: (snippet) ->
+      if snippet.model
+        snippetModel = snippet.model
+      else
+        snippetModel = snippet
+      mapEditModalOptions.resolve =
+        snippet: ->
+          snippetModel
+      $modal.open(mapEditModalOptions)

@@ -4,6 +4,7 @@ angular.module('ldEditor').factory 'snippetInlineOptionsService',
 
     lastEditBtnScope = undefined
     lastHistoryBtnScope = undefined
+    lastMapBtnScope = undefined
 
     # Service
     # -------
@@ -57,4 +58,29 @@ angular.module('ldEditor').factory 'snippetInlineOptionsService',
           dialogService.openHistoryModal(snippet)
           $event.stopPropagation()
       )
+
+
+    removeMapButton: ->
+      if lastMapBtnScope
+        lastMapBtnScope.button.remove()
+        lastMapBtnScope.$destroy()
+
+
+    drawMapButton: (snippet) ->
+      insertScope = $rootScope.$new()
+      lastMapBtnScope = insertScope
+      $compile(htmlTemplates.mapButton)(insertScope, (button, childScope) ->
+        $('body').append(button)
+        childScope.button = button
+        childScope.buttonStyle =
+          position: 'absolute'
+          top: snippet.getBoundingClientRect().top + 45
+          left: snippet.getBoundingClientRect().left - 37
+          fontSize: '2em'
+        childScope.snippet = snippet # set the snippet to edit
+        childScope.showHistory = (snippet, $event) ->
+          dialogService.openMapEditModal(snippet)
+          $event.stopPropagation()
+      )
+
 
