@@ -61,6 +61,7 @@ do ->
         projection: 'albersUsa'
         mappingPropertyOnMap: 'id'
         mappingPropertyOnData: 'id'
+        valueProperty: 'value'
       }
     ]
 

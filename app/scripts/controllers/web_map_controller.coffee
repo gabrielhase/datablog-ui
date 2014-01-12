@@ -8,6 +8,7 @@ class WebMapController
 
     @setupSnippetChangeListener()
     @initScope()
+    @initEditingDefaults()
 
 
   initScope: ->
@@ -36,6 +37,15 @@ class WebMapController
             uuid: ''
           }
         ]
+
+
+  initEditingDefaults: ->
+    @$scope.defaults =
+      scrollWheelZoom: false
+      zoomControl: false
+      doubleClickZoom: false
+      dragging: false
+      keyboard: false
 
 
   setupSnippetChangeListener: ->

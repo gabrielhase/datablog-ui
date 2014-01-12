@@ -7,4 +7,4 @@ class PopoverController
 
   close: ($event, target) ->
     $event.stopPropagation()
-    @$scope.openCondition.active = false
+    @$scope.openCondition = false
