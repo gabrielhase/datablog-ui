@@ -28,6 +28,16 @@ htmlTemplates.webmapSidebarForm = """
                 required>
       </fieldset>
       <fieldset>
+        <legend>Tile Layer</legend>
+        <select ng-model="tileLayer" ng-options="value.name as value.name for (key, value) in uiModel.getAvailableTileLayers()">
+          <option value="">-- choose Tile Layer --</option>
+        </select>
+        <div class="upfront-well red" ng-show="tileLayer == 'mapbox'">
+          Mapbox is a commercial tile layer and this app uses a free test account. If you don't see the map, probably the quota for the free version was reached.
+          DON'T RELY ON THIS TILE LAYER ON DATABLOG.IO!
+        </div>
+      </fieldset>
+      <fieldset>
         <legend>Kickstart</legend>
         <label>Upload a geojson to kickstart your locations</label>
         <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>

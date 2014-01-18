@@ -13,6 +13,7 @@ class WebMapFormController
     $.extend(true, @$scope.markers, @$scope.snippet.data('markers'))
     @$scope.availableZoomLevels = [1..16]
     @$scope.newMarker = {}
+    @$scope.tileLayer = @$scope.snippet.data('tiles').name
 
     @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.deleteMarker = $.proxy(@deleteMarker, this)
@@ -24,6 +25,7 @@ class WebMapFormController
 
     @watchCenter()
     @watchMarkers()
+    @watchTileLayer()
 
 
   # ########################
@@ -154,6 +156,12 @@ class WebMapFormController
   validateMarkers: (markers) ->
     _.every markers, (marker) ->
       $.isNumeric(marker.lat) && $.isNumeric(marker.lng)
+
+
+  watchTileLayer: ->
+    @$scope.$watch 'tileLayer', (newVal, oldVal) =>
+      @$scope.snippet.data
+        tiles: @$scope.uiModel.getAvailableTileLayers()[newVal]
 
 
     # @$scope.sidebarBecameVisible.add =>
