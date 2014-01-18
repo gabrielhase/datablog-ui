@@ -13,12 +13,17 @@ class WebMapController
 
   initScope: ->
     @initDefaults()
-    for property in ['center', 'markers']
+    for property in ['center', 'markers', 'tiles']
       @$scope[property] = @$scope.snippetModel.data(property)
 
 
   initDefaults: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
+    uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
+    # tile layer: openstreetmap
+    @$scope.snippetModel.data
+      tiles: uiModel.getAvailableTileLayers()['openstreetmap']
+    # center: Zurich
     unless @$scope.snippetModel.data('center')
       @$scope.snippetModel.data
         center:
@@ -35,6 +40,7 @@ class WebMapController
             lat: 90
             lng: 0
             uuid: ''
+            icon: uiModel.getDefaultIcon()
           }
         ]
 
@@ -60,7 +66,3 @@ class WebMapController
         newVal = @snippetModel.data(trackedProperty)
         if typeof(newVal) != 'undefined'
           @$scope[trackedProperty] = newVal
-
-  # setupGeojsonListeners: (scope)->
-  # scope.$on "leafletDirectiveMap.geojsonClick", (ev, featureSelected, leafletEvent) ->
-  #   console.log(featureSelected)

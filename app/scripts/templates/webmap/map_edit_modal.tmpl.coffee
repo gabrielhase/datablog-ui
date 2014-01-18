@@ -9,17 +9,27 @@ htmlTemplates.mapEditModal = """
   </div>
 </div>
 <div class="upfront-modal-body" style="height: 100%">
-  <leaflet center="center" markers="markers" event-broadcast="events" style="height: 100%">
+  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%">
   </leaflet>
 
   <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">
     <form class="upfront-form upfront-control">
-      <h3>Selected Marker</h3>
+      <legend>Selected Marker</legend>
+      <label>Icon</label>
+      <span ng-repeat="icon in uiModel.getAvailableIcons()"
+                      class="fa fa-{{icon}}"
+                      ng-class="{'upfront-icon-selected': icon == editState.markerSelected.icon.options.icon}"
+                      style="padding-right: 5px;"
+                      ng-click="selectIcon(editState.markerSelected, icon)"></span>
       <label>Popover Text (optional)</label>
       <input style="width: 90%" ng-model="editState.markerSelected.message">
-      <a href="" class="upfront-btn upfront-btn-danger"
+      <a href="" class="upfront-btn upfront-btn-small upfront-btn-danger"
           ng-click="removeMarker(editState.markerSelected)">
-          Delete Marker
+          Delete
+      </a>
+      <a href="" class="upfront-btn upfront-btn-small upfront-btn-success"
+          ng-click="disableMarkerSelectedState()">
+          Accept
       </a>
     </form>
   </div>

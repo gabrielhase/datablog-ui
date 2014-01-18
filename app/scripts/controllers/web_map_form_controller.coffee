@@ -3,6 +3,7 @@ class WebMapFormController
 
   constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
     @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
+    @$scope.uiModel = @mapMediatorService.getUIModel(@$scope.snippet.id)
 
     # NOTE: since the angular leaflet directive references the literals we need
     # to make sure to update all references so we need to work with deep copies
@@ -12,6 +13,7 @@ class WebMapFormController
     $.extend(true, @$scope.markers, @$scope.snippet.data('markers'))
     @$scope.availableZoomLevels = [1..16]
     @$scope.newMarker = {}
+    @$scope.tileLayer = @$scope.snippet.data('tiles').name
 
     @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.deleteMarker = $.proxy(@deleteMarker, this)
@@ -19,29 +21,38 @@ class WebMapFormController
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
     @$scope.openFreeformEditor = $.proxy(@openFreeformEditor, this)
+    @$scope.selectIcon = $.proxy(@selectIcon, this)
 
-    @initMarkerStyles()
     @watchCenter()
     @watchMarkers()
+    @watchTileLayer()
 
 
   # ########################
   # Marker Handling
   # ########################
 
-  initMarkerStyles: ->
-    @hoverMarker = L.AwesomeMarkers.icon
-      icon: 'fa-cogs'
+
+  getHoverMarkerStyle: (currentIcon) ->
+    L.AwesomeMarkers.icon
+      icon: currentIcon.options.icon
+      prefix: currentIcon.options.prefix
       markerColor: 'green'
-      prefix: 'fa'
+
+
+  resetHoverMarkerStyle: (currentIcon) ->
+    L.AwesomeMarkers.icon
+      icon: currentIcon.options.icon
+      prefix: currentIcon.options.prefix
+      markerColor: 'cadetblue'
 
 
   highlightMarker: (index) ->
-    @$scope.markers[index].icon = @hoverMarker
+    @$scope.markers[index].icon = @getHoverMarkerStyle(@$scope.markers[index].icon)
 
 
   unHighlightMarker: (index) ->
-    @$scope.markers[index].icon = undefined
+    @$scope.markers[index].icon = @resetHoverMarkerStyle(@$scope.markers[index].icon)
 
 
   addMarker: ->
@@ -59,6 +70,13 @@ class WebMapFormController
     @$scope.markers.splice(index, 1)
 
 
+  selectIcon: (marker, icon) ->
+    marker.icon = L.AwesomeMarkers.icon
+      icon: icon
+      markerColor: marker.icon.options.markerColor
+      prefix: marker.icon.options.prefix
+
+
   # ########################
   # Geojson Kickstart
   # ########################
@@ -74,7 +92,7 @@ class WebMapFormController
         @ngProgress.complete()
       promise.success (response) =>
         if response.status == 'ok'
-          @dialogService.openMapKickstartModal(data).result.then (result) =>
+          @dialogService.openMapKickstartModal(data, @$scope.uiModel).result.then (result) =>
             if result.action == 'kickstart'
               @$scope.markers = result.markers
         else
@@ -87,7 +105,7 @@ class WebMapFormController
   # ########################
 
   openFreeformEditor: ->
-    @dialogService.openMapEditModal(@$scope.snippet)
+    @dialogService.openMapEditModal(@$scope.snippet, @$scope.uiModel)
 
 
   # ########################
@@ -138,6 +156,12 @@ class WebMapFormController
   validateMarkers: (markers) ->
     _.every markers, (marker) ->
       $.isNumeric(marker.lat) && $.isNumeric(marker.lng)
+
+
+  watchTileLayer: ->
+    @$scope.$watch 'tileLayer', (newVal, oldVal) =>
+      @$scope.snippet.data
+        tiles: @$scope.uiModel.getAvailableTileLayers()[newVal]
 
 
     # @$scope.sidebarBecameVisible.add =>
