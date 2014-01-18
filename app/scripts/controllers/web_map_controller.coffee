@@ -13,13 +13,16 @@ class WebMapController
 
   initScope: ->
     @initDefaults()
-    for property in ['center', 'markers']
+    for property in ['center', 'markers', 'tiles']
       @$scope[property] = @$scope.snippetModel.data(property)
 
 
   initDefaults: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
     uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
+    # tile layer: openstreetmap
+    @$scope.snippetModel.data
+      tiles: uiModel.getAvailableTileLayers()['openstreetmap']
     # center: Zurich
     unless @$scope.snippetModel.data('center')
       @$scope.snippetModel.data
@@ -40,9 +43,6 @@ class WebMapController
             icon: uiModel.getDefaultIcon()
           }
         ]
-    # tile layer: openstreetmap
-    @$scope.snippetModel.data
-      tiles: uiModel.getAvailableTileLayers()['openstreetmap']
 
 
   initEditingDefaults: ->
