@@ -120,6 +120,9 @@ describe 'angularTemplateService', ->
         data: (type) ->
           if type == 'dataIdentifier'
             @storedData.dataIdentifier
+          else if type == 'tiles'
+            url: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
 
       @$directiveRoot = $('<div></div>')
       window.L = mockLeaflet()
@@ -130,7 +133,7 @@ describe 'angularTemplateService', ->
       service.insertTemplateInstance(@snippetModel, @$directiveRoot, new WebMap(@snippetModel.id))
       expect(@$directiveRoot.html()).to.eq("""
         <div ng-controller="WebMapController" class="ng-scope">
-          <div class="angular-leaflet-map ng-isolate-scope" center="center" markers="markers" defaults="defaults"></div>
+          <div class="angular-leaflet-map ng-isolate-scope" center="center" markers="markers" defaults="defaults" tiles="tiles"></div>
         </div>
       """)
 
