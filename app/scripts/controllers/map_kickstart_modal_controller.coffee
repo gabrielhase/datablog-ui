@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'MapKickstartModalController',
 class MapKickstartModalController
 
-  constructor: (@$scope, @$modalInstance, @data, @leafletData, @$timeout, @leafletEvents) ->
+  constructor: (@$scope, @$modalInstance, @data, @uiModel, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
@@ -126,11 +126,12 @@ class MapKickstartModalController
     selectedMarkers = _.filter @$scope.markers, (marker) -> marker.selected
     @$modalInstance.close
       action: 'kickstart'
-      markers: _.map selectedMarkers, (marker) ->
+      markers: _.map selectedMarkers, (marker) =>
         lat: marker.geojson.geometry.coordinates[1]
         lng: marker.geojson.geometry.coordinates[0]
         message: marker.geojson.properties[marker.selectedTextProperty]
         uuid: marker.uuid
+        icon: @uiModel.getDefaultIcon()
     event.stopPropagation() # so sidebar selection is not lost
 
 

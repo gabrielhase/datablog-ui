@@ -19,6 +19,7 @@ class WebMapController
 
   initDefaults: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
+    uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
     unless @$scope.snippetModel.data('center')
       @$scope.snippetModel.data
         center:
@@ -35,6 +36,7 @@ class WebMapController
             lat: 90
             lng: 0
             uuid: ''
+            icon: uiModel.getDefaultIcon()
           }
         ]
 
