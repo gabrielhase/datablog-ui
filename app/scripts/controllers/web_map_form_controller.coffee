@@ -3,7 +3,7 @@ class WebMapFormController
 
   constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
     @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
-    @uiModel = @mapMediatorService.getUIModel(@$scope.snippet.id)
+    @$scope.uiModel = @mapMediatorService.getUIModel(@$scope.snippet.id)
 
     # NOTE: since the angular leaflet directive references the literals we need
     # to make sure to update all references so we need to work with deep copies
@@ -20,6 +20,7 @@ class WebMapFormController
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
     @$scope.openFreeformEditor = $.proxy(@openFreeformEditor, this)
+    @$scope.selectIcon = $.proxy(@selectIcon, this)
 
     @watchCenter()
     @watchMarkers()
@@ -67,6 +68,13 @@ class WebMapFormController
     @$scope.markers.splice(index, 1)
 
 
+  selectIcon: (marker, icon) ->
+    marker.icon = L.AwesomeMarkers.icon
+      icon: icon
+      markerColor: marker.icon.options.markerColor
+      prefix: marker.icon.options.prefix
+
+
   # ########################
   # Geojson Kickstart
   # ########################
@@ -82,7 +90,7 @@ class WebMapFormController
         @ngProgress.complete()
       promise.success (response) =>
         if response.status == 'ok'
-          @dialogService.openMapKickstartModal(data, @uiModel).result.then (result) =>
+          @dialogService.openMapKickstartModal(data, @$scope.uiModel).result.then (result) =>
             if result.action == 'kickstart'
               @$scope.markers = result.markers
         else
@@ -95,7 +103,7 @@ class WebMapFormController
   # ########################
 
   openFreeformEditor: ->
-    @dialogService.openMapEditModal(@$scope.snippet, @uiModel)
+    @dialogService.openMapEditModal(@$scope.snippet, @$scope.uiModel)
 
 
   # ########################

@@ -73,6 +73,16 @@ htmlTemplates.webmapSidebarForm = """
               <label>Popover Text</label>
               <input style="width: 80%"
                 ng-model="marker.message">
+
+              <div>
+                <label>Select Icon</label>
+                <span ng-repeat="icon in uiModel.getAvailableIcons()"
+                      class="fa fa-{{icon}}"
+                      ng-class="{'upfront-icon-selected': icon == marker.icon.options.icon}"
+                      style="padding-right: 5px;"
+                      ng-click="selectIcon(marker, icon)"></span>
+              </div>
+
             </li>
           </ul>
         </div>

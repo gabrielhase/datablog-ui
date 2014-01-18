@@ -13,3 +13,23 @@ class WebMap
       icon: 'star'
       markerColor: 'cadetblue'
       prefix: 'fa'
+
+
+  getAvailableIcons: ->
+    [
+      # abstract
+      'star',
+      'gear',
+      'bookmark',
+      'circle',
+      'rocket',
+      'info',
+      # concrete
+      'coffee',
+      'stethoscope',
+      'wheelchair',
+      'glass',
+      'cutlery',
+      'shopping-cart',
+      'road'
+    ]
