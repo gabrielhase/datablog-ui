@@ -45,14 +45,16 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       $modal.open(historyModalOptions)
 
 
-    openMapKickstartModal: (data) ->
+    openMapKickstartModal: (data, uiModel) ->
       mapKickstartModalOptions.resolve =
         data: ->
           data
+        uiModel: ->
+          uiModel
       $modal.open(mapKickstartModalOptions)
 
 
-    openMapEditModal: (snippet) ->
+    openMapEditModal: (snippet, uiModel) ->
       if snippet.model
         snippetModel = snippet.model
       else
@@ -60,4 +62,6 @@ angular.module('ldEditor').factory 'dialogService', ($modal, uiStateService) ->
       mapEditModalOptions.resolve =
         snippet: ->
           snippetModel
+        uiModel: ->
+          uiModel
       $modal.open(mapEditModalOptions)

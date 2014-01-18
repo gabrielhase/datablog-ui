@@ -3,6 +3,7 @@ class WebMapFormController
 
   constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
     @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
+    @uiModel = @mapMediatorService.getUIModel(@$scope.snippet.id)
 
     # NOTE: since the angular leaflet directive references the literals we need
     # to make sure to update all references so we need to work with deep copies
@@ -20,7 +21,6 @@ class WebMapFormController
     @$scope.kickstartMarkers = $.proxy(@kickstartMarkers, this)
     @$scope.openFreeformEditor = $.proxy(@openFreeformEditor, this)
 
-    @initMarkerStyles()
     @watchCenter()
     @watchMarkers()
 
@@ -29,19 +29,27 @@ class WebMapFormController
   # Marker Handling
   # ########################
 
-  initMarkerStyles: ->
-    @hoverMarker = L.AwesomeMarkers.icon
-      icon: 'fa-cogs'
+
+  getHoverMarkerStyle: (currentIcon) ->
+    L.AwesomeMarkers.icon
+      icon: currentIcon.options.icon
+      prefix: currentIcon.options.prefix
       markerColor: 'green'
-      prefix: 'fa'
+
+
+  resetHoverMarkerStyle: (currentIcon) ->
+    L.AwesomeMarkers.icon
+      icon: currentIcon.options.icon
+      prefix: currentIcon.options.prefix
+      markerColor: 'cadetblue'
 
 
   highlightMarker: (index) ->
-    @$scope.markers[index].icon = @hoverMarker
+    @$scope.markers[index].icon = @getHoverMarkerStyle(@$scope.markers[index].icon)
 
 
   unHighlightMarker: (index) ->
-    @$scope.markers[index].icon = undefined
+    @$scope.markers[index].icon = @resetHoverMarkerStyle(@$scope.markers[index].icon)
 
 
   addMarker: ->
@@ -74,7 +82,7 @@ class WebMapFormController
         @ngProgress.complete()
       promise.success (response) =>
         if response.status == 'ok'
-          @dialogService.openMapKickstartModal(data).result.then (result) =>
+          @dialogService.openMapKickstartModal(data, @uiModel).result.then (result) =>
             if result.action == 'kickstart'
               @$scope.markers = result.markers
         else
@@ -87,7 +95,7 @@ class WebMapFormController
   # ########################
 
   openFreeformEditor: ->
-    @dialogService.openMapEditModal(@$scope.snippet)
+    @dialogService.openMapEditModal(@$scope.snippet, @uiModel)
 
 
   # ########################

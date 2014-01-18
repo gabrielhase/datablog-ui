@@ -6,3 +6,10 @@ class WebMap
 
   getTemplate: ->
     webMapConfig.template
+
+
+  getDefaultIcon: ->
+    L.AwesomeMarkers.icon
+      icon: 'star'
+      markerColor: 'cadetblue'
+      prefix: 'fa'

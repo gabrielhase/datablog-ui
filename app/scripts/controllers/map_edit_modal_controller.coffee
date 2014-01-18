@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'MapEditModalController',
 class MapEditModalController
 
-  constructor: (@$scope, @$modalInstance, @snippet, @leafletData, @$timeout, @leafletEvents) ->
+  constructor: (@$scope, @$modalInstance, @snippet, @uiModel, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
     @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.removeMarker = $.proxy(@removeMarker, this)
@@ -80,6 +80,7 @@ class MapEditModalController
       lat: @$scope.editState.geolocation.lat
       lng: @$scope.editState.geolocation.lng
       uuid: livingmapsUid.guid()
+      icon: @uiModel.getDefaultIcon()
     @$scope.markers.push(newMarker)
 
     @disableAddMarkerState()
