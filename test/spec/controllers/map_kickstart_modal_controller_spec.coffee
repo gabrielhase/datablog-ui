@@ -8,12 +8,13 @@ describe 'MapKickstartModalController', ->
     @event =
       stopPropagation: ->
         true
+    @uiModel = new WebMap(123)
 
 
   describe 'initializations', ->
     beforeEach ->
       @mapKickstartModalController = instantiateController('MapKickstartModalController',
-        $scope: @scope, $modalInstance: @modalInstance, data: zurichCargoPins)
+        $scope: @scope, $modalInstance: @modalInstance, data: zurichCargoPins, uiModel: @uiModel)
 
 
     it 'recognizes all point geometries as potential pins', ->
@@ -59,7 +60,7 @@ describe 'MapKickstartModalController', ->
   describe 'changes', ->
     beforeEach ->
       @mapKickstartModalController = instantiateController('MapKickstartModalController',
-        $scope: @scope, $modalInstance: @modalInstance, data: zurichCargoPins)
+        $scope: @scope, $modalInstance: @modalInstance, data: zurichCargoPins, uiModel: @uiModel)
 
 
     it 'changes the text property on all pins when changing the global text property', ->
