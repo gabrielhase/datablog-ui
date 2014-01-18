@@ -14,6 +14,7 @@ class MapEditModalController
 
     @addGeosearch()
     @setupMapEvents()
+    @enableDraggableForMarker()
 
 
   addGeosearch: ->
@@ -91,6 +92,7 @@ class MapEditModalController
       lng: @$scope.editState.geolocation.lng
       uuid: livingmapsUid.guid()
       icon: @uiModel.getDefaultIcon()
+      draggable: true
     @$scope.markers.push(newMarker)
 
     @disableAddMarkerState()
@@ -108,11 +110,22 @@ class MapEditModalController
     @$scope.editState.markerSelected = false
 
 
+  enableDraggableForMarker: ->
+    for marker in @$scope.markers
+      marker.draggable = true
+
+
+  disableDraggableForMarkers: ->
+    for marker in @$scope.markers
+      marker.draggable = false
+
+
   close: (event) ->
     @snippet.data
       center:
         lat: @$scope.center.lat
         lng: @$scope.center.lng
         zoom: @$scope.center.zoom
+    @disableDraggableForMarkers()
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost
