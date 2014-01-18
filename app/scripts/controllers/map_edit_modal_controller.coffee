@@ -5,9 +5,12 @@ class MapEditModalController
     @$scope.close = $.proxy(@close, this)
     @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.removeMarker = $.proxy(@removeMarker, this)
+    @$scope.disableMarkerSelectedState = $.proxy(@disableMarkerSelectedState, this)
+    @$scope.selectIcon = $.proxy(@selectIcon, this)
     @$scope.center = @snippet.data('center')
     @$scope.markers = @snippet.data('markers')
     @$scope.editState = {}
+    @$scope.uiModel = @uiModel
 
     @addGeosearch()
     @setupMapEvents()
@@ -70,6 +73,13 @@ class MapEditModalController
 
   disableAddMarkerState: ->
     @$scope.editState.addMarker = false
+
+
+  selectIcon: (marker, icon) ->
+    marker.icon = L.AwesomeMarkers.icon
+      icon: icon
+      markerColor: marker.icon.options.markerColor
+      prefix: marker.icon.options.prefix
 
 
   addMarker: (event) ->
