@@ -3337,6 +3337,10 @@ input[type="submit"].upfront-btn::-moz-focus-inner {
   font-family: 'FontAwesome', sans-serif;
 }
 
+.upfront-icon-selected {
+  color: #08be4b;
+}
+
 a.upfront-close,
 button.upfront-close {
   float: right;

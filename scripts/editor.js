@@ -16127,21 +16127,27 @@ angular.module('truncate', []).filter('characters', function () {
     return ImageEmbedController;
   }());
   angular.module('ldEditor').controller('MapEditModalController', MapEditModalController = function () {
-    function MapEditModalController($scope, $modalInstance, snippet, leafletData, $timeout, leafletEvents) {
+    function MapEditModalController($scope, $modalInstance, snippet, uiModel, leafletData, $timeout, leafletEvents) {
       this.$scope = $scope;
       this.$modalInstance = $modalInstance;
       this.snippet = snippet;
+      this.uiModel = uiModel;
       this.leafletData = leafletData;
       this.$timeout = $timeout;
       this.leafletEvents = leafletEvents;
       this.$scope.close = $.proxy(this.close, this);
       this.$scope.addMarker = $.proxy(this.addMarker, this);
       this.$scope.removeMarker = $.proxy(this.removeMarker, this);
+      this.$scope.disableMarkerSelectedState = $.proxy(this.disableMarkerSelectedState, this);
+      this.$scope.selectIcon = $.proxy(this.selectIcon, this);
       this.$scope.center = this.snippet.data('center');
       this.$scope.markers = this.snippet.data('markers');
+      this.$scope.tiles = this.snippet.data('tiles');
       this.$scope.editState = {};
+      this.$scope.uiModel = this.uiModel;
       this.addGeosearch();
       this.setupMapEvents();
+      this.enableDraggableForMarker();
     }
     MapEditModalController.prototype.addGeosearch = function () {
       var _this = this;
@@ -16149,7 +16155,8 @@ angular.module('truncate', []).filter('characters', function () {
         return _this.leafletData.getMap().then(function (map) {
           return new L.Control.GeoSearch({
             provider: new L.GeoSearch.Provider.OpenStreetMap(),
-            showMarker: false
+            showMarker: false,
+            zoomLevel: 12
           }).addTo(map);
         });
       }, 100);
@@ -16210,12 +16217,21 @@ angular.module('truncate', []).filter('characters', function () {
     MapEditModalController.prototype.disableAddMarkerState = function () {
       return this.$scope.editState.addMarker = false;
     };
+    MapEditModalController.prototype.selectIcon = function (marker, icon) {
+      return marker.icon = L.AwesomeMarkers.icon({
+        icon: icon,
+        markerColor: marker.icon.options.markerColor,
+        prefix: marker.icon.options.prefix
+      });
+    };
     MapEditModalController.prototype.addMarker = function (event) {
       var newMarker;
       newMarker = {
         lat: this.$scope.editState.geolocation.lat,
         lng: this.$scope.editState.geolocation.lng,
-        uuid: livingmapsUid.guid()
+        uuid: livingmapsUid.guid(),
+        icon: this.uiModel.getDefaultIcon(),
+        draggable: true
       };
       this.$scope.markers.push(newMarker);
       this.disableAddMarkerState();
@@ -16233,6 +16249,26 @@ angular.module('truncate', []).filter('characters', function () {
       this.$scope.markers.splice(idx, 1);
       return this.$scope.editState.markerSelected = false;
     };
+    MapEditModalController.prototype.enableDraggableForMarker = function () {
+      var marker, _i, _len, _ref, _results;
+      _ref = this.$scope.markers;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        marker = _ref[_i];
+        _results.push(marker.draggable = true);
+      }
+      return _results;
+    };
+    MapEditModalController.prototype.disableDraggableForMarkers = function () {
+      var marker, _i, _len, _ref, _results;
+      _ref = this.$scope.markers;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        marker = _ref[_i];
+        _results.push(marker.draggable = false);
+      }
+      return _results;
+    };
     MapEditModalController.prototype.close = function (event) {
       this.snippet.data({
         center: {
@@ -16241,16 +16277,18 @@ angular.module('truncate', []).filter('characters', function () {
           zoom: this.$scope.center.zoom
         }
       });
+      this.disableDraggableForMarkers();
       this.$modalInstance.dismiss('close');
       return event.stopPropagation();
     };
     return MapEditModalController;
   }());
   angular.module('ldEditor').controller('MapKickstartModalController', MapKickstartModalController = function () {
-    function MapKickstartModalController($scope, $modalInstance, data, leafletData, $timeout, leafletEvents) {
+    function MapKickstartModalController($scope, $modalInstance, data, uiModel, leafletData, $timeout, leafletEvents) {
       this.$scope = $scope;
       this.$modalInstance = $modalInstance;
       this.data = data;
+      this.uiModel = uiModel;
       this.leafletData = leafletData;
       this.$timeout = $timeout;
       this.leafletEvents = leafletEvents;
@@ -16413,7 +16451,7 @@ angular.module('truncate', []).filter('characters', function () {
       });
     };
     MapKickstartModalController.prototype.kickstart = function (event) {
-      var selectedMarkers;
+      var selectedMarkers, _this = this;
       selectedMarkers = _.filter(this.$scope.markers, function (marker) {
         return marker.selected;
       });
@@ -16424,7 +16462,8 @@ angular.module('truncate', []).filter('characters', function () {
             lat: marker.geojson.geometry.coordinates[1],
             lng: marker.geojson.geometry.coordinates[0],
             message: marker.geojson.properties[marker.selectedTextProperty],
-            uuid: marker.uuid
+            uuid: marker.uuid,
+            icon: _this.uiModel.getDefaultIcon()
           };
         })
       });
@@ -16659,7 +16698,8 @@ angular.module('truncate', []).filter('characters', function () {
       this.initDefaults();
       _ref = [
         'center',
-        'markers'
+        'markers',
+        'tiles'
       ];
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -16669,8 +16709,10 @@ angular.module('truncate', []).filter('characters', function () {
       return _results;
     };
     WebMapController.prototype.initDefaults = function () {
-      var markers;
+      var markers, uiModel;
       this.$scope.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
+      uiModel = this.mapMediatorService.getUIModel(this.$scope.mapId);
+      this.$scope.snippetModel.data({ tiles: uiModel.getAvailableTileLayers()['openstreetmap'] });
       if (!this.$scope.snippetModel.data('center')) {
         this.$scope.snippetModel.data({
           center: {
@@ -16686,7 +16728,8 @@ angular.module('truncate', []).filter('characters', function () {
           markers: [{
               lat: 90,
               lng: 0,
-              uuid: ''
+              uuid: '',
+              icon: uiModel.getDefaultIcon()
             }]
         });
       }
@@ -16737,6 +16780,7 @@ angular.module('truncate', []).filter('characters', function () {
       this.dialogService = dialogService;
       this.mapMediatorService = mapMediatorService;
       this.$scope.snippet = this.mapMediatorService.getSnippetModel(this.$scope.snippet.model.id);
+      this.$scope.uiModel = this.mapMediatorService.getUIModel(this.$scope.snippet.id);
       this.$scope.center = {};
       $.extend(true, this.$scope.center, this.$scope.snippet.data('center'));
       this.$scope.markers = [];
@@ -16760,28 +16804,37 @@ angular.module('truncate', []).filter('characters', function () {
         16
       ];
       this.$scope.newMarker = {};
+      this.$scope.tileLayer = this.$scope.snippet.data('tiles').name;
       this.$scope.addMarker = $.proxy(this.addMarker, this);
       this.$scope.deleteMarker = $.proxy(this.deleteMarker, this);
       this.$scope.highlightMarker = $.proxy(this.highlightMarker, this);
       this.$scope.unHighlightMarker = $.proxy(this.unHighlightMarker, this);
       this.$scope.kickstartMarkers = $.proxy(this.kickstartMarkers, this);
       this.$scope.openFreeformEditor = $.proxy(this.openFreeformEditor, this);
-      this.initMarkerStyles();
+      this.$scope.selectIcon = $.proxy(this.selectIcon, this);
       this.watchCenter();
       this.watchMarkers();
+      this.watchTileLayer();
     }
-    WebMapFormController.prototype.initMarkerStyles = function () {
-      return this.hoverMarker = L.AwesomeMarkers.icon({
-        icon: 'fa-cogs',
-        markerColor: 'green',
-        prefix: 'fa'
+    WebMapFormController.prototype.getHoverMarkerStyle = function (currentIcon) {
+      return L.AwesomeMarkers.icon({
+        icon: currentIcon.options.icon,
+        prefix: currentIcon.options.prefix,
+        markerColor: 'green'
+      });
+    };
+    WebMapFormController.prototype.resetHoverMarkerStyle = function (currentIcon) {
+      return L.AwesomeMarkers.icon({
+        icon: currentIcon.options.icon,
+        prefix: currentIcon.options.prefix,
+        markerColor: 'cadetblue'
       });
     };
     WebMapFormController.prototype.highlightMarker = function (index) {
-      return this.$scope.markers[index].icon = this.hoverMarker;
+      return this.$scope.markers[index].icon = this.getHoverMarkerStyle(this.$scope.markers[index].icon);
     };
     WebMapFormController.prototype.unHighlightMarker = function (index) {
-      return this.$scope.markers[index].icon = void 0;
+      return this.$scope.markers[index].icon = this.resetHoverMarkerStyle(this.$scope.markers[index].icon);
     };
     WebMapFormController.prototype.addMarker = function () {
       var newValidMarker;
@@ -16798,6 +16851,13 @@ angular.module('truncate', []).filter('characters', function () {
     WebMapFormController.prototype.deleteMarker = function (index) {
       return this.$scope.markers.splice(index, 1);
     };
+    WebMapFormController.prototype.selectIcon = function (marker, icon) {
+      return marker.icon = L.AwesomeMarkers.icon({
+        icon: icon,
+        markerColor: marker.icon.options.markerColor,
+        prefix: marker.icon.options.prefix
+      });
+    };
     WebMapFormController.prototype.kickstartMarkers = function (data, error) {
       var promise, _this = this;
       if (error.message) {
@@ -16811,7 +16871,7 @@ angular.module('truncate', []).filter('characters', function () {
         });
         return promise.success(function (response) {
           if (response.status === 'ok') {
-            _this.dialogService.openMapKickstartModal(data).result.then(function (result) {
+            _this.dialogService.openMapKickstartModal(data, _this.$scope.uiModel).result.then(function (result) {
               if (result.action === 'kickstart') {
                 return _this.$scope.markers = result.markers;
               }
@@ -16824,7 +16884,7 @@ angular.module('truncate', []).filter('characters', function () {
       }
     };
     WebMapFormController.prototype.openFreeformEditor = function () {
-      return this.dialogService.openMapEditModal(this.$scope.snippet);
+      return this.dialogService.openMapEditModal(this.$scope.snippet, this.$scope.uiModel);
     };
     WebMapFormController.prototype.watchCenter = function () {
       var _this = this;
@@ -16882,6 +16942,12 @@ angular.module('truncate', []).filter('characters', function () {
     WebMapFormController.prototype.validateMarkers = function (markers) {
       return _.every(markers, function (marker) {
         return $.isNumeric(marker.lat) && $.isNumeric(marker.lng);
+      });
+    };
+    WebMapFormController.prototype.watchTileLayer = function () {
+      var _this = this;
+      return this.$scope.$watch('tileLayer', function (newVal, oldVal) {
+        return _this.$scope.snippet.data({ tiles: _this.$scope.uiModel.getAvailableTileLayers()[newVal] });
       });
     };
     return WebMapFormController;
@@ -18338,15 +18404,75 @@ angular.module('truncate', []).filter('characters', function () {
     WebMap.prototype.getTemplate = function () {
       return webMapConfig.template;
     };
+    WebMap.prototype.getDefaultIcon = function () {
+      return L.AwesomeMarkers.icon({
+        icon: 'star',
+        markerColor: 'cadetblue',
+        prefix: 'fa'
+      });
+    };
+    WebMap.prototype.getAvailableIcons = function () {
+      return [
+        'star',
+        'gear',
+        'bookmark',
+        'circle',
+        'rocket',
+        'info',
+        'coffee',
+        'stethoscope',
+        'wheelchair',
+        'glass',
+        'cutlery',
+        'shopping-cart',
+        'road'
+      ];
+    };
+    WebMap.prototype.getAvailableTileLayers = function () {
+      return {
+        openstreetmap: {
+          name: 'openstreetmap',
+          url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          options: { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }
+        },
+        opencyclemap: {
+          name: 'opencyclemap',
+          url: 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png',
+          options: { attribution: 'All maps &copy; <a href="http://www.opencyclemap.org">OpenCycleMap</a>, map data &copy; <a href="http://www.openstreetmap.org">OpenStreetMap</a> (<a href="http://www.openstreetmap.org/copyright">ODbL</a>' }
+        },
+        mapquestaerial: {
+          name: 'mapquestaerial',
+          url: 'http://otile{s}.mqcdn.com/tiles/1.0.0/{type}/{z}/{x}/{y}.png',
+          options: {
+            subdomains: '1234',
+            type: 'sat',
+            attribution: 'Imagery &copy; NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency, Tiles &copy; <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png" />'
+          }
+        },
+        arcgis: {
+          name: 'arcgis',
+          url: 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        },
+        mapbox: {
+          name: 'mapbox',
+          url: 'http://{s}.tiles.mapbox.com/v3/{user}.{map}/{z}/{x}/{y}.png',
+          options: {
+            user: 'gabriel-hase',
+            map: 'h1kmko7c'
+          }
+        }
+      };
+    };
     return WebMap;
   }();
   (function () {
     return this.webMapConfig = {
-      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults">\n  </leaflet>\n</div>',
-      directive: '<leaflet center="center" markers="markers">\n</leaflet>',
+      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles">\n  </leaflet>\n</div>',
+      directive: '<leaflet center="center" markers="markers" tiles="tiles">\n</leaflet>',
       trackedProperties: [
         'center',
-        'markers'
+        'markers',
+        'tiles'
       ]
     };
   }());
@@ -18544,15 +18670,18 @@ angular.module('truncate', []).filter('characters', function () {
           };
           return $modal.open(historyModalOptions);
         },
-        openMapKickstartModal: function (data) {
+        openMapKickstartModal: function (data, uiModel) {
           mapKickstartModalOptions.resolve = {
             data: function () {
               return data;
+            },
+            uiModel: function () {
+              return uiModel;
             }
           };
           return $modal.open(mapKickstartModalOptions);
         },
-        openMapEditModal: function (snippet) {
+        openMapEditModal: function (snippet, uiModel) {
           var snippetModel;
           if (snippet.model) {
             snippetModel = snippet.model;
@@ -18562,6 +18691,9 @@ angular.module('truncate', []).filter('characters', function () {
           mapEditModalOptions.resolve = {
             snippet: function () {
               return snippetModel;
+            },
+            uiModel: function () {
+              return uiModel;
             }
           };
           return $modal.open(mapEditModalOptions);
@@ -18947,7 +19079,8 @@ angular.module('truncate', []).filter('characters', function () {
     '$compile',
     'uiStateService',
     'dialogService',
-    function ($rootScope, $compile, uiStateService, dialogService) {
+    'mapMediatorService',
+    function ($rootScope, $compile, uiStateService, dialogService, mapMediatorService) {
       var lastEditBtnScope, lastHistoryBtnScope, lastMapBtnScope;
       lastEditBtnScope = void 0;
       lastHistoryBtnScope = void 0;
@@ -19027,7 +19160,9 @@ angular.module('truncate', []).filter('characters', function () {
             };
             childScope.snippet = snippet;
             return childScope.showHistory = function (snippet, $event) {
-              dialogService.openMapEditModal(snippet);
+              var uiModel;
+              uiModel = mapMediatorService.getUIModel(snippet.model.id);
+              dialogService.openMapEditModal(snippet, uiModel);
               return $event.stopPropagation();
             };
           });
@@ -19193,9 +19328,9 @@ angular.module('truncate', []).filter('characters', function () {
   htmlTemplates.backdrop = '<div class="modal-backdrop fade" ng-class="{in: animate}" ng-style="{\'z-index\': 1040 + index*10}" ng-click="close($event)">\n</div>';
   htmlTemplates.window = '<div class="{{ windowClass }}" ng-style="{\'z-index\': 1050 + index*10}" ng-transclude>\n</div>';
   htmlTemplates.mapButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-map" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.mapEditModal = '<div class="upfron-modal-full-width-header">\n  <h3>Freeform Editing for your Map</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">\n            Close Freeform Editing\n    </button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <leaflet center="center" markers="markers" event-broadcast="events" style="height: 100%">\n  </leaflet>\n\n  <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">\n    <form class="upfront-form upfront-control">\n      <h3>Selected Marker</h3>\n      <label>Popover Text (optional)</label>\n      <input style="width: 90%" ng-model="editState.markerSelected.message">\n      <a href="" class="upfront-btn upfront-btn-danger"\n          ng-click="removeMarker(editState.markerSelected)">\n          Delete Marker\n      </a>\n    </form>\n  </div>\n\n  <div popover ng-if="editState.addMarker" arrow-distance="14" bounding-box="{{ editState.boundingBox }}" popover-css-class="upfront-popover--minimal">\n    <div class="upfront-control">\n      <a  href="" class="upfront-btn upfront-text-format-btn entypo-location"\n          ng-click="addMarker($event)">\n          Add marker\n      </a>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close Freeform Editing</button>\n</div>';
+  htmlTemplates.mapEditModal = '<div class="upfron-modal-full-width-header">\n  <h3>Freeform Editing for your Map</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">\n            Close Freeform Editing\n    </button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%">\n  </leaflet>\n\n  <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">\n    <form class="upfront-form upfront-control">\n      <legend>Selected Marker</legend>\n      <label>Icon</label>\n      <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == editState.markerSelected.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(editState.markerSelected, icon)"></span>\n      <label>Popover Text (optional)</label>\n      <input style="width: 90%" ng-model="editState.markerSelected.message">\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-danger"\n          ng-click="removeMarker(editState.markerSelected)">\n          Delete\n      </a>\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-success"\n          ng-click="disableMarkerSelectedState()">\n          Accept\n      </a>\n    </form>\n  </div>\n\n  <div popover ng-if="editState.addMarker" arrow-distance="14" bounding-box="{{ editState.boundingBox }}" popover-css-class="upfront-popover--minimal">\n    <div class="upfront-control">\n      <a  href="" class="upfront-btn upfront-text-format-btn entypo-location"\n          ng-click="addMarker($event)">\n          Add marker\n      </a>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close Freeform Editing</button>\n</div>';
   htmlTemplates.mapKickstartModal = '<div class="upfron-modal-full-width-header">\n  <h3>Import data from your geojson file</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)"\n            ng-hide="hasMarkers()">Close kickstart view</button>\n\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Kickstart</button>\n    &nbsp;\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="kickstart($event)">Kickstart Markers</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-show="markers.length == 0">\n    <h3 class="entypo-attention">The geojson file does not contain Point geometries. You can only kickstart markers with Point geometries.</h3>\n  </div>\n  <div ng-if="markers.length > 0">\n    <div style="width: 40%; float: left;">\n      <form class="upfront-form">\n        <table class="table table-bordered">\n          <thead>\n            <tr>\n              <td>#</td>\n              <td><b>Inlcude this pin</b></td>\n              <td>\n                <b>Property for Popover Text</b>\n              </td>\n              <td><b>Popover Text</b></td>\n            </tr>\n          </thead>\n          <tbody>\n            <tr>\n              <td>Global:</td>\n              <td><input type="checkbox" ng-model="globalValues.selected"></td>\n              <td>\n                <select ng-model="globalValues.textProperty" ng-options="property for property in globalTextProperties">\n                  <option value="">-- reset all --</option>\n                </select>\n              </td>\n              <td></td>\n            </tr>\n            <tr ng-repeat="marker in markers"\n                ng-class="{\'success\': marker.selected}"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)"\n                ng-click="toggleMarker(marker, $index)">\n              <td>{{$index}}</td>\n              <td>\n                <input type="checkbox" ng-checked="marker.selected">\n              </td>\n              <td>\n                <select ng-model="marker.selectedTextProperty" ng-options="property for property in marker.textProperties">\n                  <option value="">-- no text initialization --</option>\n                </select>\n              </td>\n              <td>\n                {{marker.geojson.properties[marker.selectedTextProperty] | characters: 40}}\n              </td>\n            </tr>\n          </tbody>\n\n        </table>\n      </form>\n    </div>\n    <div style="width: 40%; position: absolute; right: 10px;">\n      <leaflet center="center" markers="previewMarkers" event-broadcast="events"></leaflet>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="hasMarkers()"\n          class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close kickstart view</button>\n</div>';
-  htmlTemplates.webmapSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="WebMapFormController">\n    <form class="upfront-form" name="webMapForm">\n      <fieldset>\n        <a  href="" style="margin-left: 20px;" class="upfront-btn upfront-btn-large upfront-btn-info"\n            ng-click="openFreeformEditor()">\n          Open Freeform Editor\n        </a>\n      </fieldset>\n      <fieldset>\n        <legend>Map Viewbox</legend>\n\n        <label>Select a zoom level</label>\n        <select ng-model="center.zoom" ng-options="zoom for zoom in availableZoomLevels">\n          <option value="">-- choose Zoom Level --</option>\n        </select>\n        <label>Enter a longitude</label>\n        <input  style="width: 80%"\n                type="number" min="-180" max="180"\n                ng-model="center.lng"\n                required>\n        <label>Enter a latitude</label>\n        <input  style="width: 80%"\n                type="number" min="-90" max="90"3\n                ng-model="center.lat"\n                required>\n      </fieldset>\n      <fieldset>\n        <legend>Kickstart</legend>\n        <label>Upload a geojson to kickstart your locations</label>\n        <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>\n      </fieldset>\n      <fieldset>\n        <legend>Markers</legend>\n        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">\n          <label>Location (lng, lat)</label>\n            <input class="half-width left"\n              type="number" min="-180" max="180"\n              ng-model="newMarker.lng"\n              required>\n            <input class="half-width left"\n              type="number" min="-90" max="90"\n              ng-model="newMarker.lat"\n              required>\n            <label>Popover Text</label>\n            <input style="width: 80%"\n                ng-model="newMarker.message">\n            <a  href=""\n                ng-click="addMarker()"\n                class="upfront-btn upfront-btn-success">\n              Add Marker\n            </a>\n        </div>\n        <div sidebar-region caption="All Markers">\n          <ul class="upfront-list">\n            <li ng-repeat="marker in markers"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)">\n              <a  href=""\n                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"\n                  ng-click="deleteMarker($index)">X</a>\n              <label>Location (lng, lat)</label>\n              <input class="half-width left"\n                type="number" min="-180" max="180"\n                ng-model="marker.lng"\n                required>\n              <input class="half-width left"\n                type="number" min="-90" max="90"\n                ng-model="marker.lat"\n                required>\n              <label>Popover Text</label>\n              <input style="width: 80%"\n                ng-model="marker.message">\n            </li>\n          </ul>\n        </div>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.webmapSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="WebMapFormController">\n    <form class="upfront-form" name="webMapForm">\n      <fieldset>\n        <a  href="" style="margin-left: 20px;" class="upfront-btn upfront-btn-large upfront-btn-info"\n            ng-click="openFreeformEditor()">\n          Open Freeform Editor\n        </a>\n      </fieldset>\n      <fieldset>\n        <legend>Map Viewbox</legend>\n\n        <label>Select a zoom level</label>\n        <select ng-model="center.zoom" ng-options="zoom for zoom in availableZoomLevels">\n          <option value="">-- choose Zoom Level --</option>\n        </select>\n        <label>Enter a longitude</label>\n        <input  style="width: 80%"\n                type="number" min="-180" max="180"\n                ng-model="center.lng"\n                required>\n        <label>Enter a latitude</label>\n        <input  style="width: 80%"\n                type="number" min="-90" max="90"3\n                ng-model="center.lat"\n                required>\n      </fieldset>\n      <fieldset>\n        <legend>Tile Layer</legend>\n        <select ng-model="tileLayer" ng-options="value.name as value.name for (key, value) in uiModel.getAvailableTileLayers()">\n          <option value="">-- choose Tile Layer --</option>\n        </select>\n        <div class="upfront-well red" ng-show="tileLayer == \'mapbox\'">\n          Mapbox is a commercial tile layer and this app uses a free test account. If you don\'t see the map, probably the quota for the free version was reached.\n          DON\'T RELY ON THIS TILE LAYER ON DATABLOG.IO!\n        </div>\n      </fieldset>\n      <fieldset>\n        <legend>Kickstart</legend>\n        <label>Upload a geojson to kickstart your locations</label>\n        <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>\n      </fieldset>\n      <fieldset>\n        <legend>Markers</legend>\n        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">\n          <label>Location (lng, lat)</label>\n            <input class="half-width left"\n              type="number" min="-180" max="180"\n              ng-model="newMarker.lng"\n              required>\n            <input class="half-width left"\n              type="number" min="-90" max="90"\n              ng-model="newMarker.lat"\n              required>\n            <label>Popover Text</label>\n            <input style="width: 80%"\n                ng-model="newMarker.message">\n            <a  href=""\n                ng-click="addMarker()"\n                class="upfront-btn upfront-btn-success">\n              Add Marker\n            </a>\n        </div>\n        <div sidebar-region caption="All Markers">\n          <ul class="upfront-list">\n            <li ng-repeat="marker in markers"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)">\n              <a  href=""\n                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"\n                  ng-click="deleteMarker($index)">X</a>\n              <label>Location (lng, lat)</label>\n              <input class="half-width left"\n                type="number" min="-180" max="180"\n                ng-model="marker.lng"\n                required>\n              <input class="half-width left"\n                type="number" min="-90" max="90"\n                ng-model="marker.lat"\n                required>\n              <label>Popover Text</label>\n              <input style="width: 80%"\n                ng-model="marker.message">\n\n              <div>\n                <label>Select Icon</label>\n                <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == marker.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(marker, icon)"></span>\n              </div>\n\n            </li>\n          </ul>\n        </div>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   angular.module('ldApi', []).run([
     'authService',
     function (authService) {
