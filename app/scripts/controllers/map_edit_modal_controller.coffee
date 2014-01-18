@@ -9,6 +9,7 @@ class MapEditModalController
     @$scope.selectIcon = $.proxy(@selectIcon, this)
     @$scope.center = @snippet.data('center')
     @$scope.markers = @snippet.data('markers')
+    @$scope.tiles = @snippet.data('tiles')
     @$scope.editState = {}
     @$scope.uiModel = @uiModel
 
