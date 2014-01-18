@@ -58,7 +58,7 @@ class WebMap
       url: "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
     mapbox:
       name: 'mapbox'
-      url: "url: 'http://{s}.tiles.mapbox.com/v3/{user}.{map}/{z}/{x}/{y}.png"
+      url: "http://{s}.tiles.mapbox.com/v3/{user}.{map}/{z}/{x}/{y}.png"
       options:
         user: 'gabriel-hase'
         map: 'h1kmko7c'
