@@ -1,16 +1,21 @@
 angular.module('ldEditor').controller 'MapEditModalController',
 class MapEditModalController
 
-  constructor: (@$scope, @$modalInstance, @snippet, @leafletData, @$timeout, @leafletEvents) ->
+  constructor: (@$scope, @$modalInstance, @snippet, @uiModel, @leafletData, @$timeout, @leafletEvents) ->
     @$scope.close = $.proxy(@close, this)
     @$scope.addMarker = $.proxy(@addMarker, this)
     @$scope.removeMarker = $.proxy(@removeMarker, this)
+    @$scope.disableMarkerSelectedState = $.proxy(@disableMarkerSelectedState, this)
+    @$scope.selectIcon = $.proxy(@selectIcon, this)
     @$scope.center = @snippet.data('center')
     @$scope.markers = @snippet.data('markers')
+    @$scope.tiles = @snippet.data('tiles')
     @$scope.editState = {}
+    @$scope.uiModel = @uiModel
 
     @addGeosearch()
     @setupMapEvents()
+    @enableDraggableForMarker()
 
 
   addGeosearch: ->
@@ -19,6 +24,7 @@ class MapEditModalController
         new L.Control.GeoSearch(
           provider: new L.GeoSearch.Provider.OpenStreetMap()
           showMarker: false
+          zoomLevel: 12
         ).addTo(map)
     , 100
 
@@ -71,6 +77,13 @@ class MapEditModalController
     @$scope.editState.addMarker = false
 
 
+  selectIcon: (marker, icon) ->
+    marker.icon = L.AwesomeMarkers.icon
+      icon: icon
+      markerColor: marker.icon.options.markerColor
+      prefix: marker.icon.options.prefix
+
+
   addMarker: (event) ->
     # NOTE: since the snippet data is a reference to the scope var, we
     # can work with the collection directly. For once the non-deep-copy thing
@@ -79,6 +92,8 @@ class MapEditModalController
       lat: @$scope.editState.geolocation.lat
       lng: @$scope.editState.geolocation.lng
       uuid: livingmapsUid.guid()
+      icon: @uiModel.getDefaultIcon()
+      draggable: true
     @$scope.markers.push(newMarker)
 
     @disableAddMarkerState()
@@ -96,11 +111,22 @@ class MapEditModalController
     @$scope.editState.markerSelected = false
 
 
+  enableDraggableForMarker: ->
+    for marker in @$scope.markers
+      marker.draggable = true
+
+
+  disableDraggableForMarkers: ->
+    for marker in @$scope.markers
+      marker.draggable = false
+
+
   close: (event) ->
     @snippet.data
       center:
         lat: @$scope.center.lat
         lng: @$scope.center.lng
         zoom: @$scope.center.zoom
+    @disableDraggableForMarkers()
     @$modalInstance.dismiss('close')
     event.stopPropagation() # so sidebar selection is not lost

@@ -1,6 +1,6 @@
 angular.module('ldEditor').factory 'snippetInlineOptionsService',
 
-  ($rootScope, $compile, uiStateService, dialogService) ->
+  ($rootScope, $compile, uiStateService, dialogService, mapMediatorService) ->
 
     lastEditBtnScope = undefined
     lastHistoryBtnScope = undefined
@@ -79,7 +79,8 @@ angular.module('ldEditor').factory 'snippetInlineOptionsService',
           fontSize: '2em'
         childScope.snippet = snippet # set the snippet to edit
         childScope.showHistory = (snippet, $event) ->
-          dialogService.openMapEditModal(snippet)
+          uiModel = mapMediatorService.getUIModel(snippet.model.id)
+          dialogService.openMapEditModal(snippet, uiModel)
           $event.stopPropagation()
       )
 
