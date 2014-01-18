@@ -19,6 +19,7 @@ class MapEditModalController
         new L.Control.GeoSearch(
           provider: new L.GeoSearch.Provider.OpenStreetMap()
           showMarker: false
+          zoomLevel: 12
         ).addTo(map)
     , 100
 
