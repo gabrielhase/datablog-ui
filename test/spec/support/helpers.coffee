@@ -5,6 +5,11 @@ expect = chai.expect
 
 mockLeaflet = ->
   return {
+    marker: ->
+      on: ->
+        true
+      getLatLng: ->
+        true
     AwesomeMarkers:
       icon: ->
         'default'
@@ -16,6 +21,8 @@ mockLeaflet = ->
     CRS:
       EPSG3857: true
     Map: ->
+      addLayer: ->
+        true
       setView: ->
         true
       on: ->
