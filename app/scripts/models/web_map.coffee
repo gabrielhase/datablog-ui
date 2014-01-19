@@ -62,3 +62,61 @@ class WebMap
       options:
         user: 'gabriel-hase'
         map: 'h1kmko7c'
+
+
+  _getSnippetModel: ->
+    @mapMediatorService.getSnippetModel(@id)
+
+
+  # ########################
+  # DIFFERENCE CALCULATIONS
+  # ########################
+
+  # Tile Layer
+  # Center
+  # Zoom
+  # Markers
+  calculateDifference: (otherVersion) ->
+    versionDifferences = []
+    versionDifferences.push
+      secionTitle: 'View Box'
+      properties: []
+    versionDifferences[0].properties.push(@_calculateTileLayerDifference(otherVersion))
+
+    versionDifferences
+
+
+  _calculateTileLayerDifference: (otherVersion) ->
+    currentTileLayer = @_getSnippetModel().data('tiles')
+    otherTileLayer = otherVersion.data('tiles')
+    tileLayerDiffEntry =
+      label: 'Tile Layer'
+      key: 'tiles'
+    tileLayerDiffEntry.difference = @_getDifferenceType(currentTileLayer.name, otherTileLayer.name)
+    unless tileLayerDiffEntry.difference
+      tileLayerDiffEntry.info = "(#{currentTileLayer.name})"
+    tileLayerDiffEntry
+
+
+  _getDifferenceType: (currentValue, otherValue) ->
+    if !currentValue
+      type: 'delete'
+      content: otherValue
+    else if !otherValue
+      type: 'add'
+      content: currentValue
+    else
+      if currentValue != otherValue
+        type: 'change'
+        previous: otherValue
+        after: currentValue
+      else
+        undefined
+
+
+  # very primitive implementation that does NOT work when contents come
+  # in a different order, e.g. {a: 1, b: 2} != {b: 2, a: 1}
+  # a better solution is here: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+  _deepEquals: (o1, o2) ->
+    JSON.stringify(o1) == JSON.stringify(o2)
+
