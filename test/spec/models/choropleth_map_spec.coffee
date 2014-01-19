@@ -16,8 +16,10 @@ describe 'ChoroplethMap', ->
     @mapMediatorService.set(@snippetModel.id, @snippetModel, @choroplethMap)
 
 
-  it 'gets its associated snippet model', ->
-    expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
+  describe 'initialization', ->
+
+    it 'gets its associated snippet model', ->
+      expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
   describe 'Difference calculation', ->
