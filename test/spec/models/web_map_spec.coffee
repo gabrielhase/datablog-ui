@@ -37,3 +37,27 @@ describe.only 'Web Map', ->
           type: 'change'
           previous: 'openstreetmap'
           after: 'opencyclemap'
+
+
+    it 'recognizes an unchanged center', ->
+      diff = @webMap.calculateDifference(@oldSnippetModel)
+      expect(diff[1].properties[0]).to.eql
+        label: 'Center'
+        key: 'center'
+
+
+    it 'calculates the difference between two centers', ->
+      @snippetModel.data
+        center:
+          lat: 1
+          lng: 2
+          zoom: 12
+      diff = @webMap.calculateDifference(@oldSnippetModel)
+      expect(diff[1].properties[0]).to.eql
+        label: 'Center'
+        key: 'center'
+        difference: 'blobChange'
+
+    it 'recognizes an unchanged zoom level'
+
+    it 'calculates the difference between two zoom levels'

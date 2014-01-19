@@ -79,9 +79,13 @@ class WebMap
   calculateDifference: (otherVersion) ->
     versionDifferences = []
     versionDifferences.push
-      secionTitle: 'View Box'
+      secionTitle: 'Map Properties'
       properties: []
     versionDifferences[0].properties.push(@_calculateTileLayerDifference(otherVersion))
+    versionDifferences.push
+      secionTitle: 'View Box'
+      properties: []
+    versionDifferences[1].properties.push(@_calculateCenterDifference(otherVersion))
 
     versionDifferences
 
@@ -96,6 +100,18 @@ class WebMap
     unless tileLayerDiffEntry.difference
       tileLayerDiffEntry.info = "(#{currentTileLayer.name})"
     tileLayerDiffEntry
+
+
+  _calculateCenterDifference: (otherVersion) ->
+    currentCenter = @_getSnippetModel().data('center')
+    otherCenter = otherVersion.data('center')
+    centerDiffEntry =
+      label: 'Center'
+      key: 'center'
+    if !@_deepEquals(currentCenter, otherCenter)
+      centerDiffEntry.difference = 'blobChange'
+
+    centerDiffEntry
 
 
   _getDifferenceType: (currentValue, otherValue) ->
