@@ -2,8 +2,8 @@ angular.module('ldEditor').controller 'WebMapController',
 class WebMapController
 
   constructor: (@$scope, @mapMediatorService, @leafletData, @$timeout) ->
-    @$scope.cssId = livingmapsUid.guid()
     @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
+    @uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
     @snippetModel.data
       lastPositioned: (new Date()).getTime()
 
@@ -14,10 +14,12 @@ class WebMapController
     # invalidateSize() must be called to make sure the tiles are rendered
     # correctly. This automatically does this upon loading a map.
     @$timeout =>
-      @leafletData.getMap(@$scope.cssId).then (map) =>
-        map.invalidateSize()
+      @reloadMap()
     , 10
 
+
+  reloadMap: ->
+    @uiModel.reload(@$scope.mapId)
 
 
   initScope: ->
@@ -28,11 +30,10 @@ class WebMapController
 
   initDefaults: ->
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
-    uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
     # tile layer: openstreetmap
     unless @$scope.snippetModel.data('tiles')
       @$scope.snippetModel.data
-        tiles: uiModel.getAvailableTileLayers()['openstreetmap']
+        tiles: @uiModel.getAvailableTileLayers()['openstreetmap']
     # center: Zurich
     unless @$scope.snippetModel.data('center')
       @$scope.snippetModel.data
@@ -50,7 +51,7 @@ class WebMapController
             lat: 90
             lng: 0
             uuid: ''
-            icon: uiModel.getDefaultIcon()
+            icon: @uiModel.getDefaultIcon()
           }
         ]
 
@@ -71,6 +72,7 @@ class WebMapController
 
 
   changeMapAttrsData: (changedProperties) ->
+    @reloadMap() if changedProperties.indexOf('lastPositioned') != -1
     for trackedProperty in webMapConfig.trackedProperties
       if changedProperties.indexOf(trackedProperty) != -1
         newVal = @snippetModel.data(trackedProperty)

@@ -51,7 +51,8 @@ angular.module('ldEditor').factory 'livingdocsService',
         angularTemplateService.insertAngularTemplate(snippet) if angularTemplateService.isAngularTemplate(snippet)
 
       doc.snippetWasDropped (snippet) ->
-        if snippet.identifier == 'livingmaps.choropleth' || prefillChoroplethService.isPrefilledChoropleth(snippet)
+        if snippet.identifier == 'livingmaps.choropleth' || prefillChoroplethService.isPrefilledChoropleth(snippet) ||
+           snippet.identifier == 'livingmaps.map'
           snippet.data
             lastPositioned: (new Date()).getTime()
 
