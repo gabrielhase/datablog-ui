@@ -4,6 +4,12 @@ class WebMap
     @mapMediatorService = angularHelpers.inject('mapMediatorService')
 
 
+  reload: (id) ->
+    leafletData = angularHelpers.inject('leafletData')
+    leafletData.getMap(id).then (map) =>
+      map.invalidateSize()
+
+
   getTemplate: ->
     webMapConfig.template
 
