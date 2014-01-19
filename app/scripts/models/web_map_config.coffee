@@ -4,7 +4,7 @@ do ->
 
     template: """
       <div ng-controller="WebMapController">
-        <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles">
+        <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles" id="{{cssId}}">
         </leaflet>
       </div>
     """
