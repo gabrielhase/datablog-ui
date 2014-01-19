@@ -1,7 +1,8 @@
 angular.module('ldEditor').controller 'WebMapController',
 class WebMapController
 
-  constructor: (@$scope, @mapMediatorService) ->
+  constructor: (@$scope, @mapMediatorService, @leafletData, @$timeout) ->
+    @$scope.cssId = livingmapsUid.guid()
     @snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
     @snippetModel.data
       lastPositioned: (new Date()).getTime()
@@ -9,6 +10,14 @@ class WebMapController
     @setupSnippetChangeListener()
     @initScope()
     @initEditingDefaults()
+    # NOTE: if maps are added with JQuery or css properties change then
+    # invalidateSize() must be called to make sure the tiles are rendered
+    # correctly. This automatically does this upon loading a map.
+    @$timeout =>
+      @leafletData.getMap(@$scope.cssId).then (map) =>
+        map.invalidateSize()
+    , 10
+
 
 
   initScope: ->
@@ -21,8 +30,9 @@ class WebMapController
     @$scope.snippetModel = @mapMediatorService.getSnippetModel(@$scope.mapId)
     uiModel = @mapMediatorService.getUIModel(@$scope.mapId)
     # tile layer: openstreetmap
-    @$scope.snippetModel.data
-      tiles: uiModel.getAvailableTileLayers()['openstreetmap']
+    unless @$scope.snippetModel.data('tiles')
+      @$scope.snippetModel.data
+        tiles: uiModel.getAvailableTileLayers()['openstreetmap']
     # center: Zurich
     unless @$scope.snippetModel.data('center')
       @$scope.snippetModel.data
