@@ -22,6 +22,25 @@ describe 'ChoroplethMap', ->
       expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
+
+  describe 'Merging', ->
+    beforeEach ->
+      @changedSnippetModel = $.extend(true, {}, @snippetModel)
+
+    it 'merges a map change', ->
+      @changedSnippetModel.data
+        map: sampleMap
+      @choroplethMap.merge(@changedSnippetModel)
+      expect(@snippetModel.data('map')).to.eql(sampleMap)
+
+
+    it 'merges a projection change', ->
+      @changedSnippetModel.data
+        projection: 'orthographic'
+      @choroplethMap.merge(@changedSnippetModel)
+      expect(@snippetModel.data('projection')).to.equal('orthographic')
+
+
   describe 'Difference calculation', ->
 
     beforeEach ->

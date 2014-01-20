@@ -13,6 +13,24 @@ describe 'Web Map', ->
       expect(@webMap._getSnippetModel()).to.eql(@snippetModel)
 
 
+  describe 'Merge', ->
+    beforeEach ->
+      @changedSnippetModel = $.extend(true, {}, @snippetModel)
+
+    it 'merges a tile layer change', ->
+      @changedSnippetModel.data
+        'tiles': 'other tiles'
+      @webMap.merge(@changedSnippetModel)
+      expect(@snippetModel.data('tiles')).to.equal('other tiles')
+
+
+    it 'merges a center change', ->
+      @changedSnippetModel.data
+        'center': 'other center'
+      @webMap.merge(@changedSnippetModel)
+      expect(@snippetModel.data('center')).to.equal('other center')
+
+
   describe 'Difference calculation', ->
     beforeEach ->
       @oldSnippetModel = $.extend(true, {}, @snippetModel)
