@@ -12,8 +12,10 @@ class MergeController
       @initValueType()
 
 
+  # TODO: there shouldn't be type checking here...
   initValueType: ->
-    @$scope.valueType = @modelInstance.getValueType()
+    if @$scope.latestSnippetVersion.identifier == 'livingmaps.choropleth'
+      @$scope.valueType = @modelInstance.getValueType()
 
 
   revertChange: (property) ->
@@ -63,7 +65,7 @@ class MergeController
 
 
   # NOTE: we need to fire the change event manually since the latestVersionSnippet
-  # is note in the snippetTree. This is kind of a hack and should be made better when
+  # is not in the snippetTree. This is kind of a hack and should be made better when
   # the engine allows multiple documents.
   _propagateSnippetChange: (changedProperty) ->
     doc.document.snippetTree.snippetDataChanged.fire(@$scope.latestSnippetVersion, [changedProperty])

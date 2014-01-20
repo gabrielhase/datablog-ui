@@ -117,6 +117,20 @@ class ChoroplethMap
     _.uniq(data.map (row) -> row[valueProperty])
 
 
+  merge: (snippetModel) ->
+    @_getSnippetModel().data
+      mapId: snippetModel.data('mapId')
+      map: snippetModel.data('map')
+      lastPositioned: snippetModel.data('lastPositioned')
+      projection: snippetModel.data('projection')
+      data: snippetModel.data('data')
+      mappingPropertyOnMap: snippetModel.data('mappingPropertyOnMap')
+      mappingPropertyOnData: snippetModel.data('mappingPropertyOnData')
+      valueProperty: snippetModel.data('valueProperty')
+      colorSteps: snippetModel.data('colorSteps')
+      colorScheme: snippetModel.data('colorScheme')
+
+
   calculateDifference: (otherVersion) ->
     versionDifferences = []
     versionDifferences.push
