@@ -113,7 +113,8 @@ class WebMap
       key: 'center'
     if currentCenter.lat != otherCenter.lat ||
        currentCenter.lng != otherCenter.lng
-      centerDiffEntry.difference = 'blobChange'
+      centerDiffEntry.difference =
+        type: 'blobChange'
     centerDiffEntry
 
 

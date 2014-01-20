@@ -1,4 +1,4 @@
-describe.only 'Web Map', ->
+describe 'Web Map', ->
   beforeEach ->
     window.L = mockLeaflet()
     @mapMediatorService = retrieveService('mapMediatorService')
@@ -56,4 +56,5 @@ describe.only 'Web Map', ->
       expect(diff[0].properties[1]).to.eql
         label: 'View Box'
         key: 'center'
-        difference: 'blobChange'
+        difference:
+          type: 'blobChange'
