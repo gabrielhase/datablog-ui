@@ -27,7 +27,8 @@ angular.module('ldEditor').factory 'livingdocsService',
 
       doc.snippetFocused (snippet) ->
         snippetInlineOptionsService.drawEditButton(snippet)
-        if snippet.template.identifier == 'livingmaps.choropleth'
+        if snippet.template.identifier == 'livingmaps.choropleth' ||
+           snippet.template.identifier == 'livingmaps.map'
           snippetInlineOptionsService.drawHistoryButton(snippet)
         if snippet.template.identifier == 'livingmaps.map'
           snippetInlineOptionsService.drawMapButton(snippet)
@@ -36,7 +37,8 @@ angular.module('ldEditor').factory 'livingdocsService',
 
       doc.snippetBlurred (snippet) ->
         snippetInlineOptionsService.removeEditButton()
-        if snippet.template.identifier == 'livingmaps.choropleth'
+        if snippet.template.identifier == 'livingmaps.choropleth' ||
+           snippet.template.identifier == 'livingmaps.map'
           snippetInlineOptionsService.removeHistoryButton()
         if snippet.template.identifier == 'livingmaps.map'
           snippetInlineOptionsService.removeMapButton()
