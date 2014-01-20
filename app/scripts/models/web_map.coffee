@@ -91,8 +91,40 @@ class WebMap
       properties: []
     versionDifferences[0].properties.push(@_calculateTileLayerDifference(otherVersion))
     versionDifferences[0].properties.push(@_calculateCenterDifference(otherVersion))
+    versionDifferences.push
+      secionTitle: 'Markers'
+      properties: []
+    versionDifferences[1].properties = @_calculateMarkerDifference(otherVersion)
 
     versionDifferences
+
+
+  _calculateMarkerDifference: (otherVersion) ->
+    currentMarkers = @_getSnippetModel().data('markers')
+    otherMarkers = otherVersion.data('markers')
+
+    differences = []
+    additions = livingmapsDiff.differenceObjects(currentMarkers, otherMarkers)
+    deletions = livingmapsDiff.differenceObjects(otherMarkers, currentMarkers)
+
+    for addition in additions
+      differences.push
+        label: ''
+        key: 'markers'
+        difference:
+          type: 'add'
+          content: "icon: #{addition.icon?.options?.icon}, message: #{addition.message}"
+          unformattedContent: addition
+    for deletion in deletions
+      differences.push
+        label: ''
+        key: 'markers'
+        difference:
+          type: 'delete'
+          content: "icon: #{deletion.icon?.options?.icon}, message: #{deletion.message}"
+          unformattedContent: deletion
+
+    differences
 
 
   _calculateTileLayerDifference: (otherVersion) ->
