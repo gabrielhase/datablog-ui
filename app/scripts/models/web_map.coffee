@@ -88,11 +88,7 @@ class WebMap
       secionTitle: 'Map Properties'
       properties: []
     versionDifferences[0].properties.push(@_calculateTileLayerDifference(otherVersion))
-    versionDifferences.push
-      secionTitle: 'View Box'
-      properties: []
-    versionDifferences[1].properties.push(@_calculateCenterDifference(otherVersion))
-    versionDifferences[1].properties.push(@_calculateZoomLevelDifference(otherVersion))
+    versionDifferences[0].properties.push(@_calculateCenterDifference(otherVersion))
 
     versionDifferences
 
@@ -113,24 +109,12 @@ class WebMap
     currentCenter = @_getSnippetModel().data('center')
     otherCenter = otherVersion.data('center')
     centerDiffEntry =
-      label: 'Center'
+      label: 'View Box'
       key: 'center'
     if currentCenter.lat != otherCenter.lat ||
        currentCenter.lng != otherCenter.lng
       centerDiffEntry.difference = 'blobChange'
     centerDiffEntry
-
-
-  _calculateZoomLevelDifference: (otherVersion) ->
-    currentZoom = @_getSnippetModel().data('center').zoom
-    otherZoom = otherVersion.data('center').zoom
-    zoomLevelDiffEntry =
-      label: 'Zoom Level'
-      key: 'zoom'
-    zoomLevelDiffEntry.difference = @_getDifferenceType(currentZoom, otherZoom)
-    unless zoomLevelDiffEntry.difference
-      zoomLevelDiffEntry.info = "(#{currentZoom})"
-    zoomLevelDiffEntry
 
 
   _getDifferenceType: (currentValue, otherValue) ->
