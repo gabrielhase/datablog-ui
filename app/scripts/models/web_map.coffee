@@ -78,10 +78,12 @@ class WebMap
   # DIFFERENCE CALCULATIONS
   # ########################
 
-  # Tile Layer
-  # Center
-  # Zoom
-  # Markers
+  merge: (snippetModel) ->
+    @_getSnippetModel().data
+      center: snippetModel.data('center')
+      tiles: snippetModel.data('tiles')
+
+
   calculateDifference: (otherVersion) ->
     versionDifferences = []
     versionDifferences.push
