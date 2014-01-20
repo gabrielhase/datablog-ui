@@ -76,3 +76,53 @@ describe 'Web Map', ->
         key: 'center'
         difference:
           type: 'blobChange'
+
+
+    describe 'Markers', ->
+      beforeEach ->
+        @snippetModel.data
+          markers: [rocketMarker, shoppingMarker]
+        @oldSnippetModel.data
+          markers: [rocketMarker, shoppingMarker]
+
+
+      it 'recognizes an unchanged marker set', ->
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(0)
+
+
+      it 'does not care about the reordering of markers', ->
+        @oldSnippetModel.data
+          markers: [shoppingMarker, rocketMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(0)
+
+
+      it 'calculates the addition of a marker as an add diff', ->
+        @snippetModel.data
+          markers: [rocketMarker, shoppingMarker, coffeeMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties[0]).to.eql
+          label: ''
+          key: 'markers'
+          difference:
+            type: 'add'
+            content: 'icon: coffee, message: coffee'
+            unformattedContent: coffeeMarker
+
+
+      it 'calculates a deletion of a marker as a delete diff', ->
+        @snippetModel.data
+          markers: [rocketMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties[0]).to.eql
+          label: ''
+          key: 'markers'
+          difference:
+            type: 'delete'
+            content: 'icon: shopping-cart, message: shopping'
+            unformattedContent: shoppingMarker
+
+
+      # TODO: probably we don't want this for markers...
+      it 'calculates a changed value in a marker as one add and one delete diff'

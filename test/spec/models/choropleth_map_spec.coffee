@@ -22,7 +22,6 @@ describe 'ChoroplethMap', ->
       expect(@choroplethMap._getSnippetModel()).to.eql(@snippetModel)
 
 
-
   describe 'Merging', ->
     beforeEach ->
       @changedSnippetModel = $.extend(true, {}, @snippetModel)

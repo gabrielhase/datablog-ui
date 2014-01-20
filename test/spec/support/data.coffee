@@ -187,3 +187,11 @@ zurichCargoPins = { "name":"CargoTram", "type":"FeatureCollection" ,"features":[
   {"type":"Feature","geometry":{"type":"Point","coordinates":[8.53017254532061,47.3384400956873]},"properties":{"Ort":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8038","Tel":"","Name":"ZÃ¼rich, Wollishofen"}}
   {"type":"Feature","geometry":{"type":"Point","coordinates":[8.51978279833471,47.3918521734772]},"properties":{"SpecialOrt":"ZÃ¼rich","www":"http://www.stadt-zuerich.ch/content/ted/de/index/entsorgung_recycling/sauberes_zuerich/entsorgen_wiederverwerten/cargotram_elektrotram/tram_was_was_nicht.html","Adresse":"","PLZ":"8005","Tel":"","Name":"ZÃ¼rich, Tramdepot Hard"}}
 ]}
+
+#   ########################################
+#     DATA FOR MARKER TESTS
+#   ########################################
+rocketMarker = {"lat":47.37096798928946,"lng":8.52054595896334,"uuid":"1c6a6a38-7d4f-5992-09e2-08b288826d60","icon":{"options":{"className":"awesome-marker","iconSize":[35,45],"iconAnchor":[17,42],"popupAnchor":[1,-32],"shadowAnchor":[10,12],"shadowSize":[36,16],"prefix":"fa","spinClass":"fa-spin","icon":"rocket","markerColor":"cadetblue","iconColor":"white"},"_initHooksCalled":true},"draggable":false,"$$hashKey":"02O","message":"rocket"}
+shoppingMarker = {"lat":47.37189804087207,"lng":8.550071715799277,"uuid":"87ffc5c4-ece5-1c50-79ee-f169357ec79b","icon":{"options":{"className":"awesome-marker","iconSize":[35,45],"iconAnchor":[17,42],"popupAnchor":[1,-32],"shadowAnchor":[10,12],"shadowSize":[36,16],"prefix":"fa","spinClass":"fa-spin","icon":"shopping-cart","markerColor":"cadetblue","iconColor":"white"},"_initHooksCalled":true},"draggable":false,"message":"shopping"}
+coffeeMarker = {"lat":47.38677663562653,"lng":8.53702545115084,"uuid":"17d0948f-5624-d69d-3484-b2321b7535e2","icon":{"options":{"className":"awesome-marker","iconSize":[35,45],"iconAnchor":[17,42],"popupAnchor":[1,-32],"shadowAnchor":[10,12],"shadowSize":[36,16],"prefix":"fa","spinClass":"fa-spin","icon":"coffee","markerColor":"cadetblue","iconColor":"white"},"_initHooksCalled":true},"draggable":false,"message":"coffee"}
+
