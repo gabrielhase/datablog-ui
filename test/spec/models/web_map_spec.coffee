@@ -1,4 +1,4 @@
-describe 'Web Map', ->
+describe.only 'Web Map', ->
   beforeEach ->
     window.L = mockLeaflet()
     @mapMediatorService = retrieveService('mapMediatorService')
@@ -41,8 +41,8 @@ describe 'Web Map', ->
 
     it 'recognizes an unchanged center', ->
       diff = @webMap.calculateDifference(@oldSnippetModel)
-      expect(diff[1].properties[0]).to.eql
-        label: 'Center'
+      expect(diff[0].properties[1]).to.eql
+        label: 'View Box'
         key: 'center'
 
 
@@ -51,34 +51,9 @@ describe 'Web Map', ->
         center:
           lat: 1
           lng: 2
-          zoom: @oldSnippetModel.data('center').zoom
+          zoom: 3
       diff = @webMap.calculateDifference(@oldSnippetModel)
-      expect(diff[1].properties[0]).to.eql
-        label: 'Center'
+      expect(diff[0].properties[1]).to.eql
+        label: 'View Box'
         key: 'center'
         difference: 'blobChange'
-
-
-    it 'recognizes an unchanged zoom level', ->
-      diff = @webMap.calculateDifference(@oldSnippetModel)
-      expect(diff[1].properties[1]).to.eql
-        label: 'Zoom Level'
-        key: 'zoom'
-        difference: undefined
-        info: '(12)'
-
-
-    it 'calculates the difference between two zoom levels', ->
-      @snippetModel.data
-        center:
-          lat: @oldSnippetModel.data('center').lat
-          lng: @oldSnippetModel.data('center').lng
-          zoom: 1
-      diff = @webMap.calculateDifference(@oldSnippetModel)
-      expect(diff[1].properties[1]).to.eql
-        label: 'Zoom Level'
-        key: 'zoom'
-        difference:
-          type: 'change'
-          previous: 12
-          after: 1
