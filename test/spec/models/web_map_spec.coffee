@@ -102,6 +102,7 @@ describe 'Web Map', ->
         @snippetModel.data
           markers: [rocketMarker, shoppingMarker, coffeeMarker]
         diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(1)
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
@@ -115,6 +116,7 @@ describe 'Web Map', ->
         @snippetModel.data
           markers: [rocketMarker]
         diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(1)
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'

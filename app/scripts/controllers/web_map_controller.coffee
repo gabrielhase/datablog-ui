@@ -7,6 +7,7 @@ class WebMapController
     @snippetModel.data
       lastPositioned: (new Date()).getTime()
 
+    @initMarkers()
     @setupSnippetChangeListener()
     @initScope()
     @initEditingDefaults()
@@ -16,6 +17,16 @@ class WebMapController
     @$timeout =>
       @reloadMap()
     , 10
+
+
+  initMarkers: ->
+    if @snippetModel.data('markers')
+      for marker in @snippetModel.data('markers')
+        if marker.icon && marker.icon.options
+          marker.icon = new L.AwesomeMarkers.icon
+            icon: marker.icon.options.icon
+            prefix: marker.icon.options.prefix
+            markerColor: marker.icon.options.markerColor
 
 
   reloadMap: ->
