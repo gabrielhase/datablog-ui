@@ -104,8 +104,8 @@ class WebMap
     otherMarkers = otherVersion.data('markers')
 
     differences = []
-    additions = livingmapsDiff.differenceObjects(currentMarkers, otherMarkers)
-    deletions = livingmapsDiff.differenceObjects(otherMarkers, currentMarkers)
+    additions = livingmapsDiff.differenceFor(currentMarkers, otherMarkers, 'uuid')
+    deletions = livingmapsDiff.differenceFor(otherMarkers, currentMarkers, 'uuid')
 
     for addition in additions
       differences.push

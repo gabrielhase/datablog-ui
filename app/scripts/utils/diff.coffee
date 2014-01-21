@@ -9,3 +9,12 @@
         if _.isEqual(val, element)
           presentInArr2 = true
       !presentInArr2 # filter for those values that are NOT in arr2 (difference)
+
+
+  differenceFor: (arr1, arr2, property) ->
+    _.filter arr1, (val) ->
+      presentInArr2 = false
+      _.any arr2, (element) ->
+        if val[property] == element[property]
+          presentInArr2 = true
+      !presentInArr2
