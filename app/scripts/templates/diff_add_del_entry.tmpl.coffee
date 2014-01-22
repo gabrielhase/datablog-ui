@@ -1,7 +1,6 @@
 htmlTemplates.diffAddDelEntry = """
 <div  class="upfront-diff upfront-control"
-      ng-class="{'add': property.difference.type == 'add', 'delete': property.difference.type == 'delete'}"
-      ng-controller="MergeController">
+      ng-class="{'add': property.difference.type == 'add', 'delete': property.difference.type == 'delete'}">
 
   <span ng-show="property.difference.type == 'add'"
         class="entypo-plus-circled"></span>
