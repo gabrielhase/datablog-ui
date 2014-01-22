@@ -15,61 +15,14 @@ htmlTemplates.historyModal = """
   </div>
 </div>
 <div class="upfront-modal-body" style="height: 100%">
-  <div ng-show="history.length == 0">
-    There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).
-  </div>
-  <div class="upfront-snippet-history" ng-show="history.length > 0">
-
-    <div class="preview-wrapper">
-      <div class="history-explorer">
-        <div class="upfront-timeline">
-          <ol class="upfront-timeline-entries"
-              style="left: 0px;">
-
-            <li role="tab"
-                ng-click="chooseRevision(historyEntry)"
-                class="upfront-timeline-entry active-entry latest-entry"
-                ng-repeat="historyEntry in history | orderBy:'revisionId':reverse"
-                data-version="{{historyEntry.revisionId}}"
-                data-timestamp="{{historyEntry.lastChanged}}">
-              <a ng-class="{'selected': isSelected(historyEntry)}">
-                <span ng-class="{'arrow arrow-bottom': isSelected(historyEntry)}"></span>
-              </a>
-            </li>
-
-          </ol>
-        </div>
-
-        <div class="current-history-map hide-legend">
-
-        </div>
-      </div>
-
-      <div class="latest-preview">
-
-        <h2>Current Version</h2>
-        <div class="latest-version-map hide-legend">
-        </div>
-      </div>
+  <div ng-controller="ChoroplethMergeController">
+    <div ng-show="history.length == 0">
+      There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).
     </div>
 
-
-    <div class="diff-viewer">
-      <ul class="upfront-list">
-        <li ng-repeat="section in versionDifference">
-          <h3>{{section.sectionTitle}}</h3>
-          <ul class="upfront-list">
-            <li ng-repeat="property in section.properties" ng-show="property.difference">
-              <div ng-if="property.difference.type == 'change' || property.difference.type == 'blobChange'">
-                <ng-include src="'diff-change-entry.html'"></ng-include>
-              </div>
-              <div ng-if="property.difference.type == 'add' || property.difference.type == 'delete'">
-                <ng-include src="'diff-add-del-entry.html'"></ng-include>
-              </div>
-            </li>
-          </ul>
-        </li>
-      </ul>
+    <div class="upfront-snippet-history" ng-show="history.length > 0">
+      <ng-include src="'choropleth-diff-preview.html'"></ng-include>
+      <ng-include src="'choropleth-diff-table.html'"></ng-include>
     </div>
   </div>
 </div>

@@ -11,6 +11,7 @@ class HistoryModalController
     @$scope.chooseRevision = $.proxy(@chooseRevision, this)
     @$scope.isSelected = $.proxy(@isSelected, this)
 
+    @$scope.modalContentReady = $.Callbacks('memory once')
     @originalModelInstance = @mapMediatorService.getUIModel(@$scope.snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
@@ -19,6 +20,7 @@ class HistoryModalController
     @$modalInstance.opened.then =>
       @$timeout =>
         @setupModalContent()
+        @$scope.modalContentReady.fire()
 
 
   setupModalContent: ->

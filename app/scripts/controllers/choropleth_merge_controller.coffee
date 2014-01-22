@@ -1,15 +1,17 @@
-angular.module('ldEditor').controller 'MergeController',
-class MergeController
+angular.module('ldEditor').controller 'ChoroplethMergeController',
+class ChoroplethMergeController
 
   constructor: (@$scope, @mapMediatorService) ->
     @$scope.revertChange = $.proxy(@revertChange, this)
     @$scope.revertAdd = $.proxy(@revertAdd, this)
     @$scope.revertDelete = $.proxy(@revertDelete, this)
     @$scope.isColorStepsWithOrdinalData = $.proxy(@isColorStepsWithOrdinalData, this)
-    @modelInstance = @mapMediatorService.getUIModel(@$scope.latestSnippetVersion.id)
-    @initValueType()
-    @$scope.$watch "latestSnippetVersion.data('valueProperty')", (newVal) =>
+
+    @$scope.modalContentReady.add =>
+      @modelInstance = @mapMediatorService.getUIModel(@$scope.latestSnippetVersion.id)
       @initValueType()
+      @$scope.$watch "latestSnippetVersion.data('valueProperty')", (newVal) =>
+        @initValueType()
 
 
   # TODO: there shouldn't be type checking here...
