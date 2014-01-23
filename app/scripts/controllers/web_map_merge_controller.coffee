@@ -33,8 +33,16 @@ class WebMapMergeController
     @$scope.modalState.isMerging = true
 
 
-  revertDelete: ->
-    # todo
+  revertDelete: (property) ->
+    if property.key == 'markers'
+      markers = @$scope.latestSnippetVersion.data('markers')
+      markers.push(property.difference.unformattedContent)
+    else
+      log.error "Don't know how to perform operation revertDelete on #{property.key}"
+
+    @_propagateSnippetChange(property.key)
+    property.difference = undefined
+    @$scope.modalState.isMerging = true
 
 
   # NOTE: we need to fire the change event manually since the latestVersionSnippet

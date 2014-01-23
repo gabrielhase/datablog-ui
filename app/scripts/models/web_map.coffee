@@ -82,6 +82,7 @@ class WebMap
     @_getSnippetModel().data
       center: snippetModel.data('center')
       tiles: snippetModel.data('tiles')
+      markers: snippetModel.data('markers')
 
 
   calculateDifference: (otherVersion) ->
