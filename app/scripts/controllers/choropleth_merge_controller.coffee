@@ -14,10 +14,8 @@ class ChoroplethMergeController
         @initValueType()
 
 
-  # TODO: there shouldn't be type checking here...
   initValueType: ->
-    if @$scope.latestSnippetVersion.identifier == 'livingmaps.choropleth'
-      @$scope.valueType = @modelInstance.getValueType()
+    @$scope.valueType = @modelInstance.getValueType()
 
 
   revertChange: (property) ->
