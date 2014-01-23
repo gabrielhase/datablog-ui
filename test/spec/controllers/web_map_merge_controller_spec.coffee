@@ -2,15 +2,15 @@ describe.only 'WebMapMergeController', ->
   beforeEach ->
     @snippetModel = doc.create('livingmaps.map')
     doc.document.snippetTree.root.append(@snippetModel)
+    @marker =
+      lat: 1
+      lng: 1
+      uuid: 1
+      icon: 'some Icon'
     @snippetModel.data
       tiles: 'some tiles'
       center: 'some center'
-      markers: [
-        lat: 1
-        lng: 1
-        uuid: 1
-        icon: 'some Icon'
-      ]
+      markers: [@marker]
     @olderSnippetModel = @snippetModel.copy(doc.document.design)
     @scope = retrieveService('$rootScope').$new()
     @scope.latestSnippetVersion = @snippetModel
@@ -67,6 +67,17 @@ describe.only 'WebMapMergeController', ->
         difference:
           type: 'add'
           unformattedContent: addedMarker
+      expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
+
+
+    it 'reverts a deletion of a marker', ->
+      @snippetModel.data
+        markers: []
+      @mergeController.revertDelete
+        key: 'markers'
+        difference:
+          type: 'delete'
+          unformattedContent: @marker
       expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
 
 
