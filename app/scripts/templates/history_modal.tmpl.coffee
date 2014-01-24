@@ -34,7 +34,7 @@ htmlTemplates.historyModal = """
 
     <div class="upfront-snippet-history" ng-show="history.length > 0">
       <ng-include src="'choropleth-diff-preview.html'"></ng-include>
-      <ng-include src="'choropleth-diff-table.html'"></ng-include>
+      <ng-include src="'web-map-diff-table.html'"></ng-include>
     </div>
   </div>
 

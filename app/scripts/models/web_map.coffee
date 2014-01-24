@@ -88,12 +88,12 @@ class WebMap
   calculateDifference: (otherVersion) ->
     versionDifferences = []
     versionDifferences.push
-      secionTitle: 'Map Properties'
+      sectionTitle: 'Map Properties'
       properties: []
     versionDifferences[0].properties.push(@_calculateTileLayerDifference(otherVersion))
     versionDifferences[0].properties.push(@_calculateCenterDifference(otherVersion))
     versionDifferences.push
-      secionTitle: 'Markers'
+      sectionTitle: 'Markers'
       properties: []
     versionDifferences[1].properties = @_calculateMarkerDifference(otherVersion)
 
