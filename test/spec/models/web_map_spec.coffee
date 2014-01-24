@@ -149,7 +149,32 @@ describe 'Web Map', ->
             after: 'icon: rocket'
 
 
-      it 'calculates a changed popover text in a marker'
+      it 'calculates a changed popover text in a marker', ->
+        @modifiedRocketMarker.message = 'tuned rocket'
+        @oldSnippetModel.data
+          markers: [@modifiedRocketMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(1)
+        expect(diff[1].properties[0]).to.eql
+          label: ''
+          key: 'markers'
+          difference:
+            type: 'change'
+            previous: 'message: tuned rocket'
+            after: 'message: rocket'
 
 
-      it 'calculates a changed marker position'
+      it 'calculates a changed marker position', ->
+        @modifiedRocketMarker.lat = 33
+        @oldSnippetModel.data
+          markers: [@modifiedRocketMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(1)
+        log diff[1].properties[0]
+        expect(diff[1].properties[0]).to.eql
+          label: ''
+          key: 'markers'
+          difference:
+            type: 'change'
+            previous: 'position (lat/lng): 33 / 8.52054595896334'
+            after: 'position (lat/lng): 47.37096798928946 / 8.52054595896334'
