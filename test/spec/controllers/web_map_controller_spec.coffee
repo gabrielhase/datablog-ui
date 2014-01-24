@@ -1,6 +1,6 @@
 describe 'WebMapController', ->
   beforeEach ->
-    window.L = mockLeaflet()
+    #window.L = mockLeaflet()
     @mapMediatorService = retrieveService('mapMediatorService')
     @snippetModel = doc.create('livingmaps.map')
     doc.document.snippetTree.root.append(@snippetModel)
