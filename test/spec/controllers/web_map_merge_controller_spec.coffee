@@ -6,7 +6,9 @@ describe.only 'WebMapMergeController', ->
       lat: 1
       lng: 1
       uuid: 1
-      icon: 'some Icon'
+      icon:
+        options:
+          icon: 'some icon'
     @snippetModel.data
       tiles: 'some tiles'
       center: 'some center'
@@ -79,6 +81,27 @@ describe.only 'WebMapMergeController', ->
           type: 'delete'
           unformattedContent: @marker
       expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
+
+
+  describe 'Marker Changes', ->
+    beforeEach ->
+      @snippetModel.data
+        markers: @olderSnippetModel.data('markers')
+
+
+    it 'reverts an icon change', ->
+      @snippetModel.data('markers')[0].icon.options.icon = 'another icon'
+      @mergeController.revertChange
+        key: 'markers'
+      expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
+
+
+    it 'reverts a popover text change'
+
+
+    it 'reverts a location change'
+
+
 
 
 

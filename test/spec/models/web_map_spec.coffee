@@ -126,5 +126,30 @@ describe 'Web Map', ->
             unformattedContent: shoppingMarker
 
 
-      # TODO: probably we don't want this for markers...
-      it 'calculates a changed value in a marker as one add and one delete diff'
+    describe 'Marker Changes', ->
+      beforeEach ->
+        @modifiedRocketMarker = $.extend(true, {}, rocketMarker)
+        @snippetModel.data
+          markers: [rocketMarker]
+        @oldSnippetModel.data
+          markers: [rocketMarker]
+
+      it 'calculates a changed icon in a marker', ->
+        @modifiedRocketMarker.icon.options.icon = 'something so wastly different it is unimaginable'
+        @oldSnippetModel.data
+          markers: [@modifiedRocketMarker]
+        diff = @webMap.calculateDifference(@oldSnippetModel)
+        expect(diff[1].properties.length).to.equal(1)
+        expect(diff[1].properties[0]).to.eql
+          label: ''
+          key: 'markers'
+          difference:
+            type: 'change'
+            previous: 'icon: something so wastly different it is unimaginable'
+            after: 'icon: rocket'
+
+
+      it 'calculates a changed popover text in a marker'
+
+
+      it 'calculates a changed marker position'
