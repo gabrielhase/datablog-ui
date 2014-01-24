@@ -3,42 +3,43 @@
 
 expect = chai.expect
 
-mockLeaflet = ->
-  return {
-    marker: ->
-      on: ->
-        true
-      getLatLng: ->
-        true
-    AwesomeMarkers:
-      icon: ->
-        'default'
-    Icon:
-      extend: ->
-        true
-    control:
-      layers: []
-    CRS:
-      EPSG3857: true
-    Map: ->
-      addLayer: ->
-        true
-      setView: ->
-        true
-      on: ->
-        true
-      whenReady: ->
-        true
-      hasLayer: ->
-        true
-      removeLayer: ->
-        true
-    tileLayer: ->
-      return {
-        addTo: ->
-          true
-      }
-  }
+# mockLeaflet = ->
+#   return {
+#     marker: ->
+#       on: ->
+#         true
+#       getLatLng: ->
+#         true
+#     AwesomeMarkers:
+#       icon: ->
+#         'default'
+#     Icon:
+#       extend: ->
+#         true
+#     DivIcon: true
+#     control:
+#       layers: []
+#     CRS:
+#       EPSG3857: true
+#     Map: ->
+#       addLayer: ->
+#         true
+#       setView: ->
+#         true
+#       on: ->
+#         true
+#       whenReady: ->
+#         true
+#       hasLayer: ->
+#         true
+#       removeLayer: ->
+#         true
+#     tileLayer: ->
+#       return {
+#         addTo: ->
+#           true
+#       }
+#   }
 
 
 mockNgProgress = ->

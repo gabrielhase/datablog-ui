@@ -1,6 +1,6 @@
 describe 'MapKickstartModalController', ->
   beforeEach ->
-    window.L = mockLeaflet()
+    #window.L = mockLeaflet()
     @scope = retrieveService('$rootScope').$new()
     @modalInstance =
       dismiss: ->
@@ -54,7 +54,10 @@ describe 'MapKickstartModalController', ->
         lng: 8.51172926978877
         lat: 47.3530684006283
         riseOnHover: true
-        icon: 'default'
+        icon: L.AwesomeMarkers.icon
+          icon: 'fa-check'
+          markerColor: 'darkgreen'
+          prefix: 'fa'
 
 
   describe 'changes', ->
