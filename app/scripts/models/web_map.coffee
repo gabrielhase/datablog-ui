@@ -105,8 +105,10 @@ class WebMap
     otherMarkers = otherVersion.data('markers')
 
     differences = []
+    # NOTE: this gets only additions and deletions NOT changes since we compare only uuid
     additions = livingmapsDiff.differenceFor(currentMarkers, otherMarkers, 'uuid')
     deletions = livingmapsDiff.differenceFor(otherMarkers, currentMarkers, 'uuid')
+    changes = @_calculateMarkerChanges(currentMarkers, otherMarkers)
 
     for addition in additions
       differences.push
@@ -124,8 +126,38 @@ class WebMap
           type: 'delete'
           content: "icon: #{deletion.icon?.options?.icon}, message: #{deletion.message}"
           unformattedContent: deletion
+    for change in changes
+      differences.push
+        label: ''
+        key: 'markers'
+        difference:
+          type: 'change'
+          previous: change.previous
+          after: change.after
 
     differences
+
+
+  _calculateMarkerChanges: (currentMarkers, otherMarkers) ->
+    changes = []
+
+    intersection = livingmapsDiff.intersectionFor(currentMarkers, otherMarkers, 'uuid')
+    for markerSet in intersection
+      previousString = ''
+      afterString = ''
+      if markerSet.previous.icon?.options?.icon != markerSet.after.icon?.options?.icon
+        previousString = "icon: #{markerSet.previous.icon.options.icon}"
+        afterString = "icon: #{markerSet.after.icon.options.icon}"
+
+      # TODO text changes
+
+      # TODO location changes
+
+      if previousString != '' && afterString != ''
+        changes.push
+          previous: previousString
+          after: afterString
+    changes
 
 
   _calculateTileLayerDifference: (otherVersion) ->
