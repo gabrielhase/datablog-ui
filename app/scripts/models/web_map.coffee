@@ -143,20 +143,23 @@ class WebMap
 
     intersection = livingmapsDiff.intersectionFor(currentMarkers, otherMarkers, 'uuid')
     for markerSet in intersection
-      previousString = ''
-      afterString = ''
+      previousValues = []
+      afterValues = []
       if markerSet.previous.icon?.options?.icon != markerSet.after.icon?.options?.icon
-        previousString = "icon: #{markerSet.previous.icon.options.icon}"
-        afterString = "icon: #{markerSet.after.icon.options.icon}"
+        previousValues.push("icon: #{markerSet.previous.icon.options.icon}")
+        afterValues.push("icon: #{markerSet.after.icon.options.icon}")
+      if markerSet.previous.message != markerSet.after.message
+        previousValues.push("message: #{markerSet.previous.message}")
+        afterValues.push("message: #{markerSet.after.message}")
+      if  markerSet.previous.lat != markerSet.after.lat ||
+          markerSet.previous.lng != markerSet.after.lng
+        previousValues.push("position (lat/lng): #{markerSet.previous.lat} / #{markerSet.previous.lng}")
+        afterValues.push("position (lat/lng): #{markerSet.after.lat} / #{markerSet.after.lng}")
 
-      # TODO text changes
-
-      # TODO location changes
-
-      if previousString != '' && afterString != ''
+      if previousValues.length > 0 && afterValues.length > 0
         changes.push
-          previous: previousString
-          after: afterString
+          previous: previousValues.join(',')
+          after: afterValues.join(',')
     changes
 
 

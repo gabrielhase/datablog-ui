@@ -1,4 +1,4 @@
-describe.only 'WebMapMergeController', ->
+describe 'WebMapMergeController', ->
   beforeEach ->
     @snippetModel = doc.create('livingmaps.map')
     doc.document.snippetTree.root.append(@snippetModel)
@@ -6,6 +6,7 @@ describe.only 'WebMapMergeController', ->
       lat: 1
       lng: 1
       uuid: 1
+      message: 'message'
       icon:
         options:
           icon: 'some icon'
@@ -96,10 +97,19 @@ describe.only 'WebMapMergeController', ->
       expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
 
 
-    it 'reverts a popover text change'
+    it 'reverts a popover text change', ->
+      @snippetModel.data('markers')[0].message = 'another message'
+      @mergeController.revertChange
+        key: 'markers'
+      expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
 
 
-    it 'reverts a location change'
+    it 'reverts a location change', ->
+      @snippetModel.data('markers')[0].lat = 99
+      @mergeController.revertChange
+        key: 'markers'
+      expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
+
 
 
 
