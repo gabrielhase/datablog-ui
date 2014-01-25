@@ -5,6 +5,31 @@ class WebMapMergeController
     @$scope.revertChange = $.proxy(@revertChange, this)
     @$scope.revertAdd = $.proxy(@revertAdd, this)
     @$scope.revertDelete = $.proxy(@revertDelete, this)
+    @$scope.highlightMarker = $.proxy(@highlightMarker, this)
+    @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
+
+
+  highlightMarker: (property) ->
+    latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+    historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+
+    if latestMarker?
+      latestMarker.icon.options.spin = true
+    if historyMarker?
+      historyMarker.icon.options.spin = true
+
+
+  unHighlightMarker: (property) ->
+    latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+    historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+    if latestMarker?
+      latestMarker.icon.options.spin = false
+    if historyMarker?
+      historyMarker.icon.options.spin = false
 
 
   revertChange: (property) ->
