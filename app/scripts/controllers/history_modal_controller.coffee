@@ -20,7 +20,6 @@ class HistoryModalController
     @$modalInstance.opened.then =>
       @$timeout =>
         @setupModalContent()
-        @$scope.modalContentReady.fire()
 
 
   setupModalContent: ->
@@ -31,6 +30,7 @@ class HistoryModalController
         @setupHistoryPopovers()
         @addHistoryVersion(history[0]).then (historyVersion) =>
           @$scope.versionDifference = @currentModelInstance.calculateDifference(historyVersion)
+          @$scope.modalContentReady.fire()
 
 
   # Factory Method

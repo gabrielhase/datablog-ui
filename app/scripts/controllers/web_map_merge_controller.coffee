@@ -8,6 +8,33 @@ class WebMapMergeController
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @setupMarkerEvents()
+    @$scope.$watch 'versionDifference', (newVal, oldVal) =>
+      if newVal
+        @initMarkerColors()
+
+
+  resetMarkerColors: ->
+    for marker in @$scope.latestSnippetVersion.data('markers')
+      marker.icon?.options?.markerColor = 'cadetblue'
+    for marker in @$scope.historyVersionSnippet.data('markers')
+      marker.icon?.options?.markerColor = 'cadetblue'
+
+
+  initMarkerColors: ->
+    @resetMarkerColors()
+    for section in @$scope.versionDifference
+      if section.sectionTitle == 'Markers'
+        for property in section.properties
+          if property.difference.type == 'change'
+            {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
+            latestMarker.icon.options.markerColor = 'orange'
+            historyMarker.icon.options.markerColor = 'orange'
+          else if property.difference.type == 'add'
+            log "ADD"
+            # TODO make latest marker version green
+          else if property.difference.type == 'delete'
+            log "DELETE"
+            # TODO make history version marker red and draw a semi-transparent marker on the current map (maybe)
 
 
   setupMarkerEvents: ->
@@ -24,7 +51,7 @@ class WebMapMergeController
 
   highlightMarker: (lookup) ->
     if lookup.property?
-      {latestMarker, historyMarker} = @_getMarkersByProperty(lookup.property)
+      {latestMarker, historyMarker} = @_getMarkersByUuid(lookup.property.uuid)
     else if lookup.index?
       {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
     else
@@ -38,7 +65,7 @@ class WebMapMergeController
 
   unHighlightMarker: (lookup) ->
     if lookup.property?
-      {latestMarker, historyMarker} = @_getMarkersByProperty(lookup.property)
+      {latestMarker, historyMarker} = @_getMarkersByUuid(lookup.property.uuid)
     else if lookup.index?
       {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
     else
@@ -88,11 +115,11 @@ class WebMapMergeController
     @$scope.modalState.isMerging = true
 
 
-  _getMarkersByProperty: (property) ->
+  _getMarkersByUuid: (uuid) ->
     latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
-      marker.uuid == property.uuid
+      marker.uuid == uuid
     historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
-      marker.uuid == property.uuid
+      marker.uuid == uuid
 
     {latestMarker, historyMarker}
 
