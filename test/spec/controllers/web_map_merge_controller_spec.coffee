@@ -109,9 +109,3 @@ describe 'WebMapMergeController', ->
       @mergeController.revertChange
         key: 'markers'
       expect(@snippetModel.data('markers')).to.eql(@olderSnippetModel.data('markers'))
-
-
-
-
-
-
