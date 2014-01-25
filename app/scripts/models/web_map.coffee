@@ -114,6 +114,7 @@ class WebMap
       differences.push
         label: ''
         key: 'markers'
+        uuid: addition.uuid
         difference:
           type: 'add'
           content: "icon: #{addition.icon?.options?.icon}, message: #{addition.message}"
@@ -122,6 +123,7 @@ class WebMap
       differences.push
         label: ''
         key: 'markers'
+        uuid: deletion.uuid
         difference:
           type: 'delete'
           content: "icon: #{deletion.icon?.options?.icon}, message: #{deletion.message}"
@@ -130,6 +132,7 @@ class WebMap
       differences.push
         label: ''
         key: 'markers'
+        uuid: change.uuid
         difference:
           type: 'change'
           previous: change.previous
@@ -158,6 +161,7 @@ class WebMap
 
       if previousValues.length > 0 && afterValues.length > 0
         changes.push
+          uuid: markerSet.after.uuid
           previous: previousValues.join(',')
           after: afterValues.join(',')
     changes

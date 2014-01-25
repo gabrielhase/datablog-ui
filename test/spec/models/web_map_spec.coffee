@@ -106,6 +106,7 @@ describe 'Web Map', ->
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
+          uuid: coffeeMarker.uuid
           difference:
             type: 'add'
             content: 'icon: coffee, message: coffee'
@@ -120,6 +121,7 @@ describe 'Web Map', ->
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
+          uuid: shoppingMarker.uuid
           difference:
             type: 'delete'
             content: 'icon: shopping-cart, message: shopping'
@@ -143,6 +145,7 @@ describe 'Web Map', ->
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
+          uuid: rocketMarker.uuid
           difference:
             type: 'change'
             previous: 'icon: something so wastly different it is unimaginable'
@@ -158,6 +161,7 @@ describe 'Web Map', ->
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
+          uuid: rocketMarker.uuid
           difference:
             type: 'change'
             previous: 'message: tuned rocket'
@@ -170,10 +174,10 @@ describe 'Web Map', ->
           markers: [@modifiedRocketMarker]
         diff = @webMap.calculateDifference(@oldSnippetModel)
         expect(diff[1].properties.length).to.equal(1)
-        log diff[1].properties[0]
         expect(diff[1].properties[0]).to.eql
           label: ''
           key: 'markers'
+          uuid: rocketMarker.uuid
           difference:
             type: 'change'
             previous: 'position (lat/lng): 33 / 8.52054595896334'
