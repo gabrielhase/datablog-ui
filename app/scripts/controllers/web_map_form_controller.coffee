@@ -34,17 +34,19 @@ class WebMapFormController
 
 
   getHoverMarkerStyle: (currentIcon) ->
-    L.AwesomeMarkers.icon
-      icon: currentIcon.options.icon
-      prefix: currentIcon.options.prefix
-      markerColor: 'green'
+    if currentIcon?
+      L.AwesomeMarkers.icon
+        icon: currentIcon.options.icon
+        prefix: currentIcon.options.prefix
+        markerColor: 'green'
 
 
   resetHoverMarkerStyle: (currentIcon) ->
-    L.AwesomeMarkers.icon
-      icon: currentIcon.options.icon
-      prefix: currentIcon.options.prefix
-      markerColor: 'cadetblue'
+    if currentIcon?
+      L.AwesomeMarkers.icon
+        icon: currentIcon.options.icon
+        prefix: currentIcon.options.prefix
+        markerColor: 'cadetblue'
 
 
   highlightMarker: (index) ->
