@@ -87,7 +87,7 @@ class MapKickstartModalController
       riseOnHover: true
       icon: @addedMarker
     @$timeout => # we need a timeout here to wait for the directive to be done
-      @leafletData.getMap().then (map) =>
+      @leafletData.getMap("kickstart-map").then (map) =>
         map.fitBounds(@getBounds(@$scope.previewMarkers))
     , 100
 
