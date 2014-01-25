@@ -69,12 +69,17 @@ class WebMapMergeController
 
 
   revertChange: (property) ->
-    newData = {}
-    newData[property.key] = @$scope.historyVersionSnippet.data(property.key)
-    @$scope.latestSnippetVersion.data(newData)
+    if property.key == 'markers'
+      {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
+      @_revertMarkerChange(historyMarker, latestMarker)
+      property.difference = undefined
+    else
+      newData = {}
+      newData[property.key] = @$scope.historyVersionSnippet.data(property.key)
+      @$scope.latestSnippetVersion.data(newData)
+      property.difference = undefined
+      property.info = "(#{newData[property.key]})"
     @_propagateSnippetChange(property.key)
-    property.difference = undefined
-    property.info = "(#{newData[property.key]})"
     @$scope.modalState.isMerging = true
     # reset this changes color coding
     {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
@@ -116,6 +121,20 @@ class WebMapMergeController
     {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
     @$scope.resetMarker(latestMarker)
     @$scope.resetMarker(historyMarker)
+
+
+  # For some odd reason a $.extend deep copy didn't work so this method
+  # performs a deep copy by hand...
+  _revertMarkerChange: (from, to) ->
+    to.lat = from.lat
+    to.lng = from.lng
+    to.message = from.message
+    to.uuid = from.uuid
+    if from.icon?
+      to.icon = L.AwesomeMarkers.icon
+        icon: from.icon.options.icon
+        prefix: from.icon.options.prefix
+        markerColor: from.icon.options.markerColor
 
 
   _getMarkersByUuid: (uuid) ->
