@@ -39,7 +39,7 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
     return [] unless currentJson?.data
     indexes = _.map history, (historyEntry, idx) =>
       snippetJson = @searchSnippet(historyEntry.document, snippetModelId)
-      if snippetJson?.data && !@_isEqualChoropleth(snippetJson.data, currentJson.data)
+      if snippetJson?.data && !@_isEqual(snippetJson.identifier, snippetJson.data, currentJson.data)
         return idx
       else
         return -1
@@ -213,6 +213,13 @@ angular.module('ldLocalApi').factory 'documentService', ($q, $timeout, $http) ->
     return searchedSnippetJson
 
 
-  _isEqualChoropleth: (a, b) ->
-    _.every ['projection', 'data', 'map', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'colorSteps'], (definingProperty) ->
-      _.isEqual(a[definingProperty], b[definingProperty])
+  _isEqual: (type, a, b) ->
+    if type == 'livingmaps.choropleth'
+      _.every ['projection', 'data', 'map', 'mappingPropertyOnMap', 'valueProperty', 'colorScheme', 'colorSteps'], (definingProperty) ->
+        _.isEqual(a[definingProperty], b[definingProperty])
+    else if type == 'livingmaps.map'
+      _.every ['center', 'tiles', 'markers'], (definingProperty) ->
+        _.isEqual(a[definingProperty], b[definingProperty])
+    else
+      log.debug "Getting History for possibly unsupported snippet type #{type}"
+      _.isEqual(a, b)

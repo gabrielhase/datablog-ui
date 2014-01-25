@@ -36,6 +36,12 @@ module.exports = function(config) {
       'app/vendor/livingdocs-engine/vendor/store/store.js',
       'app/vendor/livingdocs-engine/livingdocs_engine.js',
 
+      // Leaflet
+      'http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js',
+      'https://s3.amazonaws.com/datablog-assets/leaflet.awesome-markers.js',
+      'https://s3.amazonaws.com/datablog-assets/l.control.geosearch.js',
+      'https://s3.amazonaws.com/datablog-assets/l.geosearch.provider.openstreetmap.js',
+
       // Maps
       'app/vendor/leaflet/angular_leaflet_directive.js',
 

@@ -1,7 +1,8 @@
 describe 'WebMapController', ->
   beforeEach ->
+    #window.L = mockLeaflet()
     @mapMediatorService = retrieveService('mapMediatorService')
-    @snippetModel = doc.create('livingmaps.choropleth')
+    @snippetModel = doc.create('livingmaps.map')
     doc.document.snippetTree.root.append(@snippetModel)
     @webMap = new WebMap(@snippetModel.id)
     @scope = retrieveService('$rootScope').$new()

@@ -74,7 +74,7 @@ angular.module('ldEditor').factory 'snippetInlineOptionsService',
         childScope.button = button
         childScope.buttonStyle =
           position: 'absolute'
-          top: snippet.getBoundingClientRect().top + 45
+          top: snippet.getBoundingClientRect().top + 75
           left: snippet.getBoundingClientRect().left - 37
           fontSize: '2em'
         childScope.snippet = snippet # set the snippet to edit
