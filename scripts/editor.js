@@ -14412,7 +14412,10 @@ angular.module('ui.bootstrap.modal', []).factory('$$stackedMap', function () {
               }
               groups[marker_data.group].addLayer(marker);
             } else {
-              map.addLayer(marker);
+              try {
+                map.addLayer(marker);
+              } catch (e) {
+              }
             }
             if (Helpers.LabelPlugin.isLoaded() && isDefined(marker_data.label) && isDefined(marker_data.label.options) && marker_data.label.options.noHide === true) {
               marker.showLabel();
@@ -16086,11 +16089,11 @@ angular.module('truncate', []).filter('characters', function () {
       this.$scope.chooseRevision = $.proxy(this.chooseRevision, this);
       this.$scope.isSelected = $.proxy(this.isSelected, this);
       this.$scope.modalContentReady = $.Callbacks('memory once');
+      this.$scope.rightBeforeMerge = $.Callbacks('memory once');
       this.originalModelInstance = this.mapMediatorService.getUIModel(this.$scope.snippet.id);
       this.$modalInstance.opened.then(function () {
         return _this.$timeout(function () {
-          _this.setupModalContent();
-          return _this.$scope.modalContentReady.fire();
+          return _this.setupModalContent();
         });
       });
     }
@@ -16102,7 +16105,8 @@ angular.module('truncate', []).filter('characters', function () {
         if (history.length > 0) {
           _this.setupHistoryPopovers();
           return _this.addHistoryVersion(history[0]).then(function (historyVersion) {
-            return _this.$scope.versionDifference = _this.currentModelInstance.calculateDifference(historyVersion);
+            _this.$scope.versionDifference = _this.currentModelInstance.calculateDifference(historyVersion);
+            return _this.$scope.modalContentReady.fire();
           });
         }
       });
@@ -16129,6 +16133,7 @@ angular.module('truncate', []).filter('characters', function () {
       return delete this.$scope.latestSnippetVersion;
     };
     HistoryModalController.prototype.merge = function (event) {
+      this.$scope.rightBeforeMerge.fire();
       this.originalModelInstance.merge(this.$scope.latestSnippetVersion);
       return this.close(event);
     };
@@ -16261,7 +16266,7 @@ angular.module('truncate', []).filter('characters', function () {
     MapEditModalController.prototype.addGeosearch = function () {
       var _this = this;
       return this.$timeout(function () {
-        return _this.leafletData.getMap().then(function (map) {
+        return _this.leafletData.getMap('freeform-map').then(function (map) {
           return new L.Control.GeoSearch({
             provider: new L.GeoSearch.Provider.OpenStreetMap(),
             showMarker: false,
@@ -16517,7 +16522,7 @@ angular.module('truncate', []).filter('characters', function () {
         };
       });
       return this.$timeout(function () {
-        return _this.leafletData.getMap().then(function (map) {
+        return _this.leafletData.getMap('kickstart-map').then(function (map) {
           return map.fitBounds(_this.getBounds(_this.$scope.previewMarkers));
         });
       }, 100);
@@ -16889,18 +16894,22 @@ angular.module('truncate', []).filter('characters', function () {
       this.watchTileLayer();
     }
     WebMapFormController.prototype.getHoverMarkerStyle = function (currentIcon) {
-      return L.AwesomeMarkers.icon({
-        icon: currentIcon.options.icon,
-        prefix: currentIcon.options.prefix,
-        markerColor: 'green'
-      });
+      if (currentIcon != null) {
+        return L.AwesomeMarkers.icon({
+          icon: currentIcon.options.icon,
+          prefix: currentIcon.options.prefix,
+          markerColor: 'green'
+        });
+      }
     };
     WebMapFormController.prototype.resetHoverMarkerStyle = function (currentIcon) {
-      return L.AwesomeMarkers.icon({
-        icon: currentIcon.options.icon,
-        prefix: currentIcon.options.prefix,
-        markerColor: 'cadetblue'
-      });
+      if (currentIcon != null) {
+        return L.AwesomeMarkers.icon({
+          icon: currentIcon.options.icon,
+          prefix: currentIcon.options.prefix,
+          markerColor: 'cadetblue'
+        });
+      }
     };
     WebMapFormController.prototype.highlightMarker = function (index) {
       return this.$scope.markers[index].icon = this.getHoverMarkerStyle(this.$scope.markers[index].icon);
@@ -17025,25 +17034,123 @@ angular.module('truncate', []).filter('characters', function () {
     return WebMapFormController;
   }());
   angular.module('ldEditor').controller('WebMapMergeController', WebMapMergeController = function () {
-    function WebMapMergeController($scope, mapMediatorService) {
+    function WebMapMergeController($scope, mapMediatorService, leafletEvents) {
+      var _this = this;
       this.$scope = $scope;
       this.mapMediatorService = mapMediatorService;
+      this.leafletEvents = leafletEvents;
       this.$scope.revertChange = $.proxy(this.revertChange, this);
       this.$scope.revertAdd = $.proxy(this.revertAdd, this);
       this.$scope.revertDelete = $.proxy(this.revertDelete, this);
+      this.$scope.highlightMarker = $.proxy(this.highlightMarker, this);
+      this.$scope.unHighlightMarker = $.proxy(this.unHighlightMarker, this);
+      this.setupMarkerEvents();
+      this.$scope.rightBeforeMerge.add(function () {
+        return _this._resetHistoryMarkerProperties();
+      });
+      this.$scope.$watch('versionDifference', function (newVal, oldVal) {
+        if (newVal) {
+          return _this.initMarkerColors();
+        }
+      });
     }
+    WebMapMergeController.prototype.initMarkerColors = function () {
+      var historyMarker, latestMarker, property, section, _i, _len, _ref, _results;
+      this._resetHistoryMarkerProperties();
+      _ref = this.$scope.versionDifference;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        section = _ref[_i];
+        if (section.sectionTitle === 'Markers') {
+          _results.push(function () {
+            var _j, _len1, _ref1, _ref2, _results1;
+            _ref1 = section.properties;
+            _results1 = [];
+            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+              property = _ref1[_j];
+              _ref2 = this._getMarkersByUuid(property.uuid), latestMarker = _ref2.latestMarker, historyMarker = _ref2.historyMarker;
+              if (property.difference.type === 'change') {
+                latestMarker.icon.options.markerColor = 'orange';
+                _results1.push(historyMarker.icon.options.markerColor = 'orange');
+              } else if (property.difference.type === 'add') {
+                _results1.push(latestMarker.icon.options.markerColor = 'green');
+              } else if (property.difference.type === 'delete') {
+                _results1.push(historyMarker.icon.options.markerColor = 'red');
+              } else {
+                _results1.push(void 0);
+              }
+            }
+            return _results1;
+          }.call(this));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+    WebMapMergeController.prototype.setupMarkerEvents = function () {
+      var _this = this;
+      this.$scope.events = { markers: { enable: this.leafletEvents.getAvailableMarkerEvents() } };
+      this.$scope.$on('leafletDirectiveMarker.mouseover', function (e, args) {
+        return _this.highlightMarker({ index: +args.markerName });
+      });
+      return this.$scope.$on('leafletDirectiveMarker.mouseout', function (e, args) {
+        return _this.unHighlightMarker({ index: +args.markerName });
+      });
+    };
+    WebMapMergeController.prototype.highlightMarker = function (lookup) {
+      var historyMarker, latestMarker, _ref, _ref1;
+      if (lookup.property != null) {
+        _ref = this._getMarkersByUuid(lookup.property.uuid), latestMarker = _ref.latestMarker, historyMarker = _ref.historyMarker;
+      } else if (lookup.index != null) {
+        _ref1 = this._getMarkersByIndex(lookup.index), latestMarker = _ref1.latestMarker, historyMarker = _ref1.historyMarker;
+      } else {
+        log.error('Don\'t know how to retrieve marker with lookup ' + lookup);
+      }
+      if (latestMarker != null) {
+        latestMarker.icon.options.spin = true;
+      }
+      if (historyMarker != null) {
+        return historyMarker.icon.options.spin = true;
+      }
+    };
+    WebMapMergeController.prototype.unHighlightMarker = function (lookup) {
+      var historyMarker, latestMarker, _ref, _ref1;
+      if (lookup.property != null) {
+        _ref = this._getMarkersByUuid(lookup.property.uuid), latestMarker = _ref.latestMarker, historyMarker = _ref.historyMarker;
+      } else if (lookup.index != null) {
+        _ref1 = this._getMarkersByIndex(lookup.index), latestMarker = _ref1.latestMarker, historyMarker = _ref1.historyMarker;
+      } else {
+        log.error('Don\'t know how to retrieve marker with lookup ' + lookup);
+      }
+      if (latestMarker != null) {
+        latestMarker.icon.options.spin = false;
+      }
+      if (historyMarker != null) {
+        return historyMarker.icon.options.spin = false;
+      }
+    };
     WebMapMergeController.prototype.revertChange = function (property) {
-      var newData;
-      newData = {};
-      newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
-      this.$scope.latestSnippetVersion.data(newData);
+      var historyMarker, latestMarker, newData, _ref, _ref1;
+      if (property.key === 'markers') {
+        _ref = this._getMarkersByUuid(property.uuid), latestMarker = _ref.latestMarker, historyMarker = _ref.historyMarker;
+        this._revertMarkerChange(historyMarker, latestMarker);
+        property.difference = void 0;
+      } else {
+        newData = {};
+        newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
+        this.$scope.latestSnippetVersion.data(newData);
+        property.difference = void 0;
+        property.info = '(' + newData[property.key] + ')';
+      }
       this._propagateSnippetChange(property.key);
-      property.difference = void 0;
-      property.info = '(' + newData[property.key] + ')';
-      return this.$scope.modalState.isMerging = true;
+      this.$scope.modalState.isMerging = true;
+      _ref1 = this._getMarkersByUuid(property.uuid), latestMarker = _ref1.latestMarker, historyMarker = _ref1.historyMarker;
+      this._resetMarker(latestMarker);
+      return this._resetMarker(historyMarker);
     };
     WebMapMergeController.prototype.revertAdd = function (property) {
-      var entry, entryIdx, idx, markers, _i, _len;
+      var entry, entryIdx, historyMarker, idx, latestMarker, markers, _i, _len, _ref;
       if (property.key === 'markers') {
         markers = this.$scope.latestSnippetVersion.data('markers');
         idx = -1;
@@ -17061,10 +17168,13 @@ angular.module('truncate', []).filter('characters', function () {
       }
       this._propagateSnippetChange(property.key);
       property.difference = void 0;
-      return this.$scope.modalState.isMerging = true;
+      this.$scope.modalState.isMerging = true;
+      _ref = this._getMarkersByUuid(property.uuid), latestMarker = _ref.latestMarker, historyMarker = _ref.historyMarker;
+      this._resetMarker(latestMarker);
+      return this._resetMarker(historyMarker);
     };
     WebMapMergeController.prototype.revertDelete = function (property) {
-      var markers;
+      var historyMarker, latestMarker, markers, _ref;
       if (property.key === 'markers') {
         markers = this.$scope.latestSnippetVersion.data('markers');
         markers.push(property.difference.unformattedContent);
@@ -17073,7 +17183,71 @@ angular.module('truncate', []).filter('characters', function () {
       }
       this._propagateSnippetChange(property.key);
       property.difference = void 0;
-      return this.$scope.modalState.isMerging = true;
+      this.$scope.modalState.isMerging = true;
+      _ref = this._getMarkersByUuid(property.uuid), latestMarker = _ref.latestMarker, historyMarker = _ref.historyMarker;
+      this._resetMarker(latestMarker);
+      return this._resetMarker(historyMarker);
+    };
+    WebMapMergeController.prototype._resetHistoryMarkerProperties = function () {
+      var marker, _i, _j, _len, _len1, _ref, _ref1, _results;
+      _ref = this.$scope.latestSnippetVersion.data('markers');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        marker = _ref[_i];
+        this._resetMarker(marker);
+      }
+      _ref1 = this.$scope.historyVersionSnippet.data('markers');
+      _results = [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        marker = _ref1[_j];
+        _results.push(this._resetMarker(marker));
+      }
+      return _results;
+    };
+    WebMapMergeController.prototype._resetMarker = function (marker) {
+      var _ref, _ref1, _ref2, _ref3;
+      if (marker != null) {
+        if ((_ref = marker.icon) != null) {
+          if ((_ref1 = _ref.options) != null) {
+            _ref1.markerColor = 'cadetblue';
+          }
+        }
+        return (_ref2 = marker.icon) != null ? (_ref3 = _ref2.options) != null ? _ref3.spin = false : void 0 : void 0;
+      }
+    };
+    WebMapMergeController.prototype._revertMarkerChange = function (from, to) {
+      to.lat = from.lat;
+      to.lng = from.lng;
+      to.message = from.message;
+      to.uuid = from.uuid;
+      if (from.icon != null) {
+        return to.icon = L.AwesomeMarkers.icon({
+          icon: from.icon.options.icon,
+          prefix: from.icon.options.prefix,
+          markerColor: from.icon.options.markerColor
+        });
+      }
+    };
+    WebMapMergeController.prototype._getMarkersByUuid = function (uuid) {
+      var historyMarker, latestMarker, _this = this;
+      latestMarker = _.find(this.$scope.latestSnippetVersion.data('markers'), function (marker) {
+        return marker.uuid === uuid;
+      });
+      historyMarker = _.find(this.$scope.historyVersionSnippet.data('markers'), function (marker) {
+        return marker.uuid === uuid;
+      });
+      return {
+        latestMarker: latestMarker,
+        historyMarker: historyMarker
+      };
+    };
+    WebMapMergeController.prototype._getMarkersByIndex = function (index) {
+      var historyMarker, latestMarker;
+      latestMarker = this.$scope.latestSnippetVersion.data('markers')[index];
+      historyMarker = this.$scope.historyVersionSnippet.data('markers')[index];
+      return {
+        latestMarker: latestMarker,
+        historyMarker: historyMarker
+      };
     };
     WebMapMergeController.prototype._propagateSnippetChange = function (changedProperty) {
       return doc.document.snippetTree.snippetDataChanged.fire(this.$scope.latestSnippetVersion, [changedProperty]);
@@ -18651,6 +18825,7 @@ angular.module('truncate', []).filter('characters', function () {
         differences.push({
           label: '',
           key: 'markers',
+          uuid: addition.uuid,
           difference: {
             type: 'add',
             content: 'icon: ' + ((_ref = addition.icon) != null ? (_ref1 = _ref.options) != null ? _ref1.icon : void 0 : void 0) + ', message: ' + addition.message,
@@ -18663,6 +18838,7 @@ angular.module('truncate', []).filter('characters', function () {
         differences.push({
           label: '',
           key: 'markers',
+          uuid: deletion.uuid,
           difference: {
             type: 'delete',
             content: 'icon: ' + ((_ref2 = deletion.icon) != null ? (_ref3 = _ref2.options) != null ? _ref3.icon : void 0 : void 0) + ', message: ' + deletion.message,
@@ -18675,6 +18851,7 @@ angular.module('truncate', []).filter('characters', function () {
         differences.push({
           label: '',
           key: 'markers',
+          uuid: change.uuid,
           difference: {
             type: 'change',
             previous: change.previous,
@@ -18706,6 +18883,7 @@ angular.module('truncate', []).filter('characters', function () {
         }
         if (previousValues.length > 0 && afterValues.length > 0) {
           changes.push({
+            uuid: markerSet.after.uuid,
             previous: previousValues.join(','),
             after: afterValues.join(',')
           });
@@ -18770,8 +18948,8 @@ angular.module('truncate', []).filter('characters', function () {
   }();
   (function () {
     return this.webMapConfig = {
-      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles" id="{{mapId}}">\n  </leaflet>\n</div>',
-      directive: '<leaflet center="center" markers="markers" tiles="tiles">\n</leaflet>',
+      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles" events="events" id="{{mapId}}">\n  </leaflet>\n</div>',
+      directive: '<leaflet center="center" markers="markers" tiles="tiles" events="events">\n</leaflet>',
       trackedProperties: [
         'center',
         'markers',
@@ -19613,7 +19791,7 @@ angular.module('truncate', []).filter('characters', function () {
   });
   htmlTemplates.addButton = '<div ng-click="insertSnippet($event)" class="add-button">\n  <a href style="font-size: 4em">+</a>\n</div>';
   htmlTemplates.dataModal = '<div class="upfron-modal-full-width-header">\n  <h3>Your Dataset</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div class="gridStyle" ng-grid="gridOptions">\n\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
-  htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" accept=".csv" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>legend</legend>\n        <label>\n          <input type="checkbox" ng-model="hideLegend" /> Hide legend\n        </label>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" accept=".csv" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>legend</legend>\n        <label>\n          <input type="checkbox" ng-model="hideLegend" /> Hide legend\n        </label>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>delete</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.diffAddDelEntry = '<div  class="upfront-diff upfront-control"\n      ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}">\n\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n\n  {{property.label}} {{property.difference.content}}\n\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertAdd(property)"\n                ng-show="property.difference.type == \'add\'">\n                remove\n        </button>\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n              ng-click="revertDelete(property)"\n              ng-show="property.difference.type == \'delete\'">\n              bring back\n      </button>\n\n</div>';
   htmlTemplates.diffChangeEntry = '<div class="upfront-diff change upfront-control">\n  <span class="entypo-flow-parallel"></span>\n    {{property.label}} changed <span ng-show="property.difference && property.difference.previous">from {{property.difference.previous}} to {{property.difference.after}}</span>\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertChange(property)"\n                ng-hide="isColorStepsWithOrdinalData(property)">\n                revert to previous value\n        </button>\n</div>';
   htmlTemplates.documentPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <h4>Thank you for trying datablog.io!</h4>\n    <p>\n      This public Test Page allows you to try the features of datablog, in particular choropleths and maps.\n      Your work is stored locally, but not on any server, so when your Browser is reset, the data is lost.\n      If you have any suggestions or ideas concerning datablog I am happy to hear about it at "gabriel(dot)hase(at)gmail(dot)com".\n    </p>\n    <a  href="" class="upfront-btn upfront-btn-danger"\n        ng-click="resetStory()">\n        Reset Test Story\n    </a>\n    <br>\n    <span class="entypo-help" style="font-size: 0.8em"> This clears all changes you have made to the Test Page</span>\n  </div>\n</div>';
@@ -19622,21 +19800,21 @@ angular.module('truncate', []).filter('characters', function () {
   htmlTemplates.flowtextOptions = '<div ng-controller=\'FlowtextOptionsController\'>\n  <div class="flowtext-options upfront-btn-group" ng-hide="editableEventsService.selectionIsOnInputField" class=\'upfront-btn-group\'>\n    <a ng-click=\'toggleBold()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isBold}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-bold"></span>\n    </a>\n\n    <a ng-click=\'toggleItalic()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isItalic}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-italic"></span>\n    </a>\n\n    <a ng-click=\'openLinkInput()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isLinked}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-link"></span>\n    </a>\n\n  </div>\n  <div ng-show="editableEventsService.selectionIsOnInputField">\n    <form class="upfront-control upfront-link-editing" ng-submit="setLink(currentSelectionStyles.link, currentSelectionStyles.isLinkExternal)">\n      <input type="submit" class=\'upfront-btn-mini upfront-link-editing_submit\' value="OK">\n      <input  type="text"\n              id="linkInput"\n              class="upfront-link-editing_link-field"\n              placeholder="www.datablog.io"\n              ld-focus="{{editableEventsService.selectionIsOnInputField}}"\n              ng-model="currentSelectionStyles.link">\n\n      <label class="upfront-link-editing_checkbox">\n        <input type="checkbox"\n              ng-model="currentSelectionStyles.isLinkExternal"> In neuem Fenster \xf6ffnen\n      </label>\n    </form>\n  </div>\n</div>';
   htmlTemplates.choroplethDiffPreview = '<div class="preview-wrapper">\n  <div class="history-explorer">\n    <div class="upfront-timeline">\n      <ol class="upfront-timeline-entries"\n          style="left: 0px;">\n\n        <li role="tab"\n            ng-click="chooseRevision(historyEntry)"\n            class="upfront-timeline-entry active-entry latest-entry"\n            ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n            data-version="{{historyEntry.revisionId}}"\n            data-timestamp="{{historyEntry.lastChanged}}">\n          <a ng-class="{\'selected\': isSelected(historyEntry)}">\n            <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n          </a>\n        </li>\n\n      </ol>\n    </div>\n\n    <div class="current-history-map hide-legend">\n\n    </div>\n  </div>\n\n  <div class="latest-preview">\n\n    <h2>Current Version</h2>\n    <div class="latest-version-map hide-legend">\n    </div>\n  </div>\n</div>';
   htmlTemplates.choroplethDiffTable = '<div class="diff-viewer">\n  <ul class="upfront-list">\n    <li ng-repeat="section in versionDifference">\n      <h3>{{section.sectionTitle}}</h3>\n      <ul class="upfront-list">\n        <li ng-repeat="property in section.properties" ng-show="property.difference">\n          <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n            <ng-include src="\'diff-change-entry.html\'"></ng-include>\n          </div>\n          <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n            <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n          </div>\n        </li>\n      </ul>\n    </li>\n  </ul>\n</div>';
-  htmlTemplates.webMapDiffTable = '<div class="diff-viewer">\n  <ul class="upfront-list">\n    <li ng-repeat="section in versionDifference">\n      <h3>{{section.sectionTitle}}</h3>\n      <ul class="upfront-list">\n        <li ng-repeat="property in section.properties" ng-show="property.difference">\n          <div ng-if="property.key == \'markers\'">\n            <div ng-if="property.difference.type == \'change\'">\n              <div class="upfront-diff change upfront-control">\n                <span class="entypo-flow-parallel"></span>\n                Marker changed from {{property.difference.previous}} to {{property.difference.after}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertChange(property)">\n                  revert to previous value\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'add\'">\n              <div  class="upfront-diff upfront-control add">\n                <span class="entypo-plus-circled"></span>\n                Marker {{property.difference.content}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertAdd(property)"\n                      ng-show="property.difference.type == \'add\'">\n                  remove\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'delete\'">\n              <div  class="upfront-diff upfront-control delete">\n                  <span class="entypo-minus-circled"></span>\n                  Marker {{property.difference.content}}\n                  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                          ng-click="revertDelete(property)"\n                          ng-show="property.difference.type == \'delete\'">\n                      bring back\n                  </button>\n              </div>\n            </div>\n          </div>\n          <div ng-if="property.key != \'markers\'">\n            <ng-include src="\'diff-change-entry.html\'"></ng-include>\n          </div>\n        </li>\n      </ul>\n    </li>\n  </ul>\n</div>';
+  htmlTemplates.webMapDiffTable = '<div class="diff-viewer">\n  <ul class="upfront-list">\n    <li ng-repeat="section in versionDifference">\n      <h3>{{section.sectionTitle}}</h3>\n      <ul class="upfront-list">\n        <li ng-repeat="property in section.properties" ng-show="property.difference">\n          <div  ng-if="property.key == \'markers\'"\n                ng-mouseover="highlightMarker({property: property})"\n                ng-mouseleave="unHighlightMarker({property: property})">\n            <div ng-if="property.difference.type == \'change\'">\n              <div class="upfront-diff change upfront-control">\n                <span class="entypo-flow-parallel"></span>\n                Marker changed from {{property.difference.previous}} to {{property.difference.after}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertChange(property)">\n                  revert to previous value\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'add\'">\n              <div  class="upfront-diff upfront-control add">\n                <span class="entypo-plus-circled"></span>\n                Marker {{property.difference.content}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertAdd(property)"\n                      ng-show="property.difference.type == \'add\'">\n                  remove\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'delete\'">\n              <div  class="upfront-diff upfront-control delete">\n                  <span class="entypo-minus-circled"></span>\n                  Marker {{property.difference.content}}\n                  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                          ng-click="revertDelete(property)"\n                          ng-show="property.difference.type == \'delete\'">\n                      bring back\n                  </button>\n              </div>\n            </div>\n          </div>\n          <div ng-if="property.key != \'markers\'">\n            <ng-include src="\'diff-change-entry.html\'"></ng-include>\n          </div>\n        </li>\n      </ul>\n    </li>\n  </ul>\n</div>';
   htmlTemplates.historyButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-flow-branch" ng-style="buttonStyle">\n</div>';
   htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-if="snippet.identifier == \'livingmaps.choropleth\'" ng-controller="ChoroplethMergeController">\n    <div ng-show="history.length == 0">\n      There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n    </div>\n\n    <div class="upfront-snippet-history" ng-show="history.length > 0">\n      <ng-include src="\'choropleth-diff-preview.html\'"></ng-include>\n      <ng-include src="\'choropleth-diff-table.html\'"></ng-include>\n    </div>\n  </div>\n\n  <div ng-if="snippet.identifier == \'livingmaps.map\'" ng-controller="WebMapMergeController">\n    <div ng-show="history.length == 0">\n      There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n    </div>\n\n    <div class="upfront-snippet-history" ng-show="history.length > 0">\n      <ng-include src="\'choropleth-diff-preview.html\'"></ng-include>\n      <ng-include src="\'web-map-diff-table.html\'"></ng-include>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
-  htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>\n      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>\n      <span ng-hide="snippet">Select an element on the page</span>\n    </h3>\n  </div>\n  <div ng-show="snippet">\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>\n      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>\n      <span ng-hide="snippet">Select an element on the page</span>\n    </h3>\n  </div>\n  <div ng-show="snippet">\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>delete</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.sidebar = '<div class="upfront-sidebar"\n  ng-class="{\'upfront-sidebar-hidden\': !foldedOut}">\n  <div class="upfront-sidebar-nav">\n    <span class="entypo-feather upfront-sidebar-nav-elem upfront-sidebar-nav-first"\n      data-nav="document"\n      ng-click="loadDocument()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'documentPanel\')}"></span>\n    <span class="upfront-sidebar-nav-elem upfront-sidebar-nav-second"\n      data-nav="snippets" style="font-weight:700;"\n      ng-click="loadSnippets()"\n      ng-class="{\'active\': uiStateService.state.isActive(\'snippetPanel\')}">+</span>\n    <span class="entypo-cog upfront-sidebar-nav-elem upfront-sidebar-nav-third"\n       data-nav="properties"\n       ng-click="loadProperties()"\n       ng-show="uiStateService.state.propertiesPanel.snippet"\n       ng-class="{\'active\': uiStateService.state.isActive(\'propertiesPanel\')}"></span>\n  </div>\n\n  <div class="upfront-sidebar-header">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span></span></h3>\n  </div>\n\n  <div class="upfront-sidebar-body" ng-transclude>\n  </div>\n</div>';
   htmlTemplates.sidebarRegion = '<div class="upfront-sidebar-region clearfix" ng-class="{\'upfront-sidebar-region-closed\': !showContent}">\n  <div class="upfront-sidebar-region-header" ng-click="toggle()">\n    <span ng-class="{\'entypo-down-open-mini\': showContent, \'entypo-right-open-mini\': !showContent}"></span>\n    <div class="upfront-sidebar-region-header-caption">{{caption}}</div>\n    <span class="upfront-sidebar-region-header-icon" ng-class="iconClass"></span>\n  </div>\n  <div class="upfront-sidebar-region-content" ng-show="showContent" ng-transclude></div>\n</div>';
   htmlTemplates.snippetPanel = '<div id="{{ controlId }}">\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3><span>Insert Snippets</span></h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <i class="entypo-help"></i>\n    Drag & Drop or click list items\n  </div>\n  <div class="upfront-snippet-wrapper">\n    <ul class="upfront-snippet-list" ng-repeat="group in groups">\n      <li class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>{{ group.title }}</li>\n      <li ng-repeat="snippet in group.templates" class="upfront-snippet-item" ng-class="{selected: group.id + \'.\' + $index==snippetInsertService.selectedSnippet}">\n        <a href="" snippet-drag="{{ snippet.identifier }}" ng-click="selectSnippet($event, group.id, $index, snippet)">{{ snippet.title }}</a>\n      </li>\n    </ul>\n  </div>\n</div>';
   htmlTemplates.backdrop = '<div class="modal-backdrop fade" ng-class="{in: animate}" ng-style="{\'z-index\': 1040 + index*10}" ng-click="close($event)">\n</div>';
   htmlTemplates.window = '<div class="{{ windowClass }}" ng-style="{\'z-index\': 1050 + index*10}" ng-transclude>\n</div>';
   htmlTemplates.mapButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-map" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.mapEditModal = '<div class="upfron-modal-full-width-header">\n  <h3>Freeform Editing for your Map</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">\n            Close Freeform Editing\n    </button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%">\n  </leaflet>\n\n  <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">\n    <form class="upfront-form upfront-control">\n      <legend>Selected Marker</legend>\n      <label>Icon</label>\n      <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == editState.markerSelected.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(editState.markerSelected, icon)"></span>\n      <label>Popover Text (optional)</label>\n      <input style="width: 90%" ng-model="editState.markerSelected.message">\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-danger"\n          ng-click="removeMarker(editState.markerSelected)">\n          Delete\n      </a>\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-success"\n          ng-click="disableMarkerSelectedState()">\n          Accept\n      </a>\n    </form>\n  </div>\n\n  <div popover ng-if="editState.addMarker" arrow-distance="14" bounding-box="{{ editState.boundingBox }}" popover-css-class="upfront-popover--minimal">\n    <div class="upfront-control">\n      <a  href="" class="upfront-btn upfront-text-format-btn entypo-location"\n          ng-click="addMarker($event)">\n          Add marker\n      </a>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close Freeform Editing</button>\n</div>';
-  htmlTemplates.mapKickstartModal = '<div class="upfron-modal-full-width-header">\n  <h3>Import data from your geojson file</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)"\n            ng-hide="hasMarkers()">Close kickstart view</button>\n\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Kickstart</button>\n    &nbsp;\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="kickstart($event)">Kickstart Markers</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-show="markers.length == 0">\n    <h3 class="entypo-attention">The geojson file does not contain Point geometries. You can only kickstart markers with Point geometries.</h3>\n  </div>\n  <div ng-if="markers.length > 0">\n    <div style="width: 40%; float: left;">\n      <form class="upfront-form">\n        <table class="table table-bordered">\n          <thead>\n            <tr>\n              <td>#</td>\n              <td><b>Inlcude this pin</b></td>\n              <td>\n                <b>Property for Popover Text</b>\n              </td>\n              <td><b>Popover Text</b></td>\n            </tr>\n          </thead>\n          <tbody>\n            <tr>\n              <td>Global:</td>\n              <td><input type="checkbox" ng-model="globalValues.selected"></td>\n              <td>\n                <select ng-model="globalValues.textProperty" ng-options="property for property in globalTextProperties">\n                  <option value="">-- reset all --</option>\n                </select>\n              </td>\n              <td></td>\n            </tr>\n            <tr ng-repeat="marker in markers"\n                ng-class="{\'success\': marker.selected}"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)"\n                ng-click="toggleMarker(marker, $index)">\n              <td>{{$index}}</td>\n              <td>\n                <input type="checkbox" ng-checked="marker.selected">\n              </td>\n              <td>\n                <select ng-model="marker.selectedTextProperty" ng-options="property for property in marker.textProperties">\n                  <option value="">-- no text initialization --</option>\n                </select>\n              </td>\n              <td>\n                {{marker.geojson.properties[marker.selectedTextProperty] | characters: 40}}\n              </td>\n            </tr>\n          </tbody>\n\n        </table>\n      </form>\n    </div>\n    <div style="width: 40%; position: absolute; right: 10px;">\n      <leaflet center="center" markers="previewMarkers" event-broadcast="events"></leaflet>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="hasMarkers()"\n          class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close kickstart view</button>\n</div>';
-  htmlTemplates.webmapSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="WebMapFormController">\n    <form class="upfront-form" name="webMapForm">\n      <fieldset>\n        <a  href="" style="margin-left: 20px;" class="upfront-btn upfront-btn-large upfront-btn-info"\n            ng-click="openFreeformEditor()">\n          Open Freeform Editor\n        </a>\n      </fieldset>\n      <fieldset>\n        <legend>Map Viewbox</legend>\n\n        <label>Select a zoom level</label>\n        <select ng-model="center.zoom" ng-options="zoom for zoom in availableZoomLevels">\n          <option value="">-- choose Zoom Level --</option>\n        </select>\n        <label>Enter a longitude</label>\n        <input  style="width: 80%"\n                type="number" min="-180" max="180"\n                ng-model="center.lng"\n                required>\n        <label>Enter a latitude</label>\n        <input  style="width: 80%"\n                type="number" min="-90" max="90"3\n                ng-model="center.lat"\n                required>\n      </fieldset>\n      <fieldset>\n        <legend>Tile Layer</legend>\n        <select ng-model="tileLayer" ng-options="value.name as value.name for (key, value) in uiModel.getAvailableTileLayers()">\n          <option value="">-- choose Tile Layer --</option>\n        </select>\n        <div class="upfront-well red" ng-show="tileLayer == \'mapbox\'">\n          Mapbox is a commercial tile layer and this app uses a free test account. If you don\'t see the map, probably the quota for the free version was reached.\n          DON\'T RELY ON THIS TILE LAYER ON DATABLOG.IO!\n        </div>\n      </fieldset>\n      <fieldset>\n        <legend>Kickstart</legend>\n        <label>Upload a geojson to kickstart your locations</label>\n        <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>\n      </fieldset>\n      <fieldset>\n        <legend>Markers</legend>\n        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">\n          <label>Location (lng, lat)</label>\n            <input class="half-width left"\n              type="number" min="-180" max="180"\n              ng-model="newMarker.lng"\n              required>\n            <input class="half-width left"\n              type="number" min="-90" max="90"\n              ng-model="newMarker.lat"\n              required>\n            <label>Popover Text</label>\n            <input style="width: 80%"\n                ng-model="newMarker.message">\n            <a  href=""\n                ng-click="addMarker()"\n                class="upfront-btn upfront-btn-success">\n              Add Marker\n            </a>\n        </div>\n        <div sidebar-region caption="All Markers">\n          <ul class="upfront-list">\n            <li ng-repeat="marker in markers"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)">\n              <a  href=""\n                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"\n                  ng-click="deleteMarker($index)">X</a>\n              <label>Location (lng, lat)</label>\n              <input class="half-width left"\n                type="number" min="-180" max="180"\n                ng-model="marker.lng"\n                required>\n              <input class="half-width left"\n                type="number" min="-90" max="90"\n                ng-model="marker.lat"\n                required>\n              <label>Popover Text</label>\n              <input style="width: 80%"\n                ng-model="marker.message">\n\n              <div>\n                <label>Select Icon</label>\n                <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == marker.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(marker, icon)"></span>\n              </div>\n\n            </li>\n          </ul>\n        </div>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
+  htmlTemplates.mapEditModal = '<div class="upfron-modal-full-width-header">\n  <h3>Freeform Editing for your Map</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">\n            Close Freeform Editing\n    </button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%" id="freeform-map">\n  </leaflet>\n\n  <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">\n    <form class="upfront-form upfront-control">\n      <legend>Selected Marker</legend>\n      <label>Icon</label>\n      <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == editState.markerSelected.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(editState.markerSelected, icon)"></span>\n      <label>Popover Text (optional)</label>\n      <input style="width: 90%" ng-model="editState.markerSelected.message">\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-danger"\n          ng-click="removeMarker(editState.markerSelected)">\n          Delete\n      </a>\n      <a href="" class="upfront-btn upfront-btn-small upfront-btn-success"\n          ng-click="disableMarkerSelectedState()">\n          Accept\n      </a>\n    </form>\n  </div>\n\n  <div popover ng-if="editState.addMarker" arrow-distance="14" bounding-box="{{ editState.boundingBox }}" popover-css-class="upfront-popover--minimal">\n    <div class="upfront-control">\n      <a  href="" class="upfront-btn upfront-text-format-btn entypo-location"\n          ng-click="addMarker($event)">\n          Add marker\n      </a>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close Freeform Editing</button>\n</div>';
+  htmlTemplates.mapKickstartModal = '<div class="upfron-modal-full-width-header">\n  <h3>Import data from your geojson file</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info"\n            ng-click="close($event)"\n            ng-hide="hasMarkers()">Close kickstart view</button>\n\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Kickstart</button>\n    &nbsp;\n    <button ng-show="hasMarkers()"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="kickstart($event)">Kickstart Markers</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-show="markers.length == 0">\n    <h3 class="entypo-attention">The geojson file does not contain Point geometries. You can only kickstart markers with Point geometries.</h3>\n  </div>\n  <div ng-if="markers.length > 0">\n    <div style="width: 40%; float: left;">\n      <form class="upfront-form">\n        <table class="table table-bordered">\n          <thead>\n            <tr>\n              <td>#</td>\n              <td><b>Inlcude this pin</b></td>\n              <td>\n                <b>Property for Popover Text</b>\n              </td>\n              <td><b>Popover Text</b></td>\n            </tr>\n          </thead>\n          <tbody>\n            <tr>\n              <td>Global:</td>\n              <td><input type="checkbox" ng-model="globalValues.selected"></td>\n              <td>\n                <select ng-model="globalValues.textProperty" ng-options="property for property in globalTextProperties">\n                  <option value="">-- reset all --</option>\n                </select>\n              </td>\n              <td></td>\n            </tr>\n            <tr ng-repeat="marker in markers"\n                ng-class="{\'success\': marker.selected}"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)"\n                ng-click="toggleMarker(marker, $index)">\n              <td>{{$index}}</td>\n              <td>\n                <input type="checkbox" ng-checked="marker.selected">\n              </td>\n              <td>\n                <select ng-model="marker.selectedTextProperty" ng-options="property for property in marker.textProperties">\n                  <option value="">-- no text initialization --</option>\n                </select>\n              </td>\n              <td>\n                {{marker.geojson.properties[marker.selectedTextProperty] | characters: 40}}\n              </td>\n            </tr>\n          </tbody>\n\n        </table>\n      </form>\n    </div>\n    <div style="width: 40%; position: absolute; right: 10px;">\n      <leaflet center="center" markers="previewMarkers" event-broadcast="events" id="kickstart-map"></leaflet>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="hasMarkers()"\n          class="upfront-btn upfront-btn-info"\n          ng-click="close($event)">Close kickstart view</button>\n</div>';
+  htmlTemplates.webmapSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="WebMapFormController">\n    <form class="upfront-form" name="webMapForm">\n      <fieldset>\n        <a  href="" style="margin-left: 20px;" class="upfront-btn upfront-btn-large upfront-btn-info"\n            ng-click="openFreeformEditor()">\n          Open Freeform Editor\n        </a>\n      </fieldset>\n      <fieldset>\n        <legend>Map Viewbox</legend>\n\n        <label>Select a zoom level</label>\n        <select ng-model="center.zoom" ng-options="zoom for zoom in availableZoomLevels">\n          <option value="">-- choose Zoom Level --</option>\n        </select>\n        <label>Enter a longitude</label>\n        <input  style="width: 80%"\n                type="number" min="-180" max="180"\n                ng-model="center.lng"\n                required>\n        <label>Enter a latitude</label>\n        <input  style="width: 80%"\n                type="number" min="-90" max="90"3\n                ng-model="center.lat"\n                required>\n      </fieldset>\n      <fieldset>\n        <legend>Tile Layer</legend>\n        <select ng-model="tileLayer" ng-options="value.name as value.name for (key, value) in uiModel.getAvailableTileLayers()">\n          <option value="">-- choose Tile Layer --</option>\n        </select>\n        <div class="upfront-well red" ng-show="tileLayer == \'mapbox\'">\n          Mapbox is a commercial tile layer and this app uses a free test account. If you don\'t see the map, probably the quota for the free version was reached.\n          DON\'T RELY ON THIS TILE LAYER ON DATABLOG.IO!\n        </div>\n      </fieldset>\n      <fieldset>\n        <legend>Kickstart</legend>\n        <label>Upload a geojson to kickstart your locations</label>\n        <input json-upload callback="kickstartMarkers(data, error)" type="file" name="data"></input>\n      </fieldset>\n      <fieldset>\n        <legend>Markers</legend>\n        <div sidebar-region caption="Add Marker" style="margin-bottom: 10px">\n          <label>Location (lng, lat)</label>\n            <input class="half-width left"\n              type="number" min="-180" max="180"\n              ng-model="newMarker.lng"\n              required>\n            <input class="half-width left"\n              type="number" min="-90" max="90"\n              ng-model="newMarker.lat"\n              required>\n            <label>Popover Text</label>\n            <input style="width: 80%"\n                ng-model="newMarker.message">\n            <a  href=""\n                ng-click="addMarker()"\n                class="upfront-btn upfront-btn-success">\n              Add Marker\n            </a>\n        </div>\n        <div sidebar-region caption="All Markers">\n          <ul class="upfront-list">\n            <li ng-repeat="marker in markers"\n                ng-mouseover="highlightMarker($index)"\n                ng-mouseleave="unHighlightMarker($index)">\n              <a  href=""\n                  class="upfront-btn upfront-btn-danger upfront-btn-mini upfront-delete-btn"\n                  ng-click="deleteMarker($index)">X</a>\n              <label>Location (lng, lat)</label>\n              <input class="half-width left"\n                type="number" min="-180" max="180"\n                ng-model="marker.lng"\n                required>\n              <input class="half-width left"\n                type="number" min="-90" max="90"\n                ng-model="marker.lat"\n                required>\n              <label>Popover Text</label>\n              <input style="width: 80%"\n                ng-model="marker.message">\n\n              <div>\n                <label>Select Icon</label>\n                <span ng-repeat="icon in uiModel.getAvailableIcons()"\n                      class="fa fa-{{icon}}"\n                      ng-class="{\'upfront-icon-selected\': icon == marker.icon.options.icon}"\n                      style="padding-right: 5px;"\n                      ng-click="selectIcon(marker, icon)"></span>\n              </div>\n\n            </li>\n          </ul>\n        </div>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>delete</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
   angular.module('ldApi', []).run([
     'authService',
     function (authService) {

@@ -1630,7 +1630,9 @@ angular.module("leaflet-directive").factory('leafletMarkerHelpers', function ($r
                     groups[marker_data.group].addLayer(marker);
                 } else {
                     // We do not have a layer attr, so the marker goes to the map layer
-                    map.addLayer(marker);
+                    try {
+                      map.addLayer(marker);
+                    } catch(e) {}
                 }
 
                 if (Helpers.LabelPlugin.isLoaded() && isDefined(marker_data.label) && isDefined(marker_data.label.options) && marker_data.label.options.noHide === true) {
