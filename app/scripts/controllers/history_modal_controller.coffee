@@ -12,6 +12,7 @@ class HistoryModalController
     @$scope.isSelected = $.proxy(@isSelected, this)
 
     @$scope.modalContentReady = $.Callbacks('memory once')
+    @$scope.rightBeforeMerge = $.Callbacks('memory once')
     @originalModelInstance = @mapMediatorService.getUIModel(@$scope.snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
@@ -20,7 +21,6 @@ class HistoryModalController
     @$modalInstance.opened.then =>
       @$timeout =>
         @setupModalContent()
-        @$scope.modalContentReady.fire()
 
 
   setupModalContent: ->
@@ -31,6 +31,7 @@ class HistoryModalController
         @setupHistoryPopovers()
         @addHistoryVersion(history[0]).then (historyVersion) =>
           @$scope.versionDifference = @currentModelInstance.calculateDifference(historyVersion)
+          @$scope.modalContentReady.fire()
 
 
   # Factory Method
@@ -59,6 +60,7 @@ class HistoryModalController
 
 
   merge: (event) ->
+    @$scope.rightBeforeMerge.fire()
     @originalModelInstance.merge(@$scope.latestSnippetVersion)
     @close(event)
 

@@ -114,7 +114,7 @@ htmlTemplates.choroplethSidebarForm = """
               type="button"
               ng-click="deleteSnippet(snippet)">
           <span class="entypo-trash"></span>
-          <span>löschen</span>
+          <span>delete</span>
         </button>
       </li>
     </ul>
