@@ -6,8 +6,8 @@ htmlTemplates.webMapDiffTable = """
       <ul class="upfront-list">
         <li ng-repeat="property in section.properties" ng-show="property.difference">
           <div  ng-if="property.key == 'markers'"
-                ng-mouseover="highlightMarker(property)"
-                ng-mouseleave="unHighlightMarker(property)">
+                ng-mouseover="highlightMarker({property: property})"
+                ng-mouseleave="unHighlightMarker({property: property})">
             <div ng-if="property.difference.type == 'change'">
               <div class="upfront-diff change upfront-control">
                 <span class="entypo-flow-parallel"></span>

@@ -1,19 +1,34 @@
 angular.module('ldEditor').controller 'WebMapMergeController',
 class WebMapMergeController
 
-  constructor: (@$scope, @mapMediatorService) ->
+  constructor: (@$scope, @mapMediatorService, @leafletEvents) ->
     @$scope.revertChange = $.proxy(@revertChange, this)
     @$scope.revertAdd = $.proxy(@revertAdd, this)
     @$scope.revertDelete = $.proxy(@revertDelete, this)
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
+    @setupMarkerEvents()
 
 
-  highlightMarker: (property) ->
-    latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
-      marker.uuid == property.uuid
-    historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
-      marker.uuid == property.uuid
+  setupMarkerEvents: ->
+    @$scope.events =
+      markers:
+        enable: @leafletEvents.getAvailableMarkerEvents()
+    @$scope.$on 'leafletDirectiveMarker.mouseover', (e, args) =>
+      @highlightMarker
+        index: +args.markerName
+    @$scope.$on 'leafletDirectiveMarker.mouseout', (e, args) =>
+      @unHighlightMarker
+        index: +args.markerName
+
+
+  highlightMarker: (lookup) ->
+    if lookup.property?
+      {latestMarker, historyMarker} = @_getMarkersByProperty(lookup.property)
+    else if lookup.index?
+      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
+    else
+      log.error "Don't know how to retrieve marker with lookup #{lookup}"
 
     if latestMarker?
       latestMarker.icon.options.spin = true
@@ -21,11 +36,14 @@ class WebMapMergeController
       historyMarker.icon.options.spin = true
 
 
-  unHighlightMarker: (property) ->
-    latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
-      marker.uuid == property.uuid
-    historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
-      marker.uuid == property.uuid
+  unHighlightMarker: (lookup) ->
+    if lookup.property?
+      {latestMarker, historyMarker} = @_getMarkersByProperty(lookup.property)
+    else if lookup.index?
+      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
+    else
+      log.error "Don't know how to retrieve marker with lookup #{lookup}"
+
     if latestMarker?
       latestMarker.icon.options.spin = false
     if historyMarker?
@@ -68,6 +86,22 @@ class WebMapMergeController
     @_propagateSnippetChange(property.key)
     property.difference = undefined
     @$scope.modalState.isMerging = true
+
+
+  _getMarkersByProperty: (property) ->
+    latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+    historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
+      marker.uuid == property.uuid
+
+    {latestMarker, historyMarker}
+
+
+  _getMarkersByIndex: (index) ->
+    latestMarker = @$scope.latestSnippetVersion.data('markers')[index]
+    historyMarker = @$scope.historyVersionSnippet.data('markers')[index]
+
+    {latestMarker, historyMarker}
 
 
   # NOTE: we need to fire the change event manually since the latestVersionSnippet
