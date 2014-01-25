@@ -25,16 +25,14 @@ class WebMapMergeController
     for section in @$scope.versionDifference
       if section.sectionTitle == 'Markers'
         for property in section.properties
+          {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
           if property.difference.type == 'change'
-            {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
             latestMarker.icon.options.markerColor = 'orange'
             historyMarker.icon.options.markerColor = 'orange'
           else if property.difference.type == 'add'
-            log "ADD"
-            # TODO make latest marker version green
+            latestMarker.icon.options.markerColor = 'green'
           else if property.difference.type == 'delete'
-            log "DELETE"
-            # TODO make history version marker red and draw a semi-transparent marker on the current map (maybe)
+            historyMarker.icon.options.markerColor = 'red'
 
 
   setupMarkerEvents: ->
