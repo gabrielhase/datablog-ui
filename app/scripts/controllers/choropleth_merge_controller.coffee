@@ -1,15 +1,17 @@
-angular.module('ldEditor').controller 'MergeController',
-class MergeController
+angular.module('ldEditor').controller 'ChoroplethMergeController',
+class ChoroplethMergeController
 
   constructor: (@$scope, @mapMediatorService) ->
     @$scope.revertChange = $.proxy(@revertChange, this)
     @$scope.revertAdd = $.proxy(@revertAdd, this)
     @$scope.revertDelete = $.proxy(@revertDelete, this)
     @$scope.isColorStepsWithOrdinalData = $.proxy(@isColorStepsWithOrdinalData, this)
-    @modelInstance = @mapMediatorService.getUIModel(@$scope.latestSnippetVersion.id)
-    @initValueType()
-    @$scope.$watch "latestSnippetVersion.data('valueProperty')", (newVal) =>
+
+    @$scope.modalContentReady.add =>
+      @modelInstance = @mapMediatorService.getUIModel(@$scope.latestSnippetVersion.id)
       @initValueType()
+      @$scope.$watch "latestSnippetVersion.data('valueProperty')", (newVal) =>
+        @initValueType()
 
 
   initValueType: ->
@@ -63,7 +65,7 @@ class MergeController
 
 
   # NOTE: we need to fire the change event manually since the latestVersionSnippet
-  # is note in the snippetTree. This is kind of a hack and should be made better when
+  # is not in the snippetTree. This is kind of a hack and should be made better when
   # the engine allows multiple documents.
   _propagateSnippetChange: (changedProperty) ->
     doc.document.snippetTree.snippetDataChanged.fire(@$scope.latestSnippetVersion, [changedProperty])

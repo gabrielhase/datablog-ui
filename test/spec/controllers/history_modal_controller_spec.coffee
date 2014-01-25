@@ -87,29 +87,3 @@ describe 'HistoryModalController', ->
     it 'assigns a novel id to the snippet copy', ->
       @historyModalController.searchHistorySnippet(@json)
       expect(@scope.historyVersionSnippet.id).not.to.equal(@snippetModel.id)
-
-
-  describe 'Merging changes', ->
-
-    beforeEach ->
-      @scope.latestSnippetVersion = @snippetModel.copy(doc.document.design)
-      @mapMediatorService.set(@scope.latestSnippetVersion.id, @scope.latestSnippetVersion, @choroplethMap, @scope)
-      @event =
-        stopPropagation: ->
-          true
-
-
-    it 'merges a map change into the snippet model on the page', ->
-      @scope.latestSnippetVersion.data
-        map: biggerSampleMap
-      @historyModalController.merge(@event)
-      expect(@snippetModel.data('map')).to.eql(biggerSampleMap)
-
-
-    it 'merges a projection change into the snippet model on the page', ->
-      @scope.latestSnippetVersion.data
-        projection: 'orthographic'
-      @historyModalController.merge(@event)
-      expect(@snippetModel.data('projection')).to.equal('orthographic')
-
-
