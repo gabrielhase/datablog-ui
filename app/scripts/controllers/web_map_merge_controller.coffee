@@ -8,13 +8,15 @@ class WebMapMergeController
     @$scope.highlightMarker = $.proxy(@highlightMarker, this)
     @$scope.unHighlightMarker = $.proxy(@unHighlightMarker, this)
     @setupMarkerEvents()
+    @$scope.rightBeforeMerge.add =>
+      @_resetHistoryMarkerProperties()
     @$scope.$watch 'versionDifference', (newVal, oldVal) =>
       if newVal
         @initMarkerColors()
 
 
   initMarkerColors: ->
-    @$scope.resetHistoryMarkerProperties()
+    @_resetHistoryMarkerProperties()
     for section in @$scope.versionDifference
       if section.sectionTitle == 'Markers'
         for property in section.properties
@@ -83,8 +85,8 @@ class WebMapMergeController
     @$scope.modalState.isMerging = true
     # reset this changes color coding
     {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
-    @$scope.resetMarker(latestMarker)
-    @$scope.resetMarker(historyMarker)
+    @_resetMarker(latestMarker)
+    @_resetMarker(historyMarker)
 
 
   revertAdd: (property) ->
@@ -103,8 +105,8 @@ class WebMapMergeController
     @$scope.modalState.isMerging = true
     # reset this changes color coding
     {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
-    @$scope.resetMarker(latestMarker)
-    @$scope.resetMarker(historyMarker)
+    @_resetMarker(latestMarker)
+    @_resetMarker(historyMarker)
 
 
   revertDelete: (property) ->
@@ -119,8 +121,25 @@ class WebMapMergeController
     @$scope.modalState.isMerging = true
     # reset this changes color coding
     {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
-    @$scope.resetMarker(latestMarker)
-    @$scope.resetMarker(historyMarker)
+    @_resetMarker(latestMarker)
+    @_resetMarker(historyMarker)
+
+
+  # #########################
+  # HELPERS
+  # #########################
+
+  _resetHistoryMarkerProperties: ->
+    for marker in @$scope.latestSnippetVersion.data('markers')
+      @_resetMarker(marker)
+    for marker in @$scope.historyVersionSnippet.data('markers')
+      @_resetMarker(marker)
+
+
+  _resetMarker: (marker) ->
+    if marker?
+      marker.icon?.options?.markerColor = 'cadetblue'
+      marker.icon?.options?.spin = false
 
 
   # For some odd reason a $.extend deep copy didn't work so this method

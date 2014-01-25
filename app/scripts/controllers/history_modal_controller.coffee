@@ -10,10 +10,9 @@ class HistoryModalController
     @$scope.close = $.proxy(@close, this)
     @$scope.chooseRevision = $.proxy(@chooseRevision, this)
     @$scope.isSelected = $.proxy(@isSelected, this)
-    @$scope.resetHistoryMarkerProperties = $.proxy(@resetHistoryMarkerProperties, this)
-    @$scope.resetMarker = $.proxy(@resetMarker, this)
 
     @$scope.modalContentReady = $.Callbacks('memory once')
+    @$scope.rightBeforeMerge = $.Callbacks('memory once')
     @originalModelInstance = @mapMediatorService.getUIModel(@$scope.snippet.id)
     # NOTE: Agnular-ui-boostraps modal needs a timeout to be sure that the content of
     # the modal is rendered. This is pretty ugly, so we probalby should move away from
@@ -61,7 +60,7 @@ class HistoryModalController
 
 
   merge: (event) ->
-    @resetHistoryMarkerProperties()
+    @$scope.rightBeforeMerge.fire()
     @originalModelInstance.merge(@$scope.latestSnippetVersion)
     @close(event)
 
@@ -142,20 +141,3 @@ class HistoryModalController
   removeHistoryVersionInstance: ->
     @angularTemplateService.removeAngularTemplate(@$scope.historyVersionSnippet)
     delete @$scope.historyVersionSnippet
-
-
-  # #########################
-  # HELPERS
-  # #########################
-
-  resetHistoryMarkerProperties: ->
-    for marker in @$scope.latestSnippetVersion.data('markers')
-      @resetMarker(marker)
-    for marker in @$scope.historyVersionSnippet.data('markers')
-      @resetMarker(marker)
-
-
-  resetMarker: (marker) ->
-    if marker?
-      marker.icon?.options?.markerColor = 'cadetblue'
-      marker.icon?.options?.spin = false
