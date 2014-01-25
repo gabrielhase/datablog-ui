@@ -9,7 +9,7 @@ htmlTemplates.mapEditModal = """
   </div>
 </div>
 <div class="upfront-modal-body" style="height: 100%">
-  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%">
+  <leaflet center="center" markers="markers" event-broadcast="events" tiles="tiles" style="height: 100%" id="freeform-map">
   </leaflet>
 
   <div popover ng-if="editState.markerSelected" placement="no-arrow" arrow-distance="0" bounding-box="{{ editState.markerPropertiesBB }}" open-condition="editState.markerSelected">
