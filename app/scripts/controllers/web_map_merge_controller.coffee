@@ -75,8 +75,11 @@ class WebMapMergeController
     @_propagateSnippetChange(property.key)
     property.difference = undefined
     property.info = "(#{newData[property.key]})"
-    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
+    # reset this changes color coding
+    {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
+    @$scope.resetMarker(latestMarker)
+    @$scope.resetMarker(historyMarker)
 
 
   revertAdd: (property) ->
@@ -92,8 +95,11 @@ class WebMapMergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
-    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
+    # reset this changes color coding
+    {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
+    @$scope.resetMarker(latestMarker)
+    @$scope.resetMarker(historyMarker)
 
 
   revertDelete: (property) ->
@@ -105,8 +111,11 @@ class WebMapMergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
-    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
+    # reset this changes color coding
+    {latestMarker, historyMarker} = @_getMarkersByUuid(property.uuid)
+    @$scope.resetMarker(latestMarker)
+    @$scope.resetMarker(historyMarker)
 
 
   _getMarkersByUuid: (uuid) ->
