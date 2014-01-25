@@ -11,6 +11,7 @@ class HistoryModalController
     @$scope.chooseRevision = $.proxy(@chooseRevision, this)
     @$scope.isSelected = $.proxy(@isSelected, this)
     @$scope.resetHistoryMarkerProperties = $.proxy(@resetHistoryMarkerProperties, this)
+    @$scope.resetMarker = $.proxy(@resetMarker, this)
 
     @$scope.modalContentReady = $.Callbacks('memory once')
     @originalModelInstance = @mapMediatorService.getUIModel(@$scope.snippet.id)
@@ -57,15 +58,6 @@ class HistoryModalController
   removeLatestVersionInstance: ->
     @angularTemplateService.removeAngularTemplate(@$scope.latestSnippetVersion)
     delete @$scope.latestSnippetVersion
-
-
-  resetHistoryMarkerProperties: ->
-    for marker in @$scope.latestSnippetVersion.data('markers')
-      marker.icon?.options?.markerColor = 'cadetblue'
-      marker.icon?.options?.spin = false
-    for marker in @$scope.historyVersionSnippet.data('markers')
-      marker.icon?.options?.markerColor = 'cadetblue'
-      marker.icon?.options?.spin = false
 
 
   merge: (event) ->
@@ -150,3 +142,20 @@ class HistoryModalController
   removeHistoryVersionInstance: ->
     @angularTemplateService.removeAngularTemplate(@$scope.historyVersionSnippet)
     delete @$scope.historyVersionSnippet
+
+
+  # #########################
+  # HELPERS
+  # #########################
+
+  resetHistoryMarkerProperties: ->
+    for marker in @$scope.latestSnippetVersion.data('markers')
+      @resetMarker(marker)
+    for marker in @$scope.historyVersionSnippet.data('markers')
+      @resetMarker(marker)
+
+
+  resetMarker: (marker) ->
+    if marker?
+      marker.icon?.options?.markerColor = 'cadetblue'
+      marker.icon?.options?.spin = false
