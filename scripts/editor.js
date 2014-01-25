@@ -15219,7 +15219,7 @@ angular.module('truncate', []).filter('characters', function () {
   };
 });
 (function () {
-  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, MapEditModalController, MapKickstartModalController, MergeController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, WebMap, WebMapController, WebMapFormController, htmlTemplates, log, __slice = [].slice;
+  var AuthController, ChoroplethFormController, ChoroplethMap, ChoroplethMapController, ChoroplethMergeController, Cookies, DataModalController, Document, DocumentPanelController, EditorController, FlowtextOptionsController, HistoryModalController, ImageEmbedController, MapEditModalController, MapKickstartModalController, PopoverController, PropertiesPanelController, Session, SidebarController, SnippetInsertor, SnippetPanelController, WebMap, WebMapController, WebMapFormController, WebMapMergeController, htmlTemplates, log, __slice = [].slice;
   this.angularHelpers = function () {
     var injector;
     injector = null;
@@ -15244,6 +15244,38 @@ angular.module('truncate', []).filter('characters', function () {
           });
           return !presentInArr2;
         });
+      },
+      differenceFor: function (arr1, arr2, property) {
+        return _.filter(arr1, function (val) {
+          var presentInArr2;
+          presentInArr2 = false;
+          _.any(arr2, function (element) {
+            if (val[property] === element[property]) {
+              return presentInArr2 = true;
+            }
+          });
+          return !presentInArr2;
+        });
+      },
+      intersectionFor: function (arr1, arr2, property) {
+        var intersectionTuples;
+        intersectionTuples = [];
+        _.each(arr1, function (val) {
+          var presentInArr2;
+          presentInArr2 = false;
+          _.any(arr2, function (element) {
+            if (val[property] === element[property]) {
+              return presentInArr2 = element;
+            }
+          });
+          if (presentInArr2) {
+            return intersectionTuples.push({
+              previous: presentInArr2,
+              after: val
+            });
+          }
+        });
+        return intersectionTuples;
       }
     };
   }();
@@ -15802,6 +15834,80 @@ angular.module('truncate', []).filter('characters', function () {
     };
     return ChoroplethMapController;
   }());
+  angular.module('ldEditor').controller('ChoroplethMergeController', ChoroplethMergeController = function () {
+    function ChoroplethMergeController($scope, mapMediatorService) {
+      var _this = this;
+      this.$scope = $scope;
+      this.mapMediatorService = mapMediatorService;
+      this.$scope.revertChange = $.proxy(this.revertChange, this);
+      this.$scope.revertAdd = $.proxy(this.revertAdd, this);
+      this.$scope.revertDelete = $.proxy(this.revertDelete, this);
+      this.$scope.isColorStepsWithOrdinalData = $.proxy(this.isColorStepsWithOrdinalData, this);
+      this.$scope.modalContentReady.add(function () {
+        _this.modelInstance = _this.mapMediatorService.getUIModel(_this.$scope.latestSnippetVersion.id);
+        _this.initValueType();
+        return _this.$scope.$watch('latestSnippetVersion.data(\'valueProperty\')', function (newVal) {
+          return _this.initValueType();
+        });
+      });
+    }
+    ChoroplethMergeController.prototype.initValueType = function () {
+      return this.$scope.valueType = this.modelInstance.getValueType();
+    };
+    ChoroplethMergeController.prototype.revertChange = function (property) {
+      var key, newData;
+      key = property.key;
+      newData = {};
+      newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
+      this.$scope.latestSnippetVersion.data(newData);
+      this._propagateSnippetChange(key);
+      property.difference = void 0;
+      if (property.key !== 'map') {
+        property.info = '(' + newData[property.key] + ')';
+      }
+      return this.$scope.modalState.isMerging = true;
+    };
+    ChoroplethMergeController.prototype.revertDelete = function (property) {
+      var data;
+      if (property.key === 'data') {
+        data = this.$scope.latestSnippetVersion.data('data');
+        data.push(property.difference.unformattedContent);
+      } else {
+        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    ChoroplethMergeController.prototype.revertAdd = function (property) {
+      var data, entry, entryIdx, idx, _i, _len;
+      if (property.key === 'data') {
+        data = this.$scope.latestSnippetVersion.data('data');
+        idx = -1;
+        for (entryIdx = _i = 0, _len = data.length; _i < _len; entryIdx = ++_i) {
+          entry = data[entryIdx];
+          if (_.isEqual(entry, property.difference.unformattedContent)) {
+            idx = entryIdx;
+          }
+        }
+        if (idx !== -1) {
+          data.splice(idx, 1);
+        }
+      } else {
+        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    ChoroplethMergeController.prototype.isColorStepsWithOrdinalData = function (property) {
+      return property.key === 'colorSteps' && this.$scope.valueType === 'categorical';
+    };
+    ChoroplethMergeController.prototype._propagateSnippetChange = function (changedProperty) {
+      return doc.document.snippetTree.snippetDataChanged.fire(this.$scope.latestSnippetVersion, [changedProperty]);
+    };
+    return ChoroplethMergeController;
+  }());
   angular.module('ldEditor').controller('DataModalController', DataModalController = function () {
     function DataModalController($scope, $modalInstance, mapMediatorService, highlightedRows, mapId, mappedColumn) {
       var entry, index, keyMapping, sanitizedData, _i, _len, _ref, _ref1;
@@ -15960,7 +16066,7 @@ angular.module('truncate', []).filter('characters', function () {
     return FlowtextOptionsController;
   }());
   angular.module('ldEditor').controller('HistoryModalController', HistoryModalController = function () {
-    function HistoryModalController($scope, $modalInstance, $timeout, $q, snippet, documentService, editorService, uiStateService, angularTemplateService, mapMediatorService) {
+    function HistoryModalController($scope, $modalInstance, $timeout, $q, snippet, documentService, editorService, uiStateService, angularTemplateService, mapMediatorService, leafletData) {
       var _this = this;
       this.$scope = $scope;
       this.$modalInstance = $modalInstance;
@@ -15972,15 +16078,19 @@ angular.module('truncate', []).filter('characters', function () {
       this.uiStateService = uiStateService;
       this.angularTemplateService = angularTemplateService;
       this.mapMediatorService = mapMediatorService;
+      this.leafletData = leafletData;
       this.$scope.modalState = { isMerging: false };
       this.$scope.snippet = this.snippet;
       this.$scope.merge = $.proxy(this.merge, this);
       this.$scope.close = $.proxy(this.close, this);
       this.$scope.chooseRevision = $.proxy(this.chooseRevision, this);
       this.$scope.isSelected = $.proxy(this.isSelected, this);
+      this.$scope.modalContentReady = $.Callbacks('memory once');
+      this.originalModelInstance = this.mapMediatorService.getUIModel(this.$scope.snippet.id);
       this.$modalInstance.opened.then(function () {
         return _this.$timeout(function () {
-          return _this.setupModalContent();
+          _this.setupModalContent();
+          return _this.$scope.modalContentReady.fire();
         });
       });
     }
@@ -15992,36 +16102,34 @@ angular.module('truncate', []).filter('characters', function () {
         if (history.length > 0) {
           _this.setupHistoryPopovers();
           return _this.addHistoryVersion(history[0]).then(function (historyVersion) {
-            return _this.$scope.versionDifference = _this.modelInstance.calculateDifference(historyVersion);
+            return _this.$scope.versionDifference = _this.currentModelInstance.calculateDifference(historyVersion);
           });
         }
       });
+    };
+    HistoryModalController.prototype.createModelInstance = function (snippetModel) {
+      if (snippetModel.identifier === 'livingmaps.choropleth') {
+        return new ChoroplethMap(snippetModel.id);
+      } else if (snippetModel.identifier === 'livingmaps.map') {
+        return new WebMap(snippetModel.id);
+      } else {
+        return log.error('Unsupported Snippet type for history view');
+      }
     };
     HistoryModalController.prototype.setupLatestVersion = function () {
       var $previewRoot;
       $previewRoot = $('.upfront-snippet-history .latest-preview .latest-version-map');
       this.$scope.latestSnippetVersion = this.snippet.copy(doc.document.design);
       this.$scope.latestSnippetVersion.data({ synchronousHighlight: true });
-      this.modelInstance = new ChoroplethMap(this.$scope.latestSnippetVersion.id);
-      return this.angularTemplateService.insertTemplateInstance(this.$scope.latestSnippetVersion, $previewRoot, new ChoroplethMap(this.$scope.latestSnippetVersion.id));
+      this.currentModelInstance = this.createModelInstance(this.$scope.latestSnippetVersion);
+      return this.angularTemplateService.insertTemplateInstance(this.$scope.latestSnippetVersion, $previewRoot, this.createModelInstance(this.$scope.latestSnippetVersion));
     };
     HistoryModalController.prototype.removeLatestVersionInstance = function () {
       this.angularTemplateService.removeAngularTemplate(this.$scope.latestSnippetVersion);
       return delete this.$scope.latestSnippetVersion;
     };
     HistoryModalController.prototype.merge = function (event) {
-      this.snippet.data({
-        mapId: this.$scope.latestSnippetVersion.data('mapId'),
-        map: this.$scope.latestSnippetVersion.data('map'),
-        lastPositioned: this.$scope.latestSnippetVersion.data('lastPositioned'),
-        projection: this.$scope.latestSnippetVersion.data('projection'),
-        data: this.$scope.latestSnippetVersion.data('data'),
-        mappingPropertyOnMap: this.$scope.latestSnippetVersion.data('mappingPropertyOnMap'),
-        mappingPropertyOnData: this.$scope.latestSnippetVersion.data('mappingPropertyOnData'),
-        valueProperty: this.$scope.latestSnippetVersion.data('valueProperty'),
-        colorSteps: this.$scope.latestSnippetVersion.data('colorSteps'),
-        colorScheme: this.$scope.latestSnippetVersion.data('colorScheme')
-      });
+      this.originalModelInstance.merge(this.$scope.latestSnippetVersion);
       return this.close(event);
     };
     HistoryModalController.prototype.close = function (event) {
@@ -16053,7 +16161,7 @@ angular.module('truncate', []).filter('characters', function () {
       var _this = this;
       this.removeHistoryVersionInstance();
       return this.addHistoryVersion(historyRevision).then(function (historyVersion) {
-        return _this.$scope.versionDifference = _this.modelInstance.calculateDifference(historyVersion);
+        return _this.$scope.versionDifference = _this.currentModelInstance.calculateDifference(historyVersion);
       });
     };
     HistoryModalController.prototype.addHistoryVersion = function (historyRevision) {
@@ -16061,7 +16169,7 @@ angular.module('truncate', []).filter('characters', function () {
       historyReady = this.$q.defer();
       this.selectedHistoryRevision = historyRevision;
       this.documentService.getRevision(this.editorService.getCurrentDocument().id, historyRevision.revisionId).then(function (documentRevision) {
-        var $previewRoot, snippetJson, _i, _len, _ref;
+        var $previewRoot, historyModelInstance, snippetJson, _i, _len, _ref;
         $previewRoot = $('.upfront-snippet-history .history-explorer .current-history-map');
         if (documentRevision.data.content) {
           _ref = documentRevision.data.content;
@@ -16074,7 +16182,8 @@ angular.module('truncate', []).filter('characters', function () {
           log.error('The history document has to contain the map');
         }
         _this.$scope.historyVersionSnippet.data({ synchronousHighlight: true });
-        _this.angularTemplateService.insertTemplateInstance(_this.$scope.historyVersionSnippet, $previewRoot, new ChoroplethMap(_this.$scope.historyVersionSnippet.id));
+        historyModelInstance = _this.createModelInstance(_this.$scope.historyVersionSnippet);
+        _this.angularTemplateService.insertTemplateInstance(_this.$scope.historyVersionSnippet, $previewRoot, historyModelInstance);
         return historyReady.resolve(_this.$scope.historyVersionSnippet);
       });
       return historyReady.promise;
@@ -16498,78 +16607,6 @@ angular.module('truncate', []).filter('characters', function () {
     };
     return MapKickstartModalController;
   }());
-  angular.module('ldEditor').controller('MergeController', MergeController = function () {
-    function MergeController($scope, mapMediatorService) {
-      var _this = this;
-      this.$scope = $scope;
-      this.mapMediatorService = mapMediatorService;
-      this.$scope.revertChange = $.proxy(this.revertChange, this);
-      this.$scope.revertAdd = $.proxy(this.revertAdd, this);
-      this.$scope.revertDelete = $.proxy(this.revertDelete, this);
-      this.$scope.isColorStepsWithOrdinalData = $.proxy(this.isColorStepsWithOrdinalData, this);
-      this.modelInstance = this.mapMediatorService.getUIModel(this.$scope.latestSnippetVersion.id);
-      this.initValueType();
-      this.$scope.$watch('latestSnippetVersion.data(\'valueProperty\')', function (newVal) {
-        return _this.initValueType();
-      });
-    }
-    MergeController.prototype.initValueType = function () {
-      return this.$scope.valueType = this.modelInstance.getValueType();
-    };
-    MergeController.prototype.revertChange = function (property) {
-      var key, newData;
-      key = property.key;
-      newData = {};
-      newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
-      this.$scope.latestSnippetVersion.data(newData);
-      this._propagateSnippetChange(key);
-      property.difference = void 0;
-      if (property.key !== 'map') {
-        property.info = '(' + newData[property.key] + ')';
-      }
-      return this.$scope.modalState.isMerging = true;
-    };
-    MergeController.prototype.revertDelete = function (property) {
-      var data;
-      if (property.key === 'data') {
-        data = this.$scope.latestSnippetVersion.data('data');
-        data.push(property.difference.unformattedContent);
-      } else {
-        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
-      }
-      this._propagateSnippetChange(property.key);
-      property.difference = void 0;
-      return this.$scope.modalState.isMerging = true;
-    };
-    MergeController.prototype.revertAdd = function (property) {
-      var data, entry, entryIdx, idx, _i, _len;
-      if (property.key === 'data') {
-        data = this.$scope.latestSnippetVersion.data('data');
-        idx = -1;
-        for (entryIdx = _i = 0, _len = data.length; _i < _len; entryIdx = ++_i) {
-          entry = data[entryIdx];
-          if (_.isEqual(entry, property.difference.unformattedContent)) {
-            idx = entryIdx;
-          }
-        }
-        if (idx !== -1) {
-          data.splice(idx, 1);
-        }
-      } else {
-        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
-      }
-      this._propagateSnippetChange(property.key);
-      property.difference = void 0;
-      return this.$scope.modalState.isMerging = true;
-    };
-    MergeController.prototype.isColorStepsWithOrdinalData = function (property) {
-      return property.key === 'colorSteps' && this.$scope.valueType === 'categorical';
-    };
-    MergeController.prototype._propagateSnippetChange = function (changedProperty) {
-      return doc.document.snippetTree.snippetDataChanged.fire(this.$scope.latestSnippetVersion, [changedProperty]);
-    };
-    return MergeController;
-  }());
   angular.module('ldEditor').controller('PopoverController', PopoverController = function () {
     function PopoverController($scope, uiStateService) {
       this.$scope = $scope;
@@ -16684,15 +16721,46 @@ angular.module('truncate', []).filter('characters', function () {
     return SnippetPanelController;
   }());
   angular.module('ldEditor').controller('WebMapController', WebMapController = function () {
-    function WebMapController($scope, mapMediatorService) {
+    function WebMapController($scope, mapMediatorService, leafletData, $timeout) {
+      var _this = this;
       this.$scope = $scope;
       this.mapMediatorService = mapMediatorService;
+      this.leafletData = leafletData;
+      this.$timeout = $timeout;
       this.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
+      this.uiModel = this.mapMediatorService.getUIModel(this.$scope.mapId);
       this.snippetModel.data({ lastPositioned: new Date().getTime() });
+      this.initMarkers();
       this.setupSnippetChangeListener();
       this.initScope();
       this.initEditingDefaults();
+      this.$timeout(function () {
+        return _this.reloadMap();
+      }, 10);
     }
+    WebMapController.prototype.initMarkers = function () {
+      var marker, _i, _len, _ref, _results;
+      if (this.snippetModel.data('markers')) {
+        _ref = this.snippetModel.data('markers');
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          marker = _ref[_i];
+          if (marker.icon && marker.icon.options) {
+            _results.push(marker.icon = new L.AwesomeMarkers.icon({
+              icon: marker.icon.options.icon,
+              prefix: marker.icon.options.prefix,
+              markerColor: marker.icon.options.markerColor
+            }));
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      }
+    };
+    WebMapController.prototype.reloadMap = function () {
+      return this.uiModel.reload(this.$scope.mapId);
+    };
     WebMapController.prototype.initScope = function () {
       var property, _i, _len, _ref, _results;
       this.initDefaults();
@@ -16709,10 +16777,11 @@ angular.module('truncate', []).filter('characters', function () {
       return _results;
     };
     WebMapController.prototype.initDefaults = function () {
-      var markers, uiModel;
+      var markers;
       this.$scope.snippetModel = this.mapMediatorService.getSnippetModel(this.$scope.mapId);
-      uiModel = this.mapMediatorService.getUIModel(this.$scope.mapId);
-      this.$scope.snippetModel.data({ tiles: uiModel.getAvailableTileLayers()['openstreetmap'] });
+      if (!this.$scope.snippetModel.data('tiles')) {
+        this.$scope.snippetModel.data({ tiles: this.uiModel.getAvailableTileLayers()['openstreetmap'] });
+      }
       if (!this.$scope.snippetModel.data('center')) {
         this.$scope.snippetModel.data({
           center: {
@@ -16729,7 +16798,7 @@ angular.module('truncate', []).filter('characters', function () {
               lat: 90,
               lng: 0,
               uuid: '',
-              icon: uiModel.getDefaultIcon()
+              icon: this.uiModel.getDefaultIcon()
             }]
         });
       }
@@ -16753,6 +16822,9 @@ angular.module('truncate', []).filter('characters', function () {
     };
     WebMapController.prototype.changeMapAttrsData = function (changedProperties) {
       var newVal, trackedProperty, _i, _len, _ref, _results;
+      if (changedProperties.indexOf('lastPositioned') !== -1) {
+        this.reloadMap();
+      }
       _ref = webMapConfig.trackedProperties;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -16951,6 +17023,62 @@ angular.module('truncate', []).filter('characters', function () {
       });
     };
     return WebMapFormController;
+  }());
+  angular.module('ldEditor').controller('WebMapMergeController', WebMapMergeController = function () {
+    function WebMapMergeController($scope, mapMediatorService) {
+      this.$scope = $scope;
+      this.mapMediatorService = mapMediatorService;
+      this.$scope.revertChange = $.proxy(this.revertChange, this);
+      this.$scope.revertAdd = $.proxy(this.revertAdd, this);
+      this.$scope.revertDelete = $.proxy(this.revertDelete, this);
+    }
+    WebMapMergeController.prototype.revertChange = function (property) {
+      var newData;
+      newData = {};
+      newData[property.key] = this.$scope.historyVersionSnippet.data(property.key);
+      this.$scope.latestSnippetVersion.data(newData);
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      property.info = '(' + newData[property.key] + ')';
+      return this.$scope.modalState.isMerging = true;
+    };
+    WebMapMergeController.prototype.revertAdd = function (property) {
+      var entry, entryIdx, idx, markers, _i, _len;
+      if (property.key === 'markers') {
+        markers = this.$scope.latestSnippetVersion.data('markers');
+        idx = -1;
+        for (entryIdx = _i = 0, _len = markers.length; _i < _len; entryIdx = ++_i) {
+          entry = markers[entryIdx];
+          if (_.isEqual(entry, property.difference.unformattedContent)) {
+            idx = entryIdx;
+          }
+        }
+        if (idx !== -1) {
+          markers.splice(idx, 1);
+        }
+      } else {
+        log.error('Don\'t know how to perform operation revertAdd on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    WebMapMergeController.prototype.revertDelete = function (property) {
+      var markers;
+      if (property.key === 'markers') {
+        markers = this.$scope.latestSnippetVersion.data('markers');
+        markers.push(property.difference.unformattedContent);
+      } else {
+        log.error('Don\'t know how to perform operation revertDelete on ' + property.key);
+      }
+      this._propagateSnippetChange(property.key);
+      property.difference = void 0;
+      return this.$scope.modalState.isMerging = true;
+    };
+    WebMapMergeController.prototype._propagateSnippetChange = function (changedProperty) {
+      return doc.document.snippetTree.snippetDataChanged.fire(this.$scope.latestSnippetVersion, [changedProperty]);
+    };
+    return WebMapMergeController;
   }());
   angular.module('ldEditor').directive('autosave', [
     'pageStateService',
@@ -17926,6 +18054,20 @@ angular.module('truncate', []).filter('characters', function () {
         return row[valueProperty];
       }));
     };
+    ChoroplethMap.prototype.merge = function (snippetModel) {
+      return this._getSnippetModel().data({
+        mapId: snippetModel.data('mapId'),
+        map: snippetModel.data('map'),
+        lastPositioned: snippetModel.data('lastPositioned'),
+        projection: snippetModel.data('projection'),
+        data: snippetModel.data('data'),
+        mappingPropertyOnMap: snippetModel.data('mappingPropertyOnMap'),
+        mappingPropertyOnData: snippetModel.data('mappingPropertyOnData'),
+        valueProperty: snippetModel.data('valueProperty'),
+        colorSteps: snippetModel.data('colorSteps'),
+        colorScheme: snippetModel.data('colorScheme')
+      });
+    };
     ChoroplethMap.prototype.calculateDifference = function (otherVersion) {
       var versionDifferences;
       versionDifferences = [];
@@ -18401,6 +18543,13 @@ angular.module('truncate', []).filter('characters', function () {
       this.id = id;
       this.mapMediatorService = angularHelpers.inject('mapMediatorService');
     }
+    WebMap.prototype.reload = function (id) {
+      var leafletData, _this = this;
+      leafletData = angularHelpers.inject('leafletData');
+      return leafletData.getMap(id).then(function (map) {
+        return map.invalidateSize();
+      });
+    };
     WebMap.prototype.getTemplate = function () {
       return webMapConfig.template;
     };
@@ -18463,11 +18612,165 @@ angular.module('truncate', []).filter('characters', function () {
         }
       };
     };
+    WebMap.prototype._getSnippetModel = function () {
+      return this.mapMediatorService.getSnippetModel(this.id);
+    };
+    WebMap.prototype.merge = function (snippetModel) {
+      return this._getSnippetModel().data({
+        center: snippetModel.data('center'),
+        tiles: snippetModel.data('tiles'),
+        markers: snippetModel.data('markers')
+      });
+    };
+    WebMap.prototype.calculateDifference = function (otherVersion) {
+      var versionDifferences;
+      versionDifferences = [];
+      versionDifferences.push({
+        sectionTitle: 'Map Properties',
+        properties: []
+      });
+      versionDifferences[0].properties.push(this._calculateTileLayerDifference(otherVersion));
+      versionDifferences[0].properties.push(this._calculateCenterDifference(otherVersion));
+      versionDifferences.push({
+        sectionTitle: 'Markers',
+        properties: []
+      });
+      versionDifferences[1].properties = this._calculateMarkerDifference(otherVersion);
+      return versionDifferences;
+    };
+    WebMap.prototype._calculateMarkerDifference = function (otherVersion) {
+      var addition, additions, change, changes, currentMarkers, deletion, deletions, differences, otherMarkers, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
+      currentMarkers = this._getSnippetModel().data('markers');
+      otherMarkers = otherVersion.data('markers');
+      differences = [];
+      additions = livingmapsDiff.differenceFor(currentMarkers, otherMarkers, 'uuid');
+      deletions = livingmapsDiff.differenceFor(otherMarkers, currentMarkers, 'uuid');
+      changes = this._calculateMarkerChanges(currentMarkers, otherMarkers);
+      for (_i = 0, _len = additions.length; _i < _len; _i++) {
+        addition = additions[_i];
+        differences.push({
+          label: '',
+          key: 'markers',
+          difference: {
+            type: 'add',
+            content: 'icon: ' + ((_ref = addition.icon) != null ? (_ref1 = _ref.options) != null ? _ref1.icon : void 0 : void 0) + ', message: ' + addition.message,
+            unformattedContent: addition
+          }
+        });
+      }
+      for (_j = 0, _len1 = deletions.length; _j < _len1; _j++) {
+        deletion = deletions[_j];
+        differences.push({
+          label: '',
+          key: 'markers',
+          difference: {
+            type: 'delete',
+            content: 'icon: ' + ((_ref2 = deletion.icon) != null ? (_ref3 = _ref2.options) != null ? _ref3.icon : void 0 : void 0) + ', message: ' + deletion.message,
+            unformattedContent: deletion
+          }
+        });
+      }
+      for (_k = 0, _len2 = changes.length; _k < _len2; _k++) {
+        change = changes[_k];
+        differences.push({
+          label: '',
+          key: 'markers',
+          difference: {
+            type: 'change',
+            previous: change.previous,
+            after: change.after
+          }
+        });
+      }
+      return differences;
+    };
+    WebMap.prototype._calculateMarkerChanges = function (currentMarkers, otherMarkers) {
+      var afterValues, changes, intersection, markerSet, previousValues, _i, _len, _ref, _ref1, _ref2, _ref3;
+      changes = [];
+      intersection = livingmapsDiff.intersectionFor(currentMarkers, otherMarkers, 'uuid');
+      for (_i = 0, _len = intersection.length; _i < _len; _i++) {
+        markerSet = intersection[_i];
+        previousValues = [];
+        afterValues = [];
+        if (((_ref = markerSet.previous.icon) != null ? (_ref1 = _ref.options) != null ? _ref1.icon : void 0 : void 0) !== ((_ref2 = markerSet.after.icon) != null ? (_ref3 = _ref2.options) != null ? _ref3.icon : void 0 : void 0)) {
+          previousValues.push('icon: ' + markerSet.previous.icon.options.icon);
+          afterValues.push('icon: ' + markerSet.after.icon.options.icon);
+        }
+        if (markerSet.previous.message !== markerSet.after.message) {
+          previousValues.push('message: ' + markerSet.previous.message);
+          afterValues.push('message: ' + markerSet.after.message);
+        }
+        if (markerSet.previous.lat !== markerSet.after.lat || markerSet.previous.lng !== markerSet.after.lng) {
+          previousValues.push('position (lat/lng): ' + markerSet.previous.lat + ' / ' + markerSet.previous.lng);
+          afterValues.push('position (lat/lng): ' + markerSet.after.lat + ' / ' + markerSet.after.lng);
+        }
+        if (previousValues.length > 0 && afterValues.length > 0) {
+          changes.push({
+            previous: previousValues.join(','),
+            after: afterValues.join(',')
+          });
+        }
+      }
+      return changes;
+    };
+    WebMap.prototype._calculateTileLayerDifference = function (otherVersion) {
+      var currentTileLayer, otherTileLayer, tileLayerDiffEntry;
+      currentTileLayer = this._getSnippetModel().data('tiles');
+      otherTileLayer = otherVersion.data('tiles');
+      tileLayerDiffEntry = {
+        label: 'Tile Layer',
+        key: 'tiles'
+      };
+      tileLayerDiffEntry.difference = this._getDifferenceType(currentTileLayer.name, otherTileLayer.name);
+      if (!tileLayerDiffEntry.difference) {
+        tileLayerDiffEntry.info = '(' + currentTileLayer.name + ')';
+      }
+      return tileLayerDiffEntry;
+    };
+    WebMap.prototype._calculateCenterDifference = function (otherVersion) {
+      var centerDiffEntry, currentCenter, otherCenter;
+      currentCenter = this._getSnippetModel().data('center');
+      otherCenter = otherVersion.data('center');
+      centerDiffEntry = {
+        label: 'View Box',
+        key: 'center'
+      };
+      if (currentCenter.lat !== otherCenter.lat || currentCenter.lng !== otherCenter.lng) {
+        centerDiffEntry.difference = { type: 'blobChange' };
+      }
+      return centerDiffEntry;
+    };
+    WebMap.prototype._getDifferenceType = function (currentValue, otherValue) {
+      if (!currentValue) {
+        return {
+          type: 'delete',
+          content: otherValue
+        };
+      } else if (!otherValue) {
+        return {
+          type: 'add',
+          content: currentValue
+        };
+      } else {
+        if (currentValue !== otherValue) {
+          return {
+            type: 'change',
+            previous: otherValue,
+            after: currentValue
+          };
+        } else {
+          return void 0;
+        }
+      }
+    };
+    WebMap.prototype._deepEquals = function (o1, o2) {
+      return JSON.stringify(o1) === JSON.stringify(o2);
+    };
     return WebMap;
   }();
   (function () {
     return this.webMapConfig = {
-      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles">\n  </leaflet>\n</div>',
+      template: '<div ng-controller="WebMapController">\n  <leaflet center="center" markers="markers" defaults="defaults" tiles="tiles" id="{{mapId}}">\n  </leaflet>\n</div>',
       directive: '<leaflet center="center" markers="markers" tiles="tiles">\n</leaflet>',
       trackedProperties: [
         'center',
@@ -18875,7 +19178,7 @@ angular.module('truncate', []).filter('characters', function () {
           });
           doc.snippetFocused(function (snippet) {
             snippetInlineOptionsService.drawEditButton(snippet);
-            if (snippet.template.identifier === 'livingmaps.choropleth') {
+            if (snippet.template.identifier === 'livingmaps.choropleth' || snippet.template.identifier === 'livingmaps.map') {
               snippetInlineOptionsService.drawHistoryButton(snippet);
             }
             if (snippet.template.identifier === 'livingmaps.map') {
@@ -18886,7 +19189,7 @@ angular.module('truncate', []).filter('characters', function () {
           doc.snippetBlurred(function (snippet) {
             var currentSelection;
             snippetInlineOptionsService.removeEditButton();
-            if (snippet.template.identifier === 'livingmaps.choropleth') {
+            if (snippet.template.identifier === 'livingmaps.choropleth' || snippet.template.identifier === 'livingmaps.map') {
               snippetInlineOptionsService.removeHistoryButton();
             }
             if (snippet.template.identifier === 'livingmaps.map') {
@@ -18908,7 +19211,7 @@ angular.module('truncate', []).filter('characters', function () {
             }
           });
           doc.snippetWasDropped(function (snippet) {
-            if (snippet.identifier === 'livingmaps.choropleth' || prefillChoroplethService.isPrefilledChoropleth(snippet)) {
+            if (snippet.identifier === 'livingmaps.choropleth' || prefillChoroplethService.isPrefilledChoropleth(snippet) || snippet.identifier === 'livingmaps.map') {
               return snippet.data({ lastPositioned: new Date().getTime() });
             }
           });
@@ -19154,7 +19457,7 @@ angular.module('truncate', []).filter('characters', function () {
             childScope.button = button;
             childScope.buttonStyle = {
               position: 'absolute',
-              top: snippet.getBoundingClientRect().top + 45,
+              top: snippet.getBoundingClientRect().top + 75,
               left: snippet.getBoundingClientRect().left - 37,
               fontSize: '2em'
             };
@@ -19311,14 +19614,17 @@ angular.module('truncate', []).filter('characters', function () {
   htmlTemplates.addButton = '<div ng-click="insertSnippet($event)" class="add-button">\n  <a href style="font-size: 4em">+</a>\n</div>';
   htmlTemplates.dataModal = '<div class="upfron-modal-full-width-header">\n  <h3>Your Dataset</h3>\n  <div class="right-content upfront-control">\n    <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close table view</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div class="gridStyle" ng-grid="gridOptions">\n\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button class="upfront-btn upfront-btn-info" ng-click="close($event)">Close</button>\n</div>';
   htmlTemplates.choroplethSidebarForm = '<div class="upfront-sidebar-content-wrapper">\n  <div  class="upfront-sidebar-content"\n        ng-controller="ChoroplethFormController">\n    <form class="upfront-form">\n      <fieldset>\n        <legend>Map Properties</legend>\n\n        <label>Select a Map from our collection</label>\n        <select ng-model="mapName" ng-options="option as option.name for option in predefinedMaps">\n          <option value="">-- choose Map --</option>\n        </select>\n\n        <label>or upload (geojson files only)</label>\n        <input json-upload callback="setMap(data, error)" type="file" name="map"></input>\n\n        <label>Geographical projection</label>\n        <select ng-model="projection" ng-options="option.value as option.name for option in projections">\n          <option value="">-- choose Projection --</option>\n        </select>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Mapping</legend>\n\n        <label>Select a property that can be matched by your data</label>\n        <select ng-model="mappingPropertyOnMap" ng-options="option.value as option.label for option in availableMapProperties">\n          <option value="">-- choose Property --</option>\n        </select>\n\n        <div class="upfront-well red" ng-show="availableDataMappingProperties.length == 0">\n          No column of your data file can be mapped to the selected mapping property on your map.\n          Select a different mapping property on the map or change your data.\n        </div>\n\n        <div class="upfront-well green" ng-show="availableDataMappingProperties.length == 1">\n          <span class="entypo-check"></span> Successfully mapped on data column \'{{availableDataMappingProperties[0].key}}\'\n          <div ng-show="choroplethInstance.regionsWithMissingDataPoints.length > 0">\n            <span class="entypo-attention"></span> {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            <small> Regions not visualized on the map</small>\n          </div>\n        </div>\n\n        <div ng-show="availableDataMappingProperties.length > 1">\n          <label>Select a property that matches your selected map property</label>\n          <select ng-model="mappingPropertyOnData" ng-options="option.key as option.label for option in availableDataMappingProperties">\n            <option value="">-- choose Property --</option>\n          </select>\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>Data Visualization</legend>\n\n        <div ng-show="mappingPropertyOnMap">\n          <label>Data File (.csv, comma-separated)</label>\n          <input csv-upload callback="setData(data, error)" type="file" accept=".csv" name="data"></input>\n          <div ng-show="snippet.model.data(\'data\')">\n            Your Data File:\n            <a class="upfront-btn upfront-btn-mini upfront-btn-success"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{snippet.model.data(\'data\').length}} rows\n            </a>\n          </div>\n\n          <label>Property to visualize</label>\n          <select ng-model="valueProperty" ng-options="option.key as option.label for option in availableDataProperties">\n            <option value="">-- choose Visualization value --</option>\n          </select>\n\n          <div ng-show="choroplethInstance.dataPointsWithMissingRegion.length > 0">\n            <a class="upfront-btn upfront-btn-mini upfront-btn-danger"\n                ng-click="openDataModal(choroplethInstance.dataPointsWithMissingRegion)">\n              {{choroplethInstance.dataPointsWithMissingRegion.length}}\n            </a>\n            <small>Data Points with no corresponding region</small>\n          </div>\n\n          <label>Color scheme <small>(\xa9 colorbrewer.org, Cynthia Brewer)</small></label>\n          <select ng-model="colorScheme" ng-options="option.cssClass as option.name for option in availableColorSchemes">\n            <option value="">-- choose Color Scheme --</option>\n          </select>\n\n          <div class="upfront-well red" ng-show="isCategorical && hasTooManyCategories()">\n            The chosen categorical value has too many categories for this color scheme.\n            Choose a different color scheme or change the visualized value.\n          </div>\n\n          <div ng-show="!isCategorical">\n            <label>Nr. of different colors</label>\n            <select ng-model="colorSteps" ng-options="option for option in availableColorSteps">\n            </select>\n            <!-- TODO: Slider probably doesn\'t work since it needs click events on the document which are not propagated from within the sidebar -->\n            <!--<slider floor="3" ceiling="9" step="1" precision="1" ng-model="bla"></slider>-->\n          </div>\n\n        </div>\n\n      </fieldset>\n      <fieldset>\n        <legend>legend</legend>\n        <label>\n          <input type="checkbox" ng-model="hideLegend" /> Hide legend\n        </label>\n      </fieldset>\n\n    </form>\n  </div>\n  <div>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
-  htmlTemplates.diffAddDelEntry = '<div  class="upfront-diff upfront-control"\n      ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}"\n      ng-controller="MergeController">\n\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n\n  {{property.label}} {{property.difference.content}}\n\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertAdd(property)"\n                ng-show="property.difference.type == \'add\'">\n                remove\n        </button>\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n              ng-click="revertDelete(property)"\n              ng-show="property.difference.type == \'delete\'">\n              bring back\n      </button>\n\n</div>';
-  htmlTemplates.diffChangeEntry = '<div class="upfront-diff change upfront-control" ng-controller="MergeController">\n  <span class="entypo-flow-parallel"></span>\n    {{property.label}} changed <span ng-show="!property.difference.type == \'blobChange\'">from {{property.difference.previous}} to {{property.difference.after}}</span>\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertChange(property)"\n                ng-hide="isColorStepsWithOrdinalData(property)">\n                revert to previous value\n        </button>\n</div>';
+  htmlTemplates.diffAddDelEntry = '<div  class="upfront-diff upfront-control"\n      ng-class="{\'add\': property.difference.type == \'add\', \'delete\': property.difference.type == \'delete\'}">\n\n  <span ng-show="property.difference.type == \'add\'"\n        class="entypo-plus-circled"></span>\n\n  <span ng-show="property.difference.type == \'delete\'"\n        class="entypo-minus-circled"></span>\n\n  {{property.label}} {{property.difference.content}}\n\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertAdd(property)"\n                ng-show="property.difference.type == \'add\'">\n                remove\n        </button>\n\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n              ng-click="revertDelete(property)"\n              ng-show="property.difference.type == \'delete\'">\n              bring back\n      </button>\n\n</div>';
+  htmlTemplates.diffChangeEntry = '<div class="upfront-diff change upfront-control">\n  <span class="entypo-flow-parallel"></span>\n    {{property.label}} changed <span ng-show="property.difference && property.difference.previous">from {{property.difference.previous}} to {{property.difference.after}}</span>\n  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                ng-click="revertChange(property)"\n                ng-hide="isColorStepsWithOrdinalData(property)">\n                revert to previous value\n        </button>\n</div>';
   htmlTemplates.documentPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>{{ document.title }}</h3>\n  </div>\n  <div class="upfront-sidebar-content upfront-help-small">\n    <h4>Thank you for trying datablog.io!</h4>\n    <p>\n      This public Test Page allows you to try the features of datablog, in particular choropleths and maps.\n      Your work is stored locally, but not on any server, so when your Browser is reset, the data is lost.\n      If you have any suggestions or ideas concerning datablog I am happy to hear about it at "gabriel(dot)hase(at)gmail(dot)com".\n    </p>\n    <a  href="" class="upfront-btn upfront-btn-danger"\n        ng-click="resetStory()">\n        Reset Test Story\n    </a>\n    <br>\n    <span class="entypo-help" style="font-size: 0.8em"> This clears all changes you have made to the Test Page</span>\n  </div>\n</div>';
   htmlTemplates.editButton = '<div ng-click="editSnippet(snippet, $event)" class="edit-button entypo-cog" ng-style="buttonStyle">\n</div>';
   htmlTemplates.editor = '<div>\n  <div class="-js-editor-root upfront-control" ng-controller="EditorController" document-click autosave>\n\n    <!-- Autosave messages -->\n    <div class=\'top-message\'\n         ng-show="autosave.state"\n         ng-class="autosave.state"\n         ng-animate="{show: \'message-show\'}">\n      {{ autosave.message }}\n    </div>\n\n    <!-- Sidebar -->\n    <div sidebar ng-if="state.isActive(\'sidebar\')" folded-out="state.sidebar.foldedOut">\n      <div document-panel ng-if="state.isActive(\'documentPanel\')"></div>\n      <div snippet-panel ng-if="state.isActive(\'snippetPanel\')"></div>\n      <div properties-panel snippet="state.propertiesPanel.snippet" ng-if="state.isActive(\'propertiesPanel\')"></div>\n    </div>\n\n    <!-- Selected Text Options -->\n    <div popover ng-if="state.isActive(\'flowtextPopover\')" arrow-distance="14" open-condition="state.flowtextPopover.active" bounding-box="{{ textPopoverBoundingBox }}" popover-css-class="upfront-formatting-popover">\n      <ng-include src="\'flowtext-options.html\'">\n      </ng-include>\n    </div>\n\n    <!-- Selected Image Popover -->\n    <div popover ng-if="state.isActive(\'imagePopover\')" arrow-distance="14" open-condition="state.imagePopover.active" bounding-box="{{ state.imagePopover.boundingBox }}">\n      <ng-include src="\'image-input.html\'"></ng-include>\n    </div>\n\n  </div>\n</div>';
   htmlTemplates.flowtextOptions = '<div ng-controller=\'FlowtextOptionsController\'>\n  <div class="flowtext-options upfront-btn-group" ng-hide="editableEventsService.selectionIsOnInputField" class=\'upfront-btn-group\'>\n    <a ng-click=\'toggleBold()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isBold}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-bold"></span>\n    </a>\n\n    <a ng-click=\'toggleItalic()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isItalic}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-italic"></span>\n    </a>\n\n    <a ng-click=\'openLinkInput()\'\n       ng-class="{\'upfront-formatting-active\': currentSelectionStyles.isLinked}"\n       class=\'upfront-btn upfront-text-format-btn\'>\n      <span class="fontawesome-link"></span>\n    </a>\n\n  </div>\n  <div ng-show="editableEventsService.selectionIsOnInputField">\n    <form class="upfront-control upfront-link-editing" ng-submit="setLink(currentSelectionStyles.link, currentSelectionStyles.isLinkExternal)">\n      <input type="submit" class=\'upfront-btn-mini upfront-link-editing_submit\' value="OK">\n      <input  type="text"\n              id="linkInput"\n              class="upfront-link-editing_link-field"\n              placeholder="www.datablog.io"\n              ld-focus="{{editableEventsService.selectionIsOnInputField}}"\n              ng-model="currentSelectionStyles.link">\n\n      <label class="upfront-link-editing_checkbox">\n        <input type="checkbox"\n              ng-model="currentSelectionStyles.isLinkExternal"> In neuem Fenster \xf6ffnen\n      </label>\n    </form>\n  </div>\n</div>';
+  htmlTemplates.choroplethDiffPreview = '<div class="preview-wrapper">\n  <div class="history-explorer">\n    <div class="upfront-timeline">\n      <ol class="upfront-timeline-entries"\n          style="left: 0px;">\n\n        <li role="tab"\n            ng-click="chooseRevision(historyEntry)"\n            class="upfront-timeline-entry active-entry latest-entry"\n            ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n            data-version="{{historyEntry.revisionId}}"\n            data-timestamp="{{historyEntry.lastChanged}}">\n          <a ng-class="{\'selected\': isSelected(historyEntry)}">\n            <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n          </a>\n        </li>\n\n      </ol>\n    </div>\n\n    <div class="current-history-map hide-legend">\n\n    </div>\n  </div>\n\n  <div class="latest-preview">\n\n    <h2>Current Version</h2>\n    <div class="latest-version-map hide-legend">\n    </div>\n  </div>\n</div>';
+  htmlTemplates.choroplethDiffTable = '<div class="diff-viewer">\n  <ul class="upfront-list">\n    <li ng-repeat="section in versionDifference">\n      <h3>{{section.sectionTitle}}</h3>\n      <ul class="upfront-list">\n        <li ng-repeat="property in section.properties" ng-show="property.difference">\n          <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n            <ng-include src="\'diff-change-entry.html\'"></ng-include>\n          </div>\n          <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n            <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n          </div>\n        </li>\n      </ul>\n    </li>\n  </ul>\n</div>';
+  htmlTemplates.webMapDiffTable = '<div class="diff-viewer">\n  <ul class="upfront-list">\n    <li ng-repeat="section in versionDifference">\n      <h3>{{section.sectionTitle}}</h3>\n      <ul class="upfront-list">\n        <li ng-repeat="property in section.properties" ng-show="property.difference">\n          <div ng-if="property.key == \'markers\'">\n            <div ng-if="property.difference.type == \'change\'">\n              <div class="upfront-diff change upfront-control">\n                <span class="entypo-flow-parallel"></span>\n                Marker changed from {{property.difference.previous}} to {{property.difference.after}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertChange(property)">\n                  revert to previous value\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'add\'">\n              <div  class="upfront-diff upfront-control add">\n                <span class="entypo-plus-circled"></span>\n                Marker {{property.difference.content}}\n                &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                      ng-click="revertAdd(property)"\n                      ng-show="property.difference.type == \'add\'">\n                  remove\n                </button>\n              </div>\n            </div>\n            <div ng-if="property.difference.type == \'delete\'">\n              <div  class="upfront-diff upfront-control delete">\n                  <span class="entypo-minus-circled"></span>\n                  Marker {{property.difference.content}}\n                  &nbsp;<button class="upfront-btn upfront-btn-small upfront-btn-info"\n                          ng-click="revertDelete(property)"\n                          ng-show="property.difference.type == \'delete\'">\n                      bring back\n                  </button>\n              </div>\n            </div>\n          </div>\n          <div ng-if="property.key != \'markers\'">\n            <ng-include src="\'diff-change-entry.html\'"></ng-include>\n          </div>\n        </li>\n      </ul>\n    </li>\n  </ul>\n</div>';
   htmlTemplates.historyButton = '<div ng-click="showHistory(snippet, $event)" class="entypo-flow-branch" ng-style="buttonStyle">\n</div>';
-  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n  <div ng-show="history.length == 0">\n    There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n  </div>\n  <div class="upfront-snippet-history" ng-show="history.length > 0">\n\n    <div class="preview-wrapper">\n      <div class="history-explorer">\n        <div class="upfront-timeline">\n          <ol class="upfront-timeline-entries"\n              style="left: 0px;">\n\n            <li role="tab"\n                ng-click="chooseRevision(historyEntry)"\n                class="upfront-timeline-entry active-entry latest-entry"\n                ng-repeat="historyEntry in history | orderBy:\'revisionId\':reverse"\n                data-version="{{historyEntry.revisionId}}"\n                data-timestamp="{{historyEntry.lastChanged}}">\n              <a ng-class="{\'selected\': isSelected(historyEntry)}">\n                <span ng-class="{\'arrow arrow-bottom\': isSelected(historyEntry)}"></span>\n              </a>\n            </li>\n\n          </ol>\n        </div>\n\n        <div class="current-history-map hide-legend">\n\n        </div>\n      </div>\n\n      <div class="latest-preview">\n\n        <h2>Current Version</h2>\n        <div class="latest-version-map hide-legend">\n        </div>\n      </div>\n    </div>\n\n\n    <div class="diff-viewer">\n      <ul class="upfront-list">\n        <li ng-repeat="section in versionDifference">\n          <h3>{{section.sectionTitle}}</h3>\n          <ul class="upfront-list">\n            <li ng-repeat="property in section.properties" ng-show="property.difference">\n              <div ng-if="property.difference.type == \'change\' || property.difference.type == \'blobChange\'">\n                <ng-include src="\'diff-change-entry.html\'"></ng-include>\n              </div>\n              <div ng-if="property.difference.type == \'add\' || property.difference.type == \'delete\'">\n                <ng-include src="\'diff-add-del-entry.html\'"></ng-include>\n              </div>\n            </li>\n          </ul>\n        </li>\n      </ul>\n    </div>\n  </div>\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
+  htmlTemplates.historyModal = '<div class="upfron-modal-full-width-header">\n  <h3>History for {{snippet.template.title}}</h3>\n  <div class="right-content upfront-control">\n    <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-danger"\n            ng-click="close($event)">Cancel Merging</button>\n    &nbsp;\n    <button ng-show="modalState.isMerging"\n            class="upfront-btn upfront-btn-large upfront-btn-success"\n            ng-click="merge($event)">Merge changes</button>\n  </div>\n</div>\n<div class="upfront-modal-body" style="height: 100%">\n\n  <div ng-if="snippet.identifier == \'livingmaps.choropleth\'" ng-controller="ChoroplethMergeController">\n    <div ng-show="history.length == 0">\n      There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n    </div>\n\n    <div class="upfront-snippet-history" ng-show="history.length > 0">\n      <ng-include src="\'choropleth-diff-preview.html\'"></ng-include>\n      <ng-include src="\'choropleth-diff-table.html\'"></ng-include>\n    </div>\n  </div>\n\n  <div ng-if="snippet.identifier == \'livingmaps.map\'" ng-controller="WebMapMergeController">\n    <div ng-show="history.length == 0">\n      There is no history for this snippet in the last 10 revisions (only the 10 latest revisions are stored in demo mode).\n    </div>\n\n    <div class="upfront-snippet-history" ng-show="history.length > 0">\n      <ng-include src="\'choropleth-diff-preview.html\'"></ng-include>\n      <ng-include src="\'web-map-diff-table.html\'"></ng-include>\n    </div>\n  </div>\n\n</div>\n<div class="upfront-modal-footer upfront-control">\n  <button ng-hide="modalState.isMerging"\n            class="upfront-btn upfront-btn-info"\n            ng-click="close($event)">Close table view</button>\n</div>';
   htmlTemplates.imageInput = '<form class="upfront-form" style="width: 300px" ng-submit="embedImage(imageUrl)" ng-controller="ImageEmbedController">\n  <label>Paste Image Url</label>\n  <textarea class="full-width" rows="5" ng-model="imageUrl">\n  </textarea>\n  <br/>\n  <input type="submit" class="upfront-btn" value="embed" />\n</form>';
   htmlTemplates.popover = '<div class=\'upfront-popover-panel upfront-popover\'\n  style=\'position: absolute; left: {{left}}px; top: {{top}}px\'>\n  <div class=\'arrow\' ng-class="arrowCss"></div>\n    <button class=\'upfront-close\' ng-click=\'close($event, target)\'>x</button>\n    <div class=\'upfront-panel-content clearfix\'>\n      <div class=\'clearfix\' ng-transclude>\n      </div>\n    </div>\n  </div>\n</div>';
   htmlTemplates.propertiesPanel = '<div>\n  <div class="upfront-sidebar-header" style="display: block;"\n    ng-click="hideSidebar()">\n    <i class="entypo-right-open-big upfront-sidebar-hide-icon"></i>\n    <h3>\n      <span ng-show="snippet">Properties for {{snippet.template.title}}</span>\n      <span ng-hide="snippet">Select an element on the page</span>\n    </h3>\n  </div>\n  <div ng-show="snippet">\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Visual Properties</div>\n    <div class="visual-form-placeholder">\n    </div>\n    <form class="upfront-properties-form upfront-form">\n    </form>\n    <div class="upfront-snippet-grouptitle"><i class="entypo-down-open-mini"></i>Actions</div>\n    <ul class="upfront-action-list" style="text-align: center">\n      <li ng-show="isDeletable(snippet)">\n        <button class="upfront-btn upfront-control upfront-btn-danger"\n              type="button"\n              ng-click="deleteSnippet(snippet)">\n          <span class="entypo-trash"></span>\n          <span>l\xf6schen</span>\n        </button>\n      </li>\n    </ul>\n  </div>\n</div>';
@@ -28631,7 +28937,7 @@ angular.module('truncate', []).filter('characters', function () {
           indexes = _.map(history, function (historyEntry, idx) {
             var snippetJson;
             snippetJson = _this.searchSnippet(historyEntry.document, snippetModelId);
-            if ((snippetJson != null ? snippetJson.data : void 0) && !_this._isEqualChoropleth(snippetJson.data, currentJson.data)) {
+            if ((snippetJson != null ? snippetJson.data : void 0) && !_this._isEqual(snippetJson.identifier, snippetJson.data, currentJson.data)) {
               return idx;
             } else {
               return -1;
@@ -62497,18 +62803,31 @@ angular.module('truncate', []).filter('characters', function () {
           }
           return searchedSnippetJson;
         },
-        _isEqualChoropleth: function (a, b) {
-          return _.every([
-            'projection',
-            'data',
-            'map',
-            'mappingPropertyOnMap',
-            'valueProperty',
-            'colorScheme',
-            'colorSteps'
-          ], function (definingProperty) {
-            return _.isEqual(a[definingProperty], b[definingProperty]);
-          });
+        _isEqual: function (type, a, b) {
+          if (type === 'livingmaps.choropleth') {
+            return _.every([
+              'projection',
+              'data',
+              'map',
+              'mappingPropertyOnMap',
+              'valueProperty',
+              'colorScheme',
+              'colorSteps'
+            ], function (definingProperty) {
+              return _.isEqual(a[definingProperty], b[definingProperty]);
+            });
+          } else if (type === 'livingmaps.map') {
+            return _.every([
+              'center',
+              'tiles',
+              'markers'
+            ], function (definingProperty) {
+              return _.isEqual(a[definingProperty], b[definingProperty]);
+            });
+          } else {
+            log.debug('Getting History for possibly unsupported snippet type ' + type);
+            return _.isEqual(a, b);
+          }
         }
       };
     }
