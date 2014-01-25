@@ -13,15 +13,8 @@ class WebMapMergeController
         @initMarkerColors()
 
 
-  resetMarkerColors: ->
-    for marker in @$scope.latestSnippetVersion.data('markers')
-      marker.icon?.options?.markerColor = 'cadetblue'
-    for marker in @$scope.historyVersionSnippet.data('markers')
-      marker.icon?.options?.markerColor = 'cadetblue'
-
-
   initMarkerColors: ->
-    @resetMarkerColors()
+    @$scope.resetHistoryMarkerProperties()
     for section in @$scope.versionDifference
       if section.sectionTitle == 'Markers'
         for property in section.properties
@@ -82,6 +75,7 @@ class WebMapMergeController
     @_propagateSnippetChange(property.key)
     property.difference = undefined
     property.info = "(#{newData[property.key]})"
+    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
 
 
@@ -98,6 +92,7 @@ class WebMapMergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
+    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
 
 
@@ -110,6 +105,7 @@ class WebMapMergeController
 
     @_propagateSnippetChange(property.key)
     property.difference = undefined
+    @$scope.resetHistoryMarkerProperties()
     @$scope.modalState.isMerging = true
 
 
