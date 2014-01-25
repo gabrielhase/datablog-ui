@@ -69,7 +69,7 @@ htmlTemplates.mapKickstartModal = """
       </form>
     </div>
     <div style="width: 40%; position: absolute; right: 10px;">
-      <leaflet center="center" markers="previewMarkers" event-broadcast="events"></leaflet>
+      <leaflet center="center" markers="previewMarkers" event-broadcast="events" id="kickstart-map"></leaflet>
     </div>
   </div>
 
