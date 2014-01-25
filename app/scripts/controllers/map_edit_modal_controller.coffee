@@ -20,7 +20,7 @@ class MapEditModalController
 
   addGeosearch: ->
     @$timeout =>
-      @leafletData.getMap().then (map) =>
+      @leafletData.getMap("freeform-map").then (map) =>
         new L.Control.GeoSearch(
           provider: new L.GeoSearch.Provider.OpenStreetMap()
           showMarker: false
