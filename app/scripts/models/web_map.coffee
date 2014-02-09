@@ -6,7 +6,7 @@ class WebMap
 
   reload: (id) ->
     leafletData = angularHelpers.inject('leafletData')
-    leafletData.getMap(id).then (map) =>
+    leafletData.getMap("#{id}").then (map) =>
       map.invalidateSize()
 
 
@@ -15,7 +15,7 @@ class WebMap
 
 
   getBounds: (markers) ->
-    markers ?= @_getSnippetModel.data('markers')
+    markers ?= @_getSnippetModel().data('markers')
     maxLat = @getMinOrMax(markers, 'max', 'lat')
     maxLng = @getMinOrMax(markers, 'max', 'lng')
     minLat = @getMinOrMax(markers, 'min', 'lat')
