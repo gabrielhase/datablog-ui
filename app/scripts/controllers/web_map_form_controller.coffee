@@ -1,7 +1,7 @@
 angular.module('ldEditor').controller 'WebMapFormController',
 class WebMapFormController
 
-  constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService) ->
+  constructor: (@$scope, @ngProgress, @$http, @dialogService, @mapMediatorService, @leafletData) ->
     @$scope.snippet = @mapMediatorService.getSnippetModel(@$scope.snippet.model.id)
     @$scope.uiModel = @mapMediatorService.getUIModel(@$scope.snippet.id)
 
@@ -97,6 +97,8 @@ class WebMapFormController
           @dialogService.openMapKickstartModal(data, @$scope.uiModel).result.then (result) =>
             if result.action == 'kickstart'
               @$scope.markers = result.markers
+              @leafletData.getMap("#{@$scope.uiModel.id}").then (map) =>
+                map.fitBounds(@$scope.uiModel.getBounds(result.markers))
         else
           alert('This is not a geojson file. Sorry currently we only have support for geojson.')
         @ngProgress.complete()

@@ -88,7 +88,7 @@ class MapKickstartModalController
       icon: @addedMarker
     @$timeout => # we need a timeout here to wait for the directive to be done
       @leafletData.getMap("kickstart-map").then (map) =>
-        map.fitBounds(@getBounds(@$scope.previewMarkers))
+        map.fitBounds(@uiModel.getBounds(@$scope.previewMarkers))
     , 100
 
 
@@ -146,20 +146,6 @@ class MapKickstartModalController
 
   hasMarkers: ->
     _.any @$scope.markers, (marker) -> marker.selected
-
-
-  getBounds: (markers) ->
-    maxLat = @getMinOrMax(markers, 'max', 'lat')
-    maxLng = @getMinOrMax(markers, 'max', 'lng')
-    minLat = @getMinOrMax(markers, 'min', 'lat')
-    minLng = @getMinOrMax(markers, 'min', 'lng')
-    southWest = new L.LatLng(minLat, minLng)
-    northEast = new L.LatLng(maxLat, maxLng)
-    new L.LatLngBounds(southWest, northEast)
-
-
-  getMinOrMax: (markers, minOrMax, latOrLng) ->
-    _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
 
 
   getTextProperties: (feature) ->
