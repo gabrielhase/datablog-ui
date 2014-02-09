@@ -147,6 +147,7 @@ module.exports = (grunt) ->
             '<%= yeoman.dist %>/scripts/{,*/}*.js'
             '<%= yeoman.dist %>/styles/{,*/}*.css'
             '<%= yeoman.dist %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+            '<%= yeoman.dist %>/assets/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
             '<%= yeoman.dist %>/styles/fonts/*'
           ]
     useminPrepare:
@@ -177,6 +178,7 @@ module.exports = (grunt) ->
           src: [
             '*.{ico,png,txt}'
             'images/{,*/}*.{gif,webp,svg,png}'
+            'assets/{,*/}*.{gif,webp,svg,png}'
             'styles/fonts/*'
             'vendor/**/*'
             'data/**/*'

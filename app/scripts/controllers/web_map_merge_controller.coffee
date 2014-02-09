@@ -37,16 +37,18 @@ class WebMapMergeController
     @$scope.$on 'leafletDirectiveMarker.mouseover', (e, args) =>
       @highlightMarker
         index: +args.markerName
+        event: args.leafletEvent
     @$scope.$on 'leafletDirectiveMarker.mouseout', (e, args) =>
       @unHighlightMarker
         index: +args.markerName
+        event: args.leafletEvent
 
 
   highlightMarker: (lookup) ->
     if lookup.property?
       {latestMarker, historyMarker} = @_getMarkersByUuid(lookup.property.uuid)
     else if lookup.index?
-      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
+      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index, lookup.event)
     else
       log.error "Don't know how to retrieve marker with lookup #{lookup}"
 
@@ -60,7 +62,7 @@ class WebMapMergeController
     if lookup.property?
       {latestMarker, historyMarker} = @_getMarkersByUuid(lookup.property.uuid)
     else if lookup.index?
-      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index)
+      {latestMarker, historyMarker} = @_getMarkersByIndex(lookup.index, lookup.event)
     else
       log.error "Don't know how to retrieve marker with lookup #{lookup}"
 
@@ -165,9 +167,18 @@ class WebMapMergeController
     {latestMarker, historyMarker}
 
 
-  _getMarkersByIndex: (index) ->
-    latestMarker = @$scope.latestSnippetVersion.data('markers')[index]
-    historyMarker = @$scope.historyVersionSnippet.data('markers')[index]
+  _getMarkersByIndex: (index, event) ->
+    mapId = $(event.target._map._container).attr('id')
+    if @$scope.latestSnippetVersion.id == mapId
+      # get from index in latest snippet version
+      latestMarker = @$scope.latestSnippetVersion.data('markers')[index]
+      historyMarker = _.find @$scope.historyVersionSnippet.data('markers'), (marker) =>
+        marker.uuid == latestMarker.uuid
+    else
+      # get from index in history snippet version
+      historyMarker = @$scope.historyVersionSnippet.data('markers')[index]
+      latestMarker = _.find @$scope.latestSnippetVersion.data('markers'), (marker) =>
+        marker.uuid == historyMarker.uuid
 
     {latestMarker, historyMarker}
 
