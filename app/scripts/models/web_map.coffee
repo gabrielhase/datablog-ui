@@ -14,6 +14,17 @@ class WebMap
     webMapConfig.template
 
 
+  getBounds: (markers) ->
+    markers ?= @_getSnippetModel.data('markers')
+    maxLat = @getMinOrMax(markers, 'max', 'lat')
+    maxLng = @getMinOrMax(markers, 'max', 'lng')
+    minLat = @getMinOrMax(markers, 'min', 'lat')
+    minLng = @getMinOrMax(markers, 'min', 'lng')
+    southWest = new L.LatLng(minLat, minLng)
+    northEast = new L.LatLng(maxLat, maxLng)
+    new L.LatLngBounds(southWest, northEast)
+
+
   getDefaultIcon: ->
     L.AwesomeMarkers.icon
       icon: 'star'
@@ -73,6 +84,9 @@ class WebMap
   _getSnippetModel: ->
     @mapMediatorService.getSnippetModel(@id)
 
+
+  getMinOrMax: (markers, minOrMax, latOrLng) ->
+    _[minOrMax](_.map markers, (marker) -> marker[latOrLng])
 
   # ########################
   # DIFFERENCE CALCULATIONS
