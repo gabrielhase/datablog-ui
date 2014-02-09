@@ -15,6 +15,7 @@ describe 'WebMapMergeController', ->
     @scope.historyVersionSnippet = @olderSnippetModel
     @scope.modalState =
       isMerging: false
+    @scope.rightBeforeMerge = $.Callbacks('memory once')
     @scope.resetMarker = -> true
     @scope.modalContentReady = $.Callbacks('memory once')
     @scope.modalContentReady.fire()
