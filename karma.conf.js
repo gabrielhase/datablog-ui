@@ -23,18 +23,16 @@ module.exports = function(config) {
       'app/vendor/ng-grid/ng-grid-2.0.7.debug.js',
       'app/vendor/angular-truncate/truncate.js',
 
-      // angular-slider
-      'app/vendor/angular-slider/angular_slider.js',
 
       // livingdocs designs
       'app/vendor/livingmaps-design/design.js',
 
       // livingdocs-engine
-      'app/vendor/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
-      'app/vendor/livingdocs-engine/vendor/editableJS/editable.js',
-      'app/vendor/livingdocs-engine/vendor/lz-string/lz-string-1.3.3.js',
-      'app/vendor/livingdocs-engine/vendor/store/store.js',
-      'app/vendor/livingdocs-engine/livingdocs_engine.js',
+      'https://s3.amazonaws.com/datablog-assets/livingdocs-engine/vendor/yepnope/yepnope.1.5.3-min.js',
+      'https://s3.amazonaws.com/datablog-assets/livingdocs-engine/vendor/editableJS/editable.min.js',
+      'https://s3.amazonaws.com/datablog-assets/livingdocs-engine/vendor/lz-string/lz-string-1.3.3.js',
+      'https://s3.amazonaws.com/datablog-assets/livingdocs-engine/vendor/store/store.js',
+      'https://s3.amazonaws.com/datablog-assets/livingdocs-engine/livingdocs_engine.min.js',
 
       // Leaflet
       'http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js',
