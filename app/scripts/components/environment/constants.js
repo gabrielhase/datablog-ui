@@ -1,3 +1,3 @@
-angular.module("envApi", ["ldTestApi"])
+angular.module("envApi", ["ldLocalApi"])
 
 ;
