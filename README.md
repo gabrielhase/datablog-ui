@@ -1,6 +1,6 @@
 ## What is this
 
-The datablog-ui implementation allows editing text, images, and two kinds of map elements directly in the browser. It is the accompanying code repository for the livingmap, a Harvard University Extension School master thesis. A public demo page of this project can be found at [datablog.io](http://www.datablog.io/).
+The datablog-ui implementation allows editing text, images, and two kinds of map elements directly in the browser. It is the accompanying code repository for the livingmap, a Harvard University Extension School master thesis. A public demo page of this project can be found at [datablog.io](http://www.datablog.io/). The thesis document is at [https://s3.amazonaws.com/datablog-assets/Gabriel-Hase-thesis-the-livingmap.pdf](https://s3.amazonaws.com/datablog-assets/Gabriel-Hase-thesis-the-livingmap.pdf).
 
 If you care about the map elements, i.e. choropleths and web maps, you will likely need to dive into the code and integrate them with your code respectively. Web maps are created with the [angular-leaflet-directive](http://tombatossals.github.io/angular-leaflet-directive), which is an awesome open source stand-alone directive for interactive maps. You probably want to start there and see how the datablog-ui integrates the directive into an editing environment with forms and modals. The choropleth maps are supported with a custom directive that can be found in the code's `directives` folder.
 
