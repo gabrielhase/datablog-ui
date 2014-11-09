@@ -4,7 +4,7 @@ The datablog-ui implementation allows editing text, images, and two kinds of map
 
 If you care about the map elements, i.e. choropleths and web maps, you will likely need to dive into the code and integrate them with your code respectively. Web maps are created with the [angular-leaflet-directive](http://tombatossals.github.io/angular-leaflet-directive), which is an awesome open source stand-alone directive for interactive maps. You probably want to start there and see how the datablog-ui integrates the directive into an editing environment with forms and modals. The choropleth maps are supported with a custom directive that can be found in the code's `directives` folder.
 
-If you care about the text editing and drag&drop capabilities, you need the software library livingdocs, which is not open source, but was provided as is for the livingmap master thesis project. Get in touch with the guys at [livingdocs.io](http://www.livingdocs.io), chances are high they let you use their software.
+If you care about the text editing and drag&drop capabilities, you need the software library livingdocs, which is open source under the LGPL, and can be donwloaded [here](https://github.com/upfrontIO/livingdocs-engine).
 
 ## How to set it up
 
@@ -63,7 +63,7 @@ Angular.JS | http://www.angularjs.org  | MIT
 d3.js | http://www.d3js.org  | [custom](https://github.com/mbostock/d3/blob/master/LICENSE)
 d3-geo-projection | https://github.com/d3/d3-geo-projection/ | [custom](https://github.com/d3/d3-geo-projection/blob/master/LICENSE)
 leaflet.js | http://leafletjs.com/ | [custom](https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
-livingdocs | http://www.livingdocs.io | closed source (copyright)
+livingdocs | http://www.livingdocs.io | LGPL
 moment.js | http://momentjs.com/ | [custom](https://github.com/moment/moment/blob/develop/LICENSE)
 underscore.js | http://underscorejs.org/ | [custom](https://github.com/jashkenas/underscore/blob/master/LICENSE)
 ng-grid | http://angular-ui.github.io/ng-grid/ | MIT
